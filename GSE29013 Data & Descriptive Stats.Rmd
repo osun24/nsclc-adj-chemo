@@ -1,0 +1,131 @@
+---
+title: "GSE29013 Data & Descriptive Stats"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+getGEOSuppFiles("GSE29013")
+
+# untar files
+untar("GSE29013/GSE29013_RAW.tar",exdir='GSE29013/CEL')
+
+celfiles = list.files("GSE29013/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE29013.raw = read.celfiles(celfiles)
+
+# normalization 
+GSE29013.rma = rma(GSE29013.raw)
+
+write.csv(GSE29013.rma, 
+          "~/Downloads/GSE29013rma.csv",
+          row.names = F)
+
+# Get the data to be used in R
+GSE29013.expr = as.data.frame(t(exprs(GSE29013.rma)))
+
+write.csv(GSE29013.expr, 
+          "~/Downloads/GSE29013expr.csv",
+          row.names = F)
+```
+
+# map probe IDs to gene symbols
+```{r}
+# fetch feature data to get gene symbols
+gse = getGEO("GSE29013", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE29013_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "Gene Symbol")]
+
+write.csv(feature.df, 
+          "~/Downloads/GSE29013symbol.csv", 
+          row.names = F)
+
+gset = getGEO("GSE29013", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL570", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+# Extract microarray expression values from NCBI
+GSE29013.gset = as_tibble(t(exprs(gset)))
+
+clin_demo_feature = as_tibble(gset@phenoData@data) %>%
+  select(-c(title:data_row_count), 
+         -`specimen.number:ch1`, -`spor.n:ch1`, 
+         -`tissue:ch1`,
+         -`time_to_progression:ch1`,
+         -`progression:ch1`)
+
+GSE29013.df = cbind(clin_demo_feature, GSE29013.expr)
+
+# Next, we want to append clinical information onto gene expression data
+gse29013.data = clin_demo_feature 
+colnames(gse29013.data) = c("Adj_Chemo", "Age", "Death_Event", "Death_Time", "Final_Pat_Stage", "Gender", "Histology", "Race", "Smoking", "Stage")
+
+# fetch feature data to get gene symbols
+feature.dat = gse$GSE29013_series_matrix.txt.gz@featureData@data 
+GSE29013.symbol = 
+  feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+write.csv(GSE29013.symbol, 
+          "~/Downloads/GSE29013_symbol.csv")
+
+write.csv(gse29013.data, 
+          file = "~/Downloads/GSE29013_data.csv")
+```
+
+```{r}
+gse29013.data$Age= as.numeric(gse29013.data$Age)
+gse29013.data$Death_Time= as.numeric(gse29013.data$Death_Time)
+```
+
+```{r}
+nrow(gse29013.data)
+
+table(gse29013.data$Gender)
+
+adj_chemo = table(gse29013.data$Adj_Chemo)
+adj_chemo
+
+histology = table(gse29013.data$Histology)
+histology
+
+nrow(subset(gse29013.data, Age >= 65))
+nrow(subset(gse29013.data, Age < 65))
+
+stage = table(gse29013.data$Final_Pat_Stage)
+stage
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE29013merged = cbind(GSE29013.Data, GSE29013.expr)
+write.csv(GSE29013merged, 
+          "~/Downloads/GSE29013merged.csv")
+```
+
+
+
+
+
+
+
+
