@@ -1,0 +1,62 @@
+---
+title: "merged data"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(BiocManager)
+BiocManager::install("GEOquery")
+library(GEOquery) 
+library(tidyverse)
+library(limma)
+BiocManager::install("oligo")
+library(oligo)
+library(magrittr)
+
+install.packages("curl", type = "source")
+brew reinstall curl
+brew install pkg-config
+```
+
+
+```{r}
+# get supplementary files
+# Download the file manually from GEO
+download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE42nnn/GSE42127/matrix/GSE42127_series_matrix.txt.gz",
+              destfile = "GSE42127_series_matrix.txt.gz")
+
+# Load the file
+gse42127 <- getGEO(filename = "GSE42127_series_matrix.txt.gz")
+
+gse42127 = getGEO("GSE42127", GSEMatrix = T)
+
+#expression data
+gse42127.expr = exprs(gse42127[[1]])
+
+#background correction
+if(!is.null(gse42127.expr)){
+  
+  #create a detection p=alue matrix manually
+  detection_p = matrix(0.05,
+    runif(nrow(gse42127.expr) * ncol(gse42127.expr), min = 0.05, max = 0.6),
+    nrow = nrow(gse42127.expr), ncol = ncol(gse42127.expr)
+  )
+  rownames(detection_p) = rownames(gse42127.expr)
+  colnames(detection_p) = colnames(gse42127.expr)
+
+  #create an ElListRaw object
+ # raw_data = new("ElistRaw", list(E = gse42127.expr, detection.p = detection_p))
+  
+  gse42127_corrected = neqc(gse42127.expr, detection.p = detection_p, robust = T)
+}
+
+summary(gse42127.expr)
+```
+
+#RESEARCH BACKGROUND CORRECTION FOR ILLUMINA FILE..RMA IS AFFYM
+
+
