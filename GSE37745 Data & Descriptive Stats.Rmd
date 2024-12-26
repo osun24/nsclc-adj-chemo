@@ -60,10 +60,10 @@ write.csv(feature.df,
           "~/Thesis/GSE37745symbol.csv", 
           row.names = F)
 
-gset = getGEO("GSE37745", GSEMatrix=T, getGPL=F)
-if (length(gset) > 1) 
+gset1 = getGEO("GSE37745", GSEMatrix=T, getGPL=F)
+if (length(gset1) > 1) 
   idx <- grep("GPL570", attr(gset1, "names")) else idx <- 1
-gset <- gset[[idx]]
+gset1 <- gset1[[idx]]
 
 # Extract microarray expression values from NCBI
 GSE37745.gset = as_tibble(t(exprs(gset1)))
@@ -113,7 +113,7 @@ smoker
 
 ```{r}
 #Merge clinical data and expression data
-GSE37745merged = cbind(GSE37745.Data, GSE37745.expr)
+GSE37745merged = cbind(gse37745.data, GSE37745.expr)
 write.csv(GSE37745merged, 
           "~/Thesis/GSE37745merged.csv")
 ```
