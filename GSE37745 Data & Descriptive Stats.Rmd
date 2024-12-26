@@ -21,7 +21,8 @@ library(limma)
 ```
 
 ```{r}
-getGEOSuppFiles("GSE29013")
+options(timeout = 10000)
+getGEOSuppFiles("GSE37745")
 
 # untar files
 untar("GSE37745/GSE37745_RAW.tar",exdir='GSE37745/CEL')
@@ -34,14 +35,14 @@ GSE37745.raw = read.celfiles(celfiles)
 GSE37745.rma = rma(GSE37745.raw)
 
 write.csv(GSE37745.rma, 
-          "~/Downloads/GSE37745rma.csv",
+          "~/Thesis/GSE37745rma.csv",
           row.names = F)
 
 # Get the data to be used in R
 GSE37745.expr = as.data.frame(t(exprs(GSE37745.rma)))
 
 write.csv(GSE37745.expr, 
-          "~/Downloads/GSE37745expr.csv",
+          "~/Thesis/GSE37745expr.csv",
           row.names = F)
 ```
 
@@ -56,7 +57,7 @@ feature.dat =
 feature.df = feature.dat[, c("ID", "Gene Symbol")]
 
 write.csv(feature.df, 
-          "~/Downloads/GSE37745symbol.csv", 
+          "~/Thesis/GSE37745symbol.csv", 
           row.names = F)
 
 gset = getGEO("GSE37745", GSEMatrix=T, getGPL=F)
@@ -81,10 +82,10 @@ feature.dat = gse$GSE37745_series_matrix.txt.gz@featureData@data
 GSE37745.symbol = 
   feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
 write.csv(GSE37745.symbol, 
-          "~/Downloads/GSE37745_symbol.csv")
+          "~/Thesis/GSE37745_symbol.csv")
 
 write.csv(gse37745.data, 
-          file = "~/Downloads/GSE37745_data.csv")
+          file = "~/Thesis/GSE37745_data.csv")
 ```
 
 ```{r}
@@ -114,7 +115,7 @@ smoker
 #Merge clinical data and expression data
 GSE37745merged = cbind(GSE37745.Data, GSE37745.expr)
 write.csv(GSE37745merged, 
-          "~/Downloads/GSE37745merged.csv")
+          "~/Thesis/GSE37745merged.csv")
 ```
 
 
