@@ -16,10 +16,7 @@ library(limma)
 BiocManager::install("oligo")
 library(oligo)
 library(magrittr)
-
-install.packages("curl", type = "source")
-brew reinstall curl
-brew install pkg-config
+library(curl)
 ```
 
 
@@ -38,23 +35,12 @@ gse42127 = getGEO("GSE42127", GSEMatrix = T)
 gse42127.expr = exprs(gse42127[[1]])
 
 #background correction
-if(!is.null(gse42127.expr)){
-  
-  #create a detection p=alue matrix manually
-  detection_p = matrix(0.05,
-    runif(nrow(gse42127.expr) * ncol(gse42127.expr), min = 0.05, max = 0.6),
-    nrow = nrow(gse42127.expr), ncol = ncol(gse42127.expr)
-  )
-  rownames(detection_p) = rownames(gse42127.expr)
-  colnames(detection_p) = colnames(gse42127.expr)
+gse42127_corrected = backgroundCorrect.matrix(gse42127.expr, method = "normexp")
 
-  #create an ElListRaw object
- # raw_data = new("ElistRaw", list(E = gse42127.expr, detection.p = detection_p))
-  
-  gse42127_corrected = neqc(gse42127.expr, detection.p = detection_p, robust = T)
-}
+#normalization
+gse42127.normalized = normalizeBetweenArrays(gse42127_corrected, method = "quantile")
 
-summary(gse42127.expr)
+hist(gse42127.normalized)
 ```
 
 #RESEARCH BACKGROUND CORRECTION FOR ILLUMINA FILE..RMA IS AFFYM
