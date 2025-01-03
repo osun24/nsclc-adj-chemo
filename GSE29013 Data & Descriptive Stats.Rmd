@@ -21,6 +21,7 @@ library(limma)
 ```
 
 ```{r}
+options(timeout = 10000)
 getGEOSuppFiles("GSE29013")
 
 # untar files
@@ -34,15 +35,16 @@ GSE29013.raw = read.celfiles(celfiles)
 GSE29013.rma = rma(GSE29013.raw)
 
 write.csv(GSE29013.rma, 
-          "~/Downloads/GSE29013rma.csv",
+          "GSE29013rma.csv",
           row.names = F)
 
 # Get the data to be used in R
 GSE29013.expr = as.data.frame(t(exprs(GSE29013.rma)))
 
 write.csv(GSE29013.expr, 
-          "~/Downloads/GSE29013expr.csv",
+          "GSE29013expr.csv",
           row.names = F)
+
 ```
 
 # map probe IDs to gene symbols
@@ -56,7 +58,7 @@ feature.dat =
 feature.df = feature.dat[, c("ID", "Gene Symbol")]
 
 write.csv(feature.df, 
-          "~/Downloads/GSE29013symbol.csv", 
+          "GSE29013symbol.csv", 
           row.names = F)
 
 gset = getGEO("GSE29013", GSEMatrix=T, getGPL=F)
@@ -85,10 +87,10 @@ feature.dat = gse$GSE29013_series_matrix.txt.gz@featureData@data
 GSE29013.symbol = 
   feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
 write.csv(GSE29013.symbol, 
-          "~/Downloads/GSE29013_symbol.csv")
+          "GSE29013_symbol.csv")
 
 write.csv(gse29013.data, 
-          file = "~/Downloads/GSE29013_data.csv")
+          file = "GSE29013_data.csv")
 ```
 
 ```{r}
@@ -117,10 +119,10 @@ stage
 
 ```{r}
 #Merge clinical data and expression data
-GSE29013merged = cbind(GSE29013.Data, GSE29013.expr)
-write.csv(GSE29013merged, 
-          "~/Downloads/GSE29013merged.csv")
-```
+GSE29013merged = cbind(gse29013.data, GSE29013.expr)
+write.csv(GSE290135merged, 
+          "~/Thesis/GSE29013merged.csv")
+``` 
 
 
 

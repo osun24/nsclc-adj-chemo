@@ -35,14 +35,14 @@ GSE37745.raw = read.celfiles(celfiles)
 GSE37745.rma = rma(GSE37745.raw)
 
 write.csv(GSE37745.rma, 
-          "~/Thesis/GSE37745rma.csv",
+          "GSE37745rma.csv",
           row.names = F)
 
 # Get the data to be used in R
 GSE37745.expr = as.data.frame(t(exprs(GSE37745.rma)))
 
 write.csv(GSE37745.expr, 
-          "~/Thesis/GSE37745expr.csv",
+          "GSE37745expr.csv",
           row.names = F)
 ```
 
@@ -57,7 +57,7 @@ feature.dat =
 feature.df = feature.dat[, c("ID", "Gene Symbol")]
 
 write.csv(feature.df, 
-          "~/Thesis/GSE37745symbol.csv", 
+          "GSE37745symbol.csv", 
           row.names = F)
 
 gset1 = getGEO("GSE37745", GSEMatrix=T, getGPL=F)
@@ -82,10 +82,10 @@ feature.dat = gse$GSE37745_series_matrix.txt.gz@featureData@data
 GSE37745.symbol = 
   feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
 write.csv(GSE37745.symbol, 
-          "~/Thesis/GSE37745_symbol.csv")
+          "GSE37745_symbol.csv")
 
 write.csv(gse37745.data, 
-          file = "~/Thesis/GSE37745_data.csv")
+          file = "GSE37745_data.csv")
 ```
 
 ```{r}
@@ -115,7 +115,7 @@ smoker
 #Merge clinical data and expression data
 GSE37745merged = cbind(gse37745.data, GSE37745.expr)
 write.csv(GSE37745merged, 
-          "~/Thesis/GSE37745merged.csv")
+          "GSE37745merged.csv")
 ```
 
 

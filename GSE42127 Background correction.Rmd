@@ -41,7 +41,7 @@ gse42127_corrected = backgroundCorrect.matrix(gse42127.expr, method = "normexp")
 gse42127.normalized = normalizeBetweenArrays(gse42127_corrected, method = "quantile")
 
 write.csv(gse42127.data, 
-          file = "~/Thesis/GSE42127_data.csv")
+          file = "GSE42127_data.csv")
 
 hist(gse42127.expr)
 hist(gse42127_corrected)
@@ -57,7 +57,7 @@ feature.dat =
 feature.df = feature.dat[, c("ID", "ILMN_Gene")]
 
 write.csv(feature.df, 
-          "~/Thesis/GSE42127symbol.csv", 
+          "GSE42127symbol.csv", 
           row.names = F)
 
 gset = getGEO("GSE42127", GSEMatrix=T, getGPL=F)
@@ -65,8 +65,7 @@ if (length(gset) > 1)
   idx <- grep("GPL570", attr(gset, "names")) else idx <- 1
 gset <- gset[[idx]]
 
-# Extract microarray expression values from NCBI
-GSE42127.gset = as_tibble(t(exprs(gset)))
+GSE42127.expr = as.data.frame(t(gse42127.normalized))
 
 clin_demo_feature = as_tibble(gset@phenoData@data) %>%
   select(-(title:data_row_count))
@@ -80,17 +79,18 @@ colnames(gse42127.data) = c("Age at Surgery", "Final_Pat_Stage", "Gender", "Adju
 # fetch feature data to get gene symbols
 #feature.dat = gse$GSE42127_series_matrix.txt.gz@featureData@data 
 #GSE42127.symbol = feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
-#write.csv(GSE42127.symbol, "~/Thesis/GSE42127_symbol.csv")
+#write.csv(GSE42127.symbol, "GSE42127_symbol.csv")
 
 write.csv(gse42127.data, 
-          file = "~/Thesis/GSE42127_data.csv")
+          file = "GSE42127_data.csv")
+
 ```
 
 
 ```{r}
 #Merge clinical data and expression data
-GSE42127merged = cbind(gse42127.data, gse42127.normalized)
+GSE42127merged = cbind(gse42127.data, GSE42127.expr)
 write.csv(GSE42127merged, 
-          "~/Downloads/GSE42127merged.csv")
+          "GSE42127merged.csv")
 ```
 
