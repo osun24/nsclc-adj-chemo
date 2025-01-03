@@ -27,7 +27,7 @@ download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE42nnn/GSE42127/matrix/
               destfile = "GSE42127_series_matrix.txt.gz")
 
 # Load the file
-gse42127 <- getGEO(filename = "GSE42127_series_matrix.txt.gz")
+#gse42127 <- getGEO(filename = "GSE42127_series_matrix.txt.gz")
 
 gse42127 = getGEO("GSE42127", GSEMatrix = T)
 
@@ -40,9 +40,12 @@ gse42127_corrected = backgroundCorrect.matrix(gse42127.expr, method = "normexp")
 #normalization
 gse42127.normalized = normalizeBetweenArrays(gse42127_corrected, method = "quantile")
 
+hist(gse42127.expr)
+hist(gse42127_corrected)
 hist(gse42127.normalized)
 ```
 
 #RESEARCH BACKGROUND CORRECTION FOR ILLUMINA FILE..RMA IS AFFYM
+
 
 
