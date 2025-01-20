@@ -1,3 +1,6 @@
 
 *.gz
 GSE29013/GSE29013_RAW.tar
+.Rproj.user
+.Rhistory
+nsclc-adj-chemo.Rproj
