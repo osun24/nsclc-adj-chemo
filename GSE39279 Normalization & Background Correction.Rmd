@@ -1,0 +1,100 @@
+---
+title: "GSE39279"
+output: pdf_document
+date: "2025-01-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+
+```{r}
+options(timeout = 100000)
+# get supplementary files
+# Download the file manually from GEO
+download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE39nnn/GSE39279/matrix/GSE39279_series_matrix.txt.gz",
+              destfile = "GSE39279_series_matrix.txt.gz")
+
+# Load the file
+#GSE39279 <- getGEO(filename = "GSE39279_series_matrix.txt.gz")
+
+GSE39279 = getGEO("GSE39279", GSEMatrix = T)
+
+#expression data
+GSE39279.expr = exprs(GSE39279[[1]])
+
+#background correction
+GSE39279_corrected = backgroundCorrect.matrix(GSE39279.expr, method = "normexp")
+
+#normalization
+GSE39279.normalized = normalizeBetweenArrays(GSE39279_corrected, method = "quantile")
+
+write.csv(GSE39279.normalized, 
+          file = "GSE39279_data.csv")
+
+hist(GSE39279.expr)
+hist(GSE39279_corrected)
+hist(GSE39279.normalized)
+
+#range before and after
+range(GSE39279.expr)
+range(GSE39279.normalized)
+range(GSE39279.expr)
+```
+
+```{r}
+gse = getGEO("GSE39279", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE39279_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "ILMN_Gene")]
+
+write.csv(feature.df, 
+          "GSE39279symbol.csv", 
+          row.names = F)
+
+gset = getGEO("GSE39279", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL570", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+GSE39279.expr = as.data.frame(t(GSE39279.normalized))
+
+GSE39279.data = as_tibble(gset@phenoData@data) %>%
+  select(-(title:data_row_count), 
+         -'7th ed. tnm classification:ch1')
+
+colnames(GSE39279.data) = c("Adjuvant Chemo", "Age", "Status (as of 6/11)", "Gender", "Intraoperative Brachtherapy", "Years Quit", "Overall Survival (as of 6/11)", "Packyear", "Smoking Status", "TNM 7th Ed. Stage")
+
+# fetch feature data to get gene symbols
+#feature.dat = gse$GSE39279_series_matrix.txt.gz@featureData@data 
+#GSE39279.symbol = feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+#write.csv(GSE39279.symbol, "GSE39279_symbol.csv")
+
+write.csv(GSE39279.data, 
+          file = "GSE39279_data.csv")
+
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE39279merged = cbind(GSE39279.data, GSE39279.expr)
+write.csv(GSE39279merged, 
+          "GSE39279merged.csv")
+```

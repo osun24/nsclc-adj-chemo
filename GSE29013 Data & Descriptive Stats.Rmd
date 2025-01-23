@@ -120,7 +120,7 @@ stage
 ```{r}
 #Merge clinical data and expression data
 GSE29013merged = cbind(gse29013.data, GSE29013.expr)
-write.csv(GSE290135merged, 
+write.csv(GSE29013merged, 
           "~/Thesis/GSE29013merged.csv")
 ``` 
 

@@ -1,0 +1,95 @@
+---
+title: "GSE6044"
+output: pdf_document
+date: "2025-01-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+options(timeout = 10000)
+getGEOSuppFiles("GSE6044")
+
+# untar files
+untar("GSE6044/GSE6044_RAW.tar",exdir='GSE6044/CEL')
+
+celfiles = list.files("GSE6044/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE6044.raw = read.celfiles(celfiles)
+
+# normalization 
+GSE6044.rma = rma(GSE6044.raw)
+
+write.csv(GSE6044.rma, 
+          "GSE6044rma.csv",
+          row.names = F)
+
+# Get the data to be used in R
+GSE6044.expr = as.data.frame(t(exprs(GSE6044.rma)))
+
+write.csv(GSE6044.expr, 
+          "GSE6044expr.csv",
+          row.names = F)
+
+```
+
+# map probe IDs to gene symbols
+```{r}
+# fetch feature data to get gene symbols
+gse = getGEO("GSE6044", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE6044_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "Gene Symbol")]
+
+write.csv(feature.df, 
+          "GSE6044symbol.csv", 
+          row.names = F)
+
+gset = getGEO("GSE6044", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL570", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+# Extract microarray expression values from NCBI
+GSE6044.gset = as_tibble(t(exprs(gset)))
+
+# Next, we want to append clinical information onto gene expression data
+GSE6044.data = as_tibble(gset@phenoData@data) %>%
+  select(-c(title:data_row_count))
+
+colnames(GSE6044.data) = c("Age", "Disease", "Gender", "Plat Based Therapy W/ Progression")
+
+# fetch feature data to get gene symbols
+feature.dat = gse$GSE6044_series_matrix.txt.gz@featureData@data 
+GSE6044.symbol = 
+  feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+write.csv(GSE6044.symbol, 
+          "GSE6044_symbol.csv")
+
+write.csv(GSE6044.data, 
+          file = "GSE6044_data.csv")
+```
+
+```{r}
+#Merge clinical data and expression data
+GSE6044.merged = cbind(GSE6044.data, GSE6044.expr)
+write.csv(GSE6044.merged, 
+          "GSE6044merged.csv")
+```

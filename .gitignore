@@ -1,3 +1,6 @@
 
 *.gz
 GSE29013/GSE29013_RAW.tar
+GSE50081expr.csv
+GSE50081merged.csv
+GSE50081/GSE50081_RAW.tar

@@ -1,5 +1,5 @@
 ---
-title: "merged data"
+title: "GSE42127 Data"
 output: pdf_document
 ---
 
@@ -40,12 +40,16 @@ gse42127_corrected = backgroundCorrect.matrix(gse42127.expr, method = "normexp")
 #normalization
 gse42127.normalized = normalizeBetweenArrays(gse42127_corrected, method = "quantile")
 
-write.csv(gse42127.data, 
+write.csv(gse42127.normalized, 
           file = "GSE42127_data.csv")
 
 hist(gse42127.expr)
 hist(gse42127_corrected)
 hist(gse42127.normalized)
+
+#range before and after
+range(gse42127.expr)
+range(gse42127.normalized)
 ```
 
 ```{r}
@@ -89,7 +93,7 @@ write.csv(gse42127.data,
 
 ```{r}
 #Merge clinical data and expression data
-GSE42127merged = cbind(gse42127.data, GSE42127.expr)
+GSE42127merged = cbind(gse42127.data, gse42127.expr)
 write.csv(GSE42127merged, 
           "GSE42127merged.csv")
 ```
