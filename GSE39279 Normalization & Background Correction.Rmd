@@ -34,17 +34,16 @@ download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE39nnn/GSE39279/matrix/
 
 GSE39279 = getGEO("GSE39279", GSEMatrix = T)
 
-#expression data
+   #expression data
 GSE39279.expr = exprs(GSE39279[[1]])
 
 #background correction
 GSE39279_corrected = backgroundCorrect.matrix(GSE39279.expr, method = "normexp")
 
-#normalization
+ #normalization
 GSE39279.normalized = normalizeBetweenArrays(GSE39279_corrected, method = "quantile")
 
-write.csv(GSE39279.normalized, 
-          file = "GSE39279_data.csv")
+
 
 hist(GSE39279.expr)
 hist(GSE39279_corrected)
@@ -60,7 +59,7 @@ range(GSE39279.expr)
 gse = getGEO("GSE39279", GSEMatrix = T)
 
 feature.dat = 
-  gse$GSE39279_series_matrix.txt.gz@featureData@data
+  GSE39279$GSE39279_series_matrix.txt.gz@featureData@data
 
 feature.df = feature.dat[, c("ID", "ILMN_Gene")]
 
@@ -75,11 +74,18 @@ gset <- gset[[idx]]
 
 GSE39279.expr = as.data.frame(t(GSE39279.normalized))
 
-GSE39279.data = as_tibble(gset@phenoData@data) %>%
-  select(-(title:data_row_count), 
-         -'7th ed. tnm classification:ch1')
+write.csv(GSE39279.expr, 
+          file = "GSE39279_data.csv")
 
-colnames(GSE39279.data) = c("Adjuvant Chemo", "Age", "Status (as of 6/11)", "Gender", "Intraoperative Brachtherapy", "Years Quit", "Overall Survival (as of 6/11)", "Packyear", "Smoking Status", "TNM 7th Ed. Stage")
+GSE39279.data = as_tibble(gset@phenoData@data) %>%
+  select(-(title:data_row_count),
+         -'curep code:ch1',
+         -'disease state:ch1',
+         -'heatmap:ch1',
+         -'tissue:ch1',
+         -'tnm:ch1')
+
+colnames(GSE39279.data) = c("6th TNM Stage", "7th TNM Stage", "Adjuvant Chemo", "Age", "Gender", "NSCLC Type", "Recurrence", "Smoker", "Stage", "Reccurence Time", "Tumor Size")
 
 # fetch feature data to get gene symbols
 #feature.dat = gse$GSE39279_series_matrix.txt.gz@featureData@data 
