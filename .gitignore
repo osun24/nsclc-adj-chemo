@@ -1,8 +1,14 @@
 
 *.gz
 GSE29013/GSE29013_RAW.tar
+<<<<<<< HEAD
 GSE50081expr.csv
 GSE50081merged.csv
 GSE50081/GSE50081_RAW.tar
 GSE39279expr.csv
 GSE39279merged.csv
+=======
+.Rproj.user
+.Rhistory
+nsclc-adj-chemo.Rproj
+>>>>>>> a8731af13e330b7f4a5b252dfd4f34da087f209c

@@ -75,7 +75,7 @@ gset <- gset[[idx]]
 GSE39279.expr = as.data.frame(t(GSE39279.normalized))
 
 write.csv(GSE39279.expr, 
-          file = "GSE39279_data.csv")
+          file = "GSE39279expr.csv")
 
 GSE39279.data = as_tibble(gset@phenoData@data) %>%
   select(-(title:data_row_count),
@@ -93,7 +93,7 @@ colnames(GSE39279.data) = c("6th TNM Stage", "7th TNM Stage", "Adjuvant Chemo", 
 #write.csv(GSE39279.symbol, "GSE39279_symbol.csv")
 
 write.csv(GSE39279.data, 
-          file = "GSE39279_data.csv")
+          file = "GSE39279_data.csv") 
 
 ```
 
