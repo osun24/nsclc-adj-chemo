@@ -41,6 +41,8 @@ write.csv(GSE29013.rma,
 # Get the data to be used in R
 GSE29013.expr = as.data.frame(t(exprs(GSE29013.rma)))
 
+probes29013 = colnames(GSE29013.expr)
+
 write.csv(GSE29013.expr, 
           "GSE29013expr.csv",
           row.names = F)
@@ -124,6 +126,36 @@ write.csv(GSE29013merged,
           "~/Thesis/GSE29013merged.csv")
 ``` 
 
+```{r}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("hgu133plus2.db")
+library(hgu133plus2.db)
+
+# Map probe IDs to gene symbols
+annotation <- select(hgu133plus2.db,
+                     keys = probes29013,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation)
+
+duplicate_genes <- annotation[duplicated(annotation$PROBEID), ]
+print(duplicate_genes)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes <- annotation[duplicated(annotation$SYMBOL) | duplicated(annotation$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes <- duplicate_genes[order(duplicate_genes$SYMBOL), ]
+
+print(duplicate_genes)
+```
 
 
 
