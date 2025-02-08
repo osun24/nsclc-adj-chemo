@@ -1,0 +1,131 @@
+---
+title: "GSE14814"
+output: pdf_document
+date: "2025-01-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+options(timeout = 10000)
+getGEOSuppFiles("GSE14814")
+
+# untar files
+untar("GSE14814/GSE14814_RAW.tar",exdir='GSE14814/CEL')
+
+celfiles = list.files("GSE14814/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE14814.raw = read.celfiles(celfiles)
+
+# normalization 
+GSE14814.rma = rma(GSE14814.raw)
+
+write.csv(GSE14814.rma, 
+          "GSE14814rma.csv",
+          row.names = F)
+
+# Get the data to be used in R
+GSE14814.expr = as.data.frame(t(exprs(GSE14814.rma)))
+
+probesGSE14814 = colnames(GSE14814.expr)
+
+write.csv(GSE14814.expr, 
+          "GSE14814expr.csv",
+          row.names = F)
+
+```
+
+# map probe IDs to gene symbols
+```{r}
+# fetch feature data to get gene symbols
+gse = getGEO("GSE14814", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE14814_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "Gene Symbol")]
+
+write.csv(feature.df, 
+          "GSE14814symbol.csv", 
+          row.names = F)
+
+gset = getGEO("GSE14814", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL201", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+# Extract microarray expression values from NCBI
+GSE14814.gset = as_tibble(t(exprs(gset)))
+
+# Next, we want to append clinical information onto gene expression data
+GSE14814.data = as_tibble(gset@phenoData@data) %>%
+  select(-c(title:data_row_count),
+         -`relation`)
+
+GSE14814.data = GSE14814.data[, c(1, 7, 10, 12, 13)]
+
+colnames(GSE14814.data) = c("Age", "Histology", "Adjuvant Chemo", "Sex", "Stage")
+
+# fetch feature data to get gene symbols
+feature.dat = gse$GSE14814_series_matrix.txt.gz@featureData@data 
+GSE14814.symbol = 
+  feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+write.csv(GSE14814.symbol, 
+          "GSE14814_symbol.csv")
+
+write.csv(GSE14814.data, 
+          file = "GSE14814_data.csv")
+```
+
+```{r}
+#Merge clinical data and expression data
+GSE14814.merged = cbind(GSE14814.data, GSE14814.expr)
+write.csv(GSE14814.merged, 
+          "GSE14814merged.csv")
+
+GSE14814data.expr = GSE14814.merged[, 1:5]
+```
+
+```{r}
+BiocManager::install("annotation14814Dbi")
+library(annotation14814Dbi)
+BiocManager::install("hgu133a.db")
+library(hgu133a.db)
+
+# Map probe IDs to gene symbols
+annotation14814 <- select(hgu133plus2.db,
+                     keys = probesGSE14814,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation14814)
+
+duplicate_genes14814 <- annotation14814[duplicated(annotation14814$PROBEID), ]
+print(duplicate_genes14814)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes14814 <- annotation14814[duplicated(annotation14814$SYMBOL) | duplicated(annotation14814$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes14814 <- duplicate_genes14814[order(duplicate_genes14814$SYMBOL), ]
+
+print(duplicate_genes14814)
+```
+
