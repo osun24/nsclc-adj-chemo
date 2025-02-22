@@ -77,9 +77,17 @@ GSE14814.data = as_tibble(gset@phenoData@data) %>%
   select(-c(title:data_row_count),
          -`relation`)
 
-GSE14814.data = GSE14814.data[, c(1, 7, 10, 12, 13)]
+GSE14814.data = GSE14814.data[, c(1, 7, 8, 9, 10, 12, 13)]
 
-colnames(GSE14814.data) = c("Age", "Histology", "Adjuvant Chemo", "Sex", "Stage")
+colnames(GSE14814.data) = c("Age", "Histology", "OS_STATUS", "OS_MONTHS", "Adjuvant Chemo", "Sex", "Stage")
+
+GSE14814.data$Age = as.numeric(GSE14814.data$Age)
+GSE14814.data$OS_MONTHS = as.numeric(GSE14814.data$OS_MONTHS)
+GSE14814.data$OS_STATUS <- ifelse(GSE14814.data$OS_STATUS == "Dead", 1, 0)
+GSE14814.data$`Adjuvant Chemo` <- ifelse(GSE14814.data$`Adjuvant Chemo` == "ACT", 1, 0)
+GSE14814.data$Histology[GSE14814.data$Histology == "ADC"] <- "Adenocarcinoma"
+GSE14814.data$Histology[GSE14814.data$Histology == "SQCC"] <- "Squamous Cell Carcinoma"
+GSE14814.data$Histology[GSE14814.data$Histology == "LCUC"] <- "Large Cell Undifferentiated Carcinoma"
 
 # fetch feature data to get gene symbols
 feature.dat = gse$GSE14814_series_matrix.txt.gz@featureData@data 
@@ -98,23 +106,27 @@ GSE14814.merged = cbind(GSE14814.data, GSE14814.expr)
 write.csv(GSE14814.merged, 
           "GSE14814merged.csv")
 
-GSE14814data.expr = GSE14814.merged[, 1:5]
+GSE14814data.expr = GSE14814.merged[, 1:7]
 ```
 
 ```{r}
-BiocManager::install("annotation14814Dbi")
-library(annotation14814Dbi)
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
 BiocManager::install("hgu133a.db")
 library(hgu133a.db)
 
 # Map probe IDs to gene symbols
-annotation14814 <- select(hgu133plus2.db,
+annotation14814 <- select(hgu133a.db,
                      keys = probesGSE14814,
                      columns = c("SYMBOL", "GENENAME"),
                      keytype = "PROBEID")
 
 # View the results
 print(annotation14814)
+
+# Unique Symbols
+unique14814 = unique(annotation14814$SYMBOL)
+print(length(unique14814))
 
 duplicate_genes14814 <- annotation14814[duplicated(annotation14814$PROBEID), ]
 print(duplicate_genes14814)

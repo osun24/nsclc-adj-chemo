@@ -1,0 +1,141 @@
+---
+title: "gse31210"
+output: pdf_document
+date: "2025-02-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+options(timeout = 10000)
+getGEOSuppFiles("GSE31210")
+
+# untar files
+untar("GSE31210/GSE31210_RAW.tar",exdir='GSE31210/CEL')
+
+celfiles = list.files("GSE31210/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE31210.raw = read.celfiles(celfiles)
+
+# normalization 
+GSE31210.rma = rma(GSE31210.raw)
+
+write.csv(GSE31210.rma, 
+          "GSE31210rma.csv",
+          row.names = F)
+
+# Get the data to be used in R
+GSE31210.expr = as.data.frame(t(exprs(GSE31210.rma)))
+
+probes31908 = colnames(GSE31210.expr)
+
+write.csv(GSE31210.expr, 
+          "GSE31210expr.csv",
+          row.names = F)
+
+```
+
+# map probe IDs to gene symbols
+```{r}
+# fetch feature data to get gene symbols
+gse = getGEO("GSE31210", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE31210_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "Gene Symbol")]
+
+gset = getGEO("GSE31210", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL570", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+# Extract microarray expression values from NCBI
+GSE31210.gset = as_tibble(t(exprs(gset)))
+
+GSE31210.data = as_tibble(gset@phenoData@data) %>%
+  select(-c(title:data_row_count))
+
+GSE31210.data$`age (years):ch1` = coalesce(GSE31210.data$`age (years):ch1`, GSE31210.data$`age:ch1`)
+GSE31210.data$`OS_MONTHS` <- round(as.numeric(GSE31210.data$`days before death/censor:ch1`) / 30.44, 2)
+GSE31210.data$Histology <- "Adenocarcinoma"
+GSE31210.data = GSE31210.data[, c(1, 7, 9, 15, 18, 20, 21)]
+GSE31210.data$`Smoked?` = as.numeric(GSE31210.data$`Smoked?`)
+
+# Next, we want to append clinical information onto gene expression data
+colnames(GSE31210.data) = c("Age", "OS_STATUS", "Sex", "Stage", "Smoked?", "OS_MONTHS", "Histology")
+
+GSE31210.data$OS_STATUS <- ifelse(GSE31210.data$OS_STATUS == "dead", 1, 0)
+GSE31210.data$Age = as.numeric(GSE31210.data$Age)
+GSE31210.data$Sex <- ifelse(GSE31210.data$Sex == "male", "Male", "Female")
+GSE31210.data$`Smoked?` <- ifelse(GSE31210.data$`Smoked?` == "Never-smoker", "0", "1")
+GSE31210.data <- subset(GSE31210.data, !is.na(OS_STATUS))
+
+# fetch feature data to get gene symbols
+feature.dat = gse$GSE31210_series_matrix.txt.gz@featureData@data 
+GSE31210.symbol = 
+  feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+write.csv(GSE31210.symbol, 
+          "GSE31210_symbol.csv")
+
+write.csv(GSE31210.data, 
+          file = "GSE31210_data.csv")
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE31210merged = cbind(GSE31210.data, GSE31210.expr)
+GSE31210merged <- subset(GSE31210merged, !is.na(OS_STATUS))
+write.csv(GSE31210merged, 
+          "GSE31210merged.csv")
+GSE31210.expr = GSE31210merged[, -c(1:7)]
+GSE31210data.expr = GSE31210merged[, 1:7]
+```
+
+```{r}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("hgu133plus2.db")
+library(hgu133plus2.db)
+
+# Map probe IDs to gene symbols
+annotation31210 <- select(hgu133plus2.db,
+                     keys = probesGSE31210,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation31210)
+
+duplicate_genes31210 <- annotation31210[duplicated(annotation31210$PROBEID), ]
+print(duplicate_genes31210)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes31210 <- annotation31210[duplicated(annotation31210$SYMBOL) | duplicated(annotation31210$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes31210 <- duplicate_genes31210[order(duplicate_genes31210$SYMBOL), ]
+
+print(duplicate_genes31210)
+```
+

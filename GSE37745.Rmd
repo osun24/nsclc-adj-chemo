@@ -1,0 +1,191 @@
+---
+title: "GSE37745 Data & Descriptive Stats"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery) 
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+options(timeout = 10000)
+getGEOSuppFiles("GSE37745")
+
+# untar files
+untar("GSE37745/GSE37745_RAW.tar",exdir='GSE37745/CEL')
+
+celfiles = list.files("GSE37745/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE37745.raw = read.celfiles(celfiles)
+
+# normalization 
+GSE37745.rma = rma(GSE37745.raw)
+
+write.csv(GSE37745.rma, 
+          "GSE37745rma.csv",
+          row.names = F)
+
+# Get the data to be used in R
+GSE37745.expr = as.data.frame(t(exprs(GSE37745.rma)))
+
+probesGSE37745 = colnames(GSE37745.expr)
+
+
+```
+
+# map probe IDs to gene symbols
+```{r}
+# fetch feature data to get gene symbols
+gse = getGEO("GSE37745", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE37745_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "Gene Symbol")]
+
+gset1 = getGEO("GSE37745", GSEMatrix=T, getGPL=F)
+if (length(gset1) > 1) 
+  idx <- grep("GPL570", attr(gset1, "names")) else idx <- 1
+gset1 <- gset1[[idx]]
+
+# Extract microarray expression values from NCBI
+GSE37745.gset = as_tibble(t(exprs(gset1)))
+
+GSE37745.data = as_tibble(gset1@phenoData@data) %>%
+  select(-(title:data_row_count),
+         -`performance status corresponding to who criteria:ch1`,
+         -`recurrence:ch1`)
+as.numeric(GSE37745.data$`days to determined death status:ch1`)
+GSE37745.data$`OS_MONTHS` <- round(as.numeric(GSE37745.data$`days to determined death status:ch1`) / 30.44, 2)
+GSE37745.data$`RFS_MONTHS` <- round(as.numeric(GSE37745.data$`days to recurrence / to last visit:ch1`) / 30.44, 2)
+
+# Next, we want to append clinical information onto gene expression data
+GSE37745.data = GSE37745.data[,c(1, 2, 5, 6, 7, 8, 9, 10)] 
+colnames(GSE37745.data) = c("Adjuvant Chemo", "Age", "OS_STATUS", "Sex", "Histology", "Stage", "OS_MONTHS", "RFS_MONTHS")
+
+GSE37745.data$OS_STATUS <- ifelse(GSE37745.data$OS_STATUS == "yes", 1, 0)
+GSE37745.data$Age = as.numeric(GSE37745.data$Age)
+GSE37745.data$Sex <- ifelse(GSE37745.data$Sex == "male", "Male", "Female")
+GSE37745.data$Histology[GSE37745.data$Histology == "adeno"] <- "Adenocarcinoma"
+GSE37745.data$Histology[GSE37745.data$Histology == "squamous"] <- "Squamous Cell Carcinoma"
+GSE37745.data$Histology[GSE37745.data$Histology == "large"] <- "Large Cell Carcinoma"
+GSE37745.data$Stage[GSE37745.data$Stage == "1a"  ] <- "IA"
+GSE37745.data$Stage[GSE37745.data$Stage == "1b"  ] <- "IB"
+GSE37745.data$Stage[GSE37745.data$Stage == "2a"  ] <- "IIA"
+GSE37745.data$Stage[GSE37745.data$Stage == "2b"  ] <- "IIB"
+GSE37745.data$Stage[GSE37745.data$Stage == "3a"  ] <- "IIIA"
+GSE37745.data$Stage[GSE37745.data$Stage == "3b"  ] <- "IIIB"
+GSE37745.data$Stage[GSE37745.data$Stage == "4"  ] <- "IV"
+)
+
+# fetch feature data to get gene symbols
+feature.dat = gse$GSE37745_series_matrix.txt.gz@featureData@data 
+GSE37745.symbol = 
+  feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE37745merged = cbind(GSE37745.data, GSE37745.expr)
+GSE37745merged <- GSE37745merged[(GSE37745merged$`Adjuvant Chemo`) != "not known", ]
+
+
+GSE37745.data = GSE37745.data[(GSE37745.data$`Adjuvant Chemo`) != "not known", ]
+GSE37745.data$`Adjuvant Chemo` <- ifelse(GSE37745.data$`Adjuvant Chemo` == "yes", 1, 0)
+GSE37745.expr = GSE37745merged[, -c(1:8)]
+
+GSE37745data.expr = GSE37745merged[, 1:8]
+```
+
+```{r}
+write.csv(GSE37745.expr, 
+          "GSE37745expr.csv",
+          row.names = F)
+
+write.csv(GSE37745.data, 
+          file = "GSE37745_data.csv")
+
+
+write.csv(GSE37745merged, 
+          "GSE37745merged.csv")
+```
+
+```{r}
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("hgu133plus2.db")
+library(hgu133plus2.db)
+
+# Map probe IDs to gene symbols
+annotation37745 <- select(hgu133plus2.db,
+                     keys = probesGSE37745,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation37745)
+
+# Unique Symbols
+unique37745 = unique(annotation37745$SYMBOL)
+print(length(unique37745))
+
+duplicate_genes37745 <- annotation37745[duplicated(annotation37745$PROBEID), ]
+print(duplicate_genes37745)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes37745 <- annotation37745[duplicated(annotation37745$SYMBOL) | duplicated(annotation37745$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes37745 <- duplicate_genes37745[order(duplicate_genes37745$SYMBOL), ]
+
+print(duplicate_genes37745)
+```
+
+```{r}
+matrix37745 = as.matrix(GSE37745.expr)
+hist(matrix37745)
+```
+
+
+```{r}
+#Descriptive Stats
+sex37745 = table(GSE37745.Data$Gender)
+sex37745
+
+nrow(GSE37745.Data)
+
+adj.chemo = table(GSE37745.Data$Adj_Treatment)
+adj.chemo
+
+histology = table(GSE37745.Data$Histology)
+histology
+
+nrow(subset(GSE37745.Data, Age >= 65))
+nrow(subset(GSE37745.Data, Age < 65))
+
+stage = table(GSE37745.Data$Tumor_Stage)
+stage
+
+smoker = table(GSE37745.Data$Performance_Status)
+smoker
+```
+
+
+
+

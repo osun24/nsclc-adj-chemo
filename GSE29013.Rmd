@@ -1,0 +1,186 @@
+---
+title: "GSE29013 Data & Descriptive Stats"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+options(timeout = 10000)
+getGEOSuppFiles("GSE29013")
+
+# untar files
+untar("GSE29013/GSE29013_RAW.tar",exdir='GSE29013/CEL')
+
+celfiles = list.files("GSE29013/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE29013.raw = read.celfiles(celfiles)
+
+# normalization 
+GSE29013.rma = rma(GSE29013.raw)
+
+write.csv(GSE29013.rma, 
+          "GSE29013rma.csv",
+          row.names = F)
+
+# Get the data to be used in R
+GSE29013.expr = as.data.frame(t(exprs(GSE29013.rma)))
+
+probesGSE29013 = colnames(GSE29013.expr)
+
+write.csv(GSE29013.expr, 
+          "GSE29013expr.csv",
+          row.names = F)
+
+```
+
+# map probe IDs to gene symbols
+```{r}
+# fetch feature data to get gene symbols
+gse = getGEO("GSE29013", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE29013_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "Gene Symbol")]
+
+
+gset = getGEO("GSE29013", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL570", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+# Extract microarray expression values from NCBI
+GSE29013.gset = as_tibble(t(exprs(gset)))
+
+GSE29013.data = as_tibble(gset@phenoData@data) %>%
+  select(-c(title:data_row_count), 
+         -`specimen.number:ch1`, -`spor.n:ch1`)
+
+GSE29013.data = GSE29013.data[,c(1, 2, 3, 4, 5, 6, 7, 9, 10, 12)] 
+colnames(GSE29013.data) = c("Adjuvant Chemo", "Age", "OS_STATUS", "OS_MONTHS", "Stage",  "Sex", "Histology", "Race", "Smoked?", "PFS_MONTHS")
+
+GSE29013.data$Age = as.numeric(GSE29013.data$Age)
+GSE29013.data$Sex <- ifelse(GSE29013.data$Sex == "M", "Male", "Female")
+GSE29013.data$`Adjuvant Chemo` <- ifelse(GSE29013.data$`Adjuvant Chemo` == "Yes", 1, 0)
+GSE29013.data$Histology[GSE29013.data$Histology == "Squamous"] <- "Squamous Cell Carcinoma"
+GSE29013.data$OS_STATUS = as.numeric(GSE29013.data$OS_STATUS)
+GSE29013.data$OS_MONTHS = as.numeric(GSE29013.data$OS_MONTHS)
+GSE29013.data$`Smoked?` = as.numeric(GSE29013.data$`Smoked?`)
+GSE29013.data$PFS_MONTHS = as.numeric(GSE29013.data$PFS_MONTHS)
+
+# fetch feature data to get gene symbols
+feature.dat = gse$GSE29013_series_matrix.txt.gz@featureData@data 
+GSE29013.symbol = 
+  feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+```
+
+```{r}
+write.csv(feature.df, 
+          "GSE29013symbol.csv", 
+          row.names = F)
+
+write.csv(GSE29013.symbol, 
+          "GSE29013_symbol.csv")
+
+write.csv(GSE29013.data, 
+          file = "GSE29013_data.csv")
+```
+
+```{r}
+#Merge clinical data and expression data
+GSE29013merged = cbind(GSE29013.data, GSE29013.expr)
+write.csv(GSE29013merged, 
+          "GSE29013merged.csv")
+
+GSE29013data.expr = GSE29013merged[, 1:10]
+``` 
+
+```{r}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("hgu133plus2.db")
+library(hgu133plus2.db)
+
+# Map probe IDs to gene symbols
+annotation29013 <- select(hgu133plus2.db,
+                     keys = probesGSE29013,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation29013)
+
+# Unique Symbols
+unique29013 = unique(annotation29013$SYMBOL)
+print(length(unique29013))
+
+duplicate_genes29013 <- annotation29013[duplicated(annotation29013$PROBEID), ]
+print(duplicate_genes29013)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes29013 <- annotation29013[duplicated(annotation29013$SYMBOL) | duplicated(annotation29013$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes29013 <- duplicate_genes29013[order(duplicate_genes29013$SYMBOL), ]
+
+print(duplicate_genes29013)
+```
+
+```{r}
+boxplot(GSE29013.expr, outline = FALSE, las = 2,
+        main = "GSE29013 Gene Expression Distribution",
+        ylab = "Expression Levels", col = "lightblue")
+
+matrix = as.matrix(GSE29013.expr)
+hist(matrix)
+
+```
+
+
+```{r}
+gse29013.data$Age= as.numeric(gse29013.data$Age)
+gse29013.data$Death_Time= as.numeric(gse29013.data$Death_Time)
+```
+
+```{r}
+nrow(gse29013.data)
+
+table(gse29013.data$Gender)
+
+adj_chemo = table(gse29013.data$Adj_Chemo)
+adj_chemo
+
+histology = table(gse29013.data$Histology)
+histology
+
+nrow(subset(gse29013.data, Age >= 65))
+nrow(subset(gse29013.data, Age < 65))
+
+stage = table(gse29013.data$Final_Pat_Stage)
+stage
+```
+
+
+
+
+

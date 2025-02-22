@@ -1,0 +1,151 @@
+---
+title: "GSE31908"
+output: html_document
+date: "2025-01-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+options(timeout = 10000)
+getGEOSuppFiles("GSE31908")
+
+# untar files
+untar("GSE31908/GSE31908_RAW.tar",exdir='GSE31908/CEL')
+
+celfiles = list.files("GSE31908/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE31908.raw = read.celfiles(celfiles[1:17])
+
+# normalization 
+GSE31908.rma = rma(GSE31908.raw)
+
+write.csv(GSE31908.rma, 
+          "GSE31908rma.csv",
+          row.names = F)
+
+# Get the data to be used in R
+GSE31908.expr = as.data.frame(t(exprs(GSE31908.rma)))
+
+probes31908 = colnames(GSE31908.expr)
+
+write.csv(GSE31908.expr, 
+          "GSE31908expr.csv",
+          row.names = F)
+
+```
+
+# map probe IDs to gene symbols
+```{r}
+# fetch feature data to get gene symbols
+gse = getGEO("GSE31908", GSEMatrix = T)
+
+feature.dat = 
+  gse$'GSE31908-GPL570_series_matrix.txt.gz'@featureData@data
+
+feature.df = feature.dat[, c("ID", "Gene Symbol")]
+
+write.csv(feature.df, 
+          "GSE31908symbol.csv", 
+          row.names = F)
+
+gset = getGEO("GSE31908", GSEMatrix=T, getGPL=T)
+if (length(gset) > 1) 
+  idx <- grep("GPL570", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+# Extract microarray expression values from NCBI
+GSE31908.gset = as_tibble(t(exprs(gset)))
+
+GSE31908.data = as_tibble(gset@phenoData@data) %>%
+  select(-c(title:data_row_count))
+
+
+GSE31908.data$`gender:ch1` = coalesce(GSE31908.data$`gender:ch1`, GSE31908.data$`Sex:ch1`)
+GSE31908.data = GSE31908.data[, c(1, 5, 8, 10, 13, 15, 17)]
+
+# Next, we want to append clinical information onto gene expression data
+colnames(GSE31908.data) = c("Adjuvant Chemo", "Sex", "PFS_MONTHS", "OS_MONTHS", "Race", "Smoked?", "OS_STATUS")
+
+GSE31908.data$`Adjuvant Chemo` <- ifelse(GSE31908.data$`Adjuvant Chemo` == "Yes", 1, 0)
+GSE31908.data$`Smoked?` <- ifelse(GSE31908.data$`Smoked?` == "Smoked in the past", 1, 0)
+GSE31908.data$`OS_STATUS` <- ifelse(GSE31908.data$`OS_STATUS` == "Dead", 1, 0)
+GSE31908.data$Histology[GSE31908.data$Histology == "Squamous"] <- "Squamous Cell Carcinoma"
+GSE31908.data$OS_STATUS = as.numeric(GSE31908.data$OS_STATUS)
+GSE31908.data$OS_MONTHS = as.numeric(GSE31908.data$OS_MONTHS)
+GSE31908.data$PFS_MONTHS = as.numeric(GSE31908.data$PFS_MONTHS)
+GSE31908.data <- subset(GSE31908.data, !is.na(OS_STATUS))
+
+# fetch feature data to get gene symbols
+feature.dat = gse$GSE31908_series_matrix.txt.gz@featureData@data 
+GSE31908.symbol = 
+  feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+write.csv(GSE31908.symbol, 
+          "GSE31908_symbol.csv")
+
+write.csv(GSE31908.data, 
+          file = "GSE31908_data.csv")
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE31908merged = cbind(GSE31908.data, GSE31908.expr)
+GSE31908merged <- subset(GSE31908merged, !is.na(OS_STATUS))
+write.csv(GSE31908merged, 
+          "GSE31908merged.csv")
+
+GSE31908.expr = GSE31908merged[, -c(1:7)]
+
+GSE31908data.expr = GSE31908merged[, 1:7]
+``` 
+
+```{r}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("hgu133plus2.db")
+library(hgu133plus2.db)
+
+# Map probe IDs to gene symbols
+annotation31908 <- select(hgu133plus2.db,
+                     keys = probes31908,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation31908)
+
+# Unique Symbols
+unique31908 = unique(annotation31908$SYMBOL)
+print(length(unique31908))
+
+duplicate_genes31908 <- annotation31908[duplicated(annotation31908$PROBEID), ]
+print(duplicate_genes31908)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes31908 <- annotation31908[duplicated(annotation31908$SYMBOL) | duplicated(annotation31908$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes31908 <- duplicate_genes31908[order(duplicate_genes31908$SYMBOL), ]
+
+print(duplicate_genes31908)
+```
