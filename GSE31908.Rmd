@@ -77,11 +77,14 @@ GSE31908.data = as_tibble(gset@phenoData@data) %>%
 
 
 GSE31908.data$`gender:ch1` = coalesce(GSE31908.data$`gender:ch1`, GSE31908.data$`Sex:ch1`)
-GSE31908.data = GSE31908.data[, c(1, 5, 8, 10, 13, 15, 17)]
+GSE31908.data = GSE31908.data[, c(1, 5, 8, 10, 11, 13, 15, 17)]
+GSE31908.data$Histology = "Adenocarcinoma"
+GSE31908.data$Age = c(73, 69, 67, 67, 67, 59, 74, 65, 73, 73, 65, 73, 65, 69, 62, 67)
 
 # Next, we want to append clinical information onto gene expression data
-colnames(GSE31908.data) = c("Adjuvant Chemo", "Sex", "PFS_MONTHS", "OS_MONTHS", "Race", "Smoked?", "OS_STATUS")
+colnames(GSE31908.data) = c("Adjuvant Chemo", "Sex", "PFS_MONTHS", "OS_MONTHS", "Stage","Race", "Smoked?", "OS_STATUS", "Histology", "Age")
 
+unique(GSE31908.data$Stage)
 GSE31908.data$`Adjuvant Chemo` <- ifelse(GSE31908.data$`Adjuvant Chemo` == "Yes", 1, 0)
 GSE31908.data$`Smoked?` <- ifelse(GSE31908.data$`Smoked?` == "Smoked in the past", 1, 0)
 GSE31908.data$`OS_STATUS` <- ifelse(GSE31908.data$`OS_STATUS` == "Dead", 1, 0)
@@ -90,6 +93,9 @@ GSE31908.data$OS_STATUS = as.numeric(GSE31908.data$OS_STATUS)
 GSE31908.data$OS_MONTHS = as.numeric(GSE31908.data$OS_MONTHS)
 GSE31908.data$PFS_MONTHS = as.numeric(GSE31908.data$PFS_MONTHS)
 GSE31908.data <- subset(GSE31908.data, !is.na(OS_STATUS))
+GSE31908.data$Stage <- ifelse(GSE31908.data$Stage == "N0, ACCORDING TO AJCC CRITERIA", "I", "II")
+
+
 
 # fetch feature data to get gene symbols
 feature.dat = gse$GSE31908_series_matrix.txt.gz@featureData@data 
@@ -110,7 +116,7 @@ GSE31908merged <- subset(GSE31908merged, !is.na(OS_STATUS))
 write.csv(GSE31908merged, 
           "GSE31908merged.csv")
 
-GSE31908.expr = GSE31908merged[, -c(1:7)]
+GSE31908.expr = GSE31908merged[, -c(1:10)]
 
 GSE31908data.expr = GSE31908merged[, 1:7]
 ``` 

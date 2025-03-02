@@ -75,6 +75,7 @@ GSE29013.data = as_tibble(gset@phenoData@data) %>%
 GSE29013.data = GSE29013.data[,c(1, 2, 3, 4, 5, 6, 7, 9, 10, 12)] 
 colnames(GSE29013.data) = c("Adjuvant Chemo", "Age", "OS_STATUS", "OS_MONTHS", "Stage",  "Sex", "Histology", "Race", "Smoked?", "PFS_MONTHS")
 
+GSE29013.data$OS_MONTHS = GSE29013.data$OS_MONTHS*12
 GSE29013.data$Age = as.numeric(GSE29013.data$Age)
 GSE29013.data$Sex <- ifelse(GSE29013.data$Sex == "M", "Male", "Female")
 GSE29013.data$`Adjuvant Chemo` <- ifelse(GSE29013.data$`Adjuvant Chemo` == "Yes", 1, 0)

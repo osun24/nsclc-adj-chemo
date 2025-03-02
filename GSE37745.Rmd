@@ -71,6 +71,8 @@ GSE37745.data = as_tibble(gset1@phenoData@data) %>%
 as.numeric(GSE37745.data$`days to determined death status:ch1`)
 GSE37745.data$`OS_MONTHS` <- round(as.numeric(GSE37745.data$`days to determined death status:ch1`) / 30.44, 2)
 GSE37745.data$`RFS_MONTHS` <- round(as.numeric(GSE37745.data$`days to recurrence / to last visit:ch1`) / 30.44, 2)
+GSE37745.data$'Smoked?' = NA
+GSE37745.data$Race = "Unknown"
 
 # Next, we want to append clinical information onto gene expression data
 GSE37745.data = GSE37745.data[,c(1, 2, 5, 6, 7, 8, 9, 10)] 
@@ -89,7 +91,7 @@ GSE37745.data$Stage[GSE37745.data$Stage == "2b"  ] <- "IIB"
 GSE37745.data$Stage[GSE37745.data$Stage == "3a"  ] <- "IIIA"
 GSE37745.data$Stage[GSE37745.data$Stage == "3b"  ] <- "IIIB"
 GSE37745.data$Stage[GSE37745.data$Stage == "4"  ] <- "IV"
-)
+
 
 # fetch feature data to get gene symbols
 feature.dat = gse$GSE37745_series_matrix.txt.gz@featureData@data 

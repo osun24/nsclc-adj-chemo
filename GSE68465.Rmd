@@ -77,11 +77,11 @@ GSE68465.gset = as_tibble(t(exprs(gset)))
 GSE68465.data = as_tibble(gset@phenoData@data) %>%
   select(-c(title:data_row_count))
 
-GSE68465.data = GSE68465.data[, c(1, 2, 5, 8, 9, 12, 13, 14, 16)]
+GSE68465.data = GSE68465.data[, c(1, 2, 4, 5, 8, 9, 12, 13, 14, 16)]
 
-colnames(GSE68465.data) = c("Age", "Adjuvant Chemo", "Histology", "PFS_MONTHS", "OS_MONTHS", "Race", "Sex", "Smoked?", "OS_STATUS")
+colnames(GSE68465.data) = c("Age", "Adjuvant Chemo", "Stage","Histology", "PFS_MONTHS", "OS_MONTHS", "Race", "Sex", "Smoked?", "OS_STATUS")
 
-unique(GSE68465.data$`Smoked?`)
+unique(GSE68465.data$Stage)
 GSE68465.data$Age = as.numeric(GSE68465.data$Age)
 GSE68465.data$PFS_MONTHS = as.numeric(GSE68465.data$PFS_MONTHS)
 GSE68465.data$OS_MONTHS = as.numeric(GSE68465.data$OS_MONTHS)
@@ -91,6 +91,23 @@ GSE68465.data$Histology[GSE68465.data$Histology == "Lung Adenocarcinoma"] <- "Ad
 GSE68465.data$`Smoked?` <- ifelse(GSE68465.data$`Smoked?` %in% c("Smoked in the past", "Currently smoking"), 1,
                                   ifelse(GSE68465.data$`Smoked?` == "Never smoked", 0, NA))
 GSE68465.data <- subset(GSE68465.data, !is.na(OS_STATUS))
+
+convert_stage <- function(tnm) {
+  if (tnm %in% c("pN0pT1", "pN0pT2")) {
+    return("I")
+  } else if (tnm %in% c("pN0pT3", "pN1pT1", "pN1pT2")) {
+    return("II")
+  } else if (tnm %in% c("pN2pT1", "pN2pT2", "pN1pT3", "pN0pT4", "pN1pT4")) {
+    return("III")
+  } else if (tnm %in% c("pN2pT3", "pN2pT4")) {
+    return("IV")
+  } else {
+    return("Unknown")  # Handling "pp", "pNXpT1", or other undefined cases
+  }
+}
+
+# Apply the function to convert TNM stages to clinical stages
+GSE68465.data$Stage <- sapply(GSE68465.data$Stage, convert_stage)
 
 # fetch feature data to get gene symbols
 feature.dat = gse$GSE68465_series_matrix.txt.gz@featureData@data 
