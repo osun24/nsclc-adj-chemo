@@ -1,56 +1,56 @@
 "","Adjuvant Chemo","Age","OS_STATUS","OS_MONTHS","Stage","Sex","Histology","Race","Smoked?","PFS_MONTHS"
-"1",1,67,0,2.384668036,"IIA","Male","Squamous Cell Carcinoma","Caucasian",1,2.384668036
-"2",1,67,0,2.264202601,"IB","Male","Adenocarcinoma","Caucasian",1,2.264202601
-"3",1,65,1,1.404517454,"IIIB","Male","Squamous Cell Carcinoma","Caucasian",1,0.377823409
-"4",1,51,0,2.819986311,"IIB","Female","Adenocarcinoma","Caucasian",1,2.819986311
-"5",1,72,0,2.896646133,"IIB","Male","Adenocarcinoma","Caucasian",1,2.896646133
-"6",1,65,0,2.130047912,"IB","Male","Adenocarcinoma","Caucasian",1,2.130047912
-"7",1,58,0,2.721423682,"IB","Male","Adenocarcinoma","Caucasian",1,2.721423682
-"8",1,53,0,2.899383984,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,2.899383984
-"9",1,70,1,1.01026694,"IIIA","Female","Adenocarcinoma","Caucasian",1,0.785763176
-"10",1,76,0,3.197809719,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,3.197809719
-"11",1,73,1,3.019849418,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,1.045859001
-"12",1,63,0,2.590006845,"IIB","Female","Adenocarcinoma","Caucasian",1,0.750171116
-"13",1,32,1,3.531827515,"IIA","Female","Adenocarcinoma","Caucasian",0,2.633812457
-"14",1,54,1,1.297741273,"IB","Female","Squamous Cell Carcinoma","African American",1,0.815879535
-"15",1,74,0,3.258042437,"IB","Female","Adenocarcinoma","Caucasian",0,3.258042437
-"16",1,59,0,2.948665298,"IB","Female","Adenocarcinoma","Caucasian",1,2.948665298
-"17",1,76,1,3.351129363,"IB","Female","Adenocarcinoma","Caucasian",1,3.351129363
-"18",1,63,0,2.970568104,"IB","Female","Squamous Cell Carcinoma","Caucasian",1,2.970568104
-"19",1,60,0,2.658453114,"IIIA","Male","Squamous Cell Carcinoma","Caucasian",1,2.658453114
-"20",1,60,0,2.195756331,"IB","Female","Adenocarcinoma","Caucasian",1,2.195756331
-"21",1,75,0,4.145106092,"IB","Male","Adenocarcinoma","Caucasian",1,3.72347707
-"22",1,49,0,3.392197125,"IIIB","Male","Adenocarcinoma","Caucasian",1,3.392197125
-"23",1,65,0,3.383983573,"IIIA","Male","Adenocarcinoma","Caucasian",1,3.383983573
-"24",1,49,1,0.5229295,"IIIA","Male","Squamous Cell Carcinoma","Caucasian",1,0.41615332
-"25",1,62,1,2.746064339,"IIB","Female","Adenocarcinoma","Caucasian",1,0.596851472
-"26",1,60,0,4.158795346,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,3.75633128
-"27",1,55,1,1.735797399,"IIIB","Female","Squamous Cell Carcinoma","Caucasian",1,1.084188912
-"28",1,65,1,1.382614648,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,0.657084189
-"29",1,72,0,4.17522245,"IIIB","Male","Adenocarcinoma","Caucasian",1,4.17522245
-"30",1,75,1,1.32238193,"IIIA","Male","Squamous Cell Carcinoma","Caucasian",1,0.73100616
-"31",1,67,0,1.785078713,"IA","Female","Squamous Cell Carcinoma","Caucasian",1,1.785078713
-"32",1,61,0,2.020533881,"IIIA","Male","Adenocarcinoma","Caucasian",1,2.020533881
-"33",1,75,0,2.702258727,"IB","Male","Adenocarcinoma","Caucasian",1,2.617385352
-"34",1,50,1,1.407255305,"IIIB","Male","Squamous Cell Carcinoma","Caucasian",1,1.861738535
-"35",0,70,0,0.465434634,"IIIB","Male","Adenocarcinoma","Caucasian",1,0.465434634
-"36",0,69,0,0.648870637,"IB","Male","Adenocarcinoma","Caucasian",1,0.618754278
-"37",0,70,0,0.947296372,"IB","Male","Adenocarcinoma","Caucasian",1,0.856947296
-"38",0,65,0,2.46954141,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,2.46954141
-"39",0,67,0,2.203969884,"IIIB","Female","Squamous Cell Carcinoma","Caucasian",1,2.203969884
-"40",0,71,0,2.973305955,"IB","Female","Adenocarcinoma","Caucasian",1,2.973305955
-"41",0,64,0,3.868583162,"IA","Male","Adenocarcinoma","Caucasian",1,3.868583162
-"42",0,50,1,2.173853525,"IIIA","Male","Adenocarcinoma","Caucasian",1,1.308692676
-"43",0,63,0,3.58110883,"IIA","Female","Squamous Cell Carcinoma","Caucasian",1,3.014373717
-"44",0,57,1,2.162902122,"IB","Male","Adenocarcinoma","Caucasian",1,1.032169747
-"45",0,54,0,4.83504449,"IIIB","Male","Adenocarcinoma","Caucasian",1,4.213552361
-"46",0,72,0,4.717316906,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,4.717316906
-"47",0,69,0,4.777549624,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,4.777549624
-"48",0,53,0,5.278576318,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,5.278576318
-"49",0,68,1,2.406570842,"IIB","Male","Adenocarcinoma","Caucasian",1,1.505817933
-"50",0,67,0,5.352498289,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,5.352498289
-"51",0,65,1,2.778918549,"IIIB","Male","Squamous Cell Carcinoma","Caucasian",1,0.602327173
-"52",0,59,0,6.869267625,"IIB","Female","Squamous Cell Carcinoma","Caucasian",1,6.869267625
-"53",0,68,1,0.240930869,"IIIB","Male","Squamous Cell Carcinoma","African American",1,0.240930869
-"54",0,69,1,3.589322382,"IB","Male","Adenocarcinoma","Caucasian",1,3.589322382
-"55",0,69,0,5.80971937,"IA","Male","Adenocarcinoma","Caucasian",1,3.140314853
+"1",1,67,0,28.616016432,"IIA","Male","Squamous Cell Carcinoma","Caucasian",1,2.384668036
+"2",1,67,0,27.170431212,"IB","Male","Adenocarcinoma","Caucasian",1,2.264202601
+"3",1,65,1,16.854209448,"IIIB","Male","Squamous Cell Carcinoma","Caucasian",1,0.377823409
+"4",1,51,0,33.839835732,"IIB","Female","Adenocarcinoma","Caucasian",1,2.819986311
+"5",1,72,0,34.759753596,"IIB","Male","Adenocarcinoma","Caucasian",1,2.896646133
+"6",1,65,0,25.560574944,"IB","Male","Adenocarcinoma","Caucasian",1,2.130047912
+"7",1,58,0,32.657084184,"IB","Male","Adenocarcinoma","Caucasian",1,2.721423682
+"8",1,53,0,34.792607808,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,2.899383984
+"9",1,70,1,12.12320328,"IIIA","Female","Adenocarcinoma","Caucasian",1,0.785763176
+"10",1,76,0,38.373716628,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,3.197809719
+"11",1,73,1,36.238193016,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,1.045859001
+"12",1,63,0,31.08008214,"IIB","Female","Adenocarcinoma","Caucasian",1,0.750171116
+"13",1,32,1,42.38193018,"IIA","Female","Adenocarcinoma","Caucasian",0,2.633812457
+"14",1,54,1,15.572895276,"IB","Female","Squamous Cell Carcinoma","African American",1,0.815879535
+"15",1,74,0,39.096509244,"IB","Female","Adenocarcinoma","Caucasian",0,3.258042437
+"16",1,59,0,35.383983576,"IB","Female","Adenocarcinoma","Caucasian",1,2.948665298
+"17",1,76,1,40.213552356,"IB","Female","Adenocarcinoma","Caucasian",1,3.351129363
+"18",1,63,0,35.646817248,"IB","Female","Squamous Cell Carcinoma","Caucasian",1,2.970568104
+"19",1,60,0,31.901437368,"IIIA","Male","Squamous Cell Carcinoma","Caucasian",1,2.658453114
+"20",1,60,0,26.349075972,"IB","Female","Adenocarcinoma","Caucasian",1,2.195756331
+"21",1,75,0,49.741273104,"IB","Male","Adenocarcinoma","Caucasian",1,3.72347707
+"22",1,49,0,40.7063655,"IIIB","Male","Adenocarcinoma","Caucasian",1,3.392197125
+"23",1,65,0,40.607802876,"IIIA","Male","Adenocarcinoma","Caucasian",1,3.383983573
+"24",1,49,1,6.275154,"IIIA","Male","Squamous Cell Carcinoma","Caucasian",1,0.41615332
+"25",1,62,1,32.952772068,"IIB","Female","Adenocarcinoma","Caucasian",1,0.596851472
+"26",1,60,0,49.905544152,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,3.75633128
+"27",1,55,1,20.829568788,"IIIB","Female","Squamous Cell Carcinoma","Caucasian",1,1.084188912
+"28",1,65,1,16.591375776,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,0.657084189
+"29",1,72,0,50.1026694,"IIIB","Male","Adenocarcinoma","Caucasian",1,4.17522245
+"30",1,75,1,15.86858316,"IIIA","Male","Squamous Cell Carcinoma","Caucasian",1,0.73100616
+"31",1,67,0,21.420944556,"IA","Female","Squamous Cell Carcinoma","Caucasian",1,1.785078713
+"32",1,61,0,24.246406572,"IIIA","Male","Adenocarcinoma","Caucasian",1,2.020533881
+"33",1,75,0,32.427104724,"IB","Male","Adenocarcinoma","Caucasian",1,2.617385352
+"34",1,50,1,16.88706366,"IIIB","Male","Squamous Cell Carcinoma","Caucasian",1,1.861738535
+"35",0,70,0,5.585215608,"IIIB","Male","Adenocarcinoma","Caucasian",1,0.465434634
+"36",0,69,0,7.786447644,"IB","Male","Adenocarcinoma","Caucasian",1,0.618754278
+"37",0,70,0,11.367556464,"IB","Male","Adenocarcinoma","Caucasian",1,0.856947296
+"38",0,65,0,29.63449692,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,2.46954141
+"39",0,67,0,26.447638608,"IIIB","Female","Squamous Cell Carcinoma","Caucasian",1,2.203969884
+"40",0,71,0,35.67967146,"IB","Female","Adenocarcinoma","Caucasian",1,2.973305955
+"41",0,64,0,46.422997944,"IA","Male","Adenocarcinoma","Caucasian",1,3.868583162
+"42",0,50,1,26.0862423,"IIIA","Male","Adenocarcinoma","Caucasian",1,1.308692676
+"43",0,63,0,42.97330596,"IIA","Female","Squamous Cell Carcinoma","Caucasian",1,3.014373717
+"44",0,57,1,25.954825464,"IB","Male","Adenocarcinoma","Caucasian",1,1.032169747
+"45",0,54,0,58.02053388,"IIIB","Male","Adenocarcinoma","Caucasian",1,4.213552361
+"46",0,72,0,56.607802872,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,4.717316906
+"47",0,69,0,57.330595488,"IB","Male","Squamous Cell Carcinoma","Caucasian",1,4.777549624
+"48",0,53,0,63.342915816,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,5.278576318
+"49",0,68,1,28.878850104,"IIB","Male","Adenocarcinoma","Caucasian",1,1.505817933
+"50",0,67,0,64.229979468,"IIB","Male","Squamous Cell Carcinoma","Caucasian",1,5.352498289
+"51",0,65,1,33.347022588,"IIIB","Male","Squamous Cell Carcinoma","Caucasian",1,0.602327173
+"52",0,59,0,82.4312115,"IIB","Female","Squamous Cell Carcinoma","Caucasian",1,6.869267625
+"53",0,68,1,2.891170428,"IIIB","Male","Squamous Cell Carcinoma","African American",1,0.240930869
+"54",0,69,1,43.071868584,"IB","Male","Adenocarcinoma","Caucasian",1,3.589322382
+"55",0,69,0,69.71663244,"IA","Male","Adenocarcinoma","Caucasian",1,3.140314853

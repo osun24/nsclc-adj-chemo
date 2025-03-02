@@ -1,17 +1,17 @@
-"","Adjuvant Chemo","Sex","PFS_MONTHS","OS_MONTHS","Race","Smoked?","OS_STATUS"
-"1",0,"Female",NA,25.2,"White",1,0
-"2",0,"Female",NA,69.2,"Unknown",0,0
-"3",0,"Female",42.5,83,"White",1,0
-"4",0,"Female",30,69.2,"White",1,0
-"5",0,"Female",3,27.1,"White",1,0
-"6",1,"Female",9,66.6,"Asian",0,0
-"7",0,"Female",NA,128.8,"White",1,1
-"8",0,"Male",NA,62,"White",1,0
-"9",0,"Female",NA,52.1,"White",1,0
-"10",0,"Female",NA,86.8,"White",1,0
-"11",0,"Male",102,103.4,"Unknown",1,0
-"12",0,"Female",NA,162.6,"White",1,0
-"13",0,"Male",NA,101.2,"White",1,0
-"14",1,"Female",NA,32.9,"Not Reported",0,0
-"15",1,"Female",27,54.2,"Not Reported",0,1
-"16",0,"Female",10,53.2,"White",1,0
+"","Adjuvant Chemo","Sex","PFS_MONTHS","OS_MONTHS","Stage","Race","Smoked?","OS_STATUS","Histology","Age"
+"1",0,"Female",NA,25.2,"I","White",1,0,"Adenocarcinoma",73
+"2",0,"Female",NA,69.2,"I","Unknown",0,0,"Adenocarcinoma",69
+"3",0,"Female",42.5,83,"I","White",1,0,"Adenocarcinoma",67
+"4",0,"Female",30,69.2,"I","White",1,0,"Adenocarcinoma",67
+"5",0,"Female",3,27.1,"I","White",1,0,"Adenocarcinoma",67
+"6",1,"Female",9,66.6,"I","Asian",0,0,"Adenocarcinoma",59
+"7",0,"Female",NA,128.8,"I","White",1,1,"Adenocarcinoma",74
+"8",0,"Male",NA,62,"I","White",1,0,"Adenocarcinoma",65
+"9",0,"Female",NA,52.1,"I","White",1,0,"Adenocarcinoma",73
+"10",0,"Female",NA,86.8,"I","White",1,0,"Adenocarcinoma",73
+"11",0,"Male",102,103.4,"I","Unknown",1,0,"Adenocarcinoma",65
+"12",0,"Female",NA,162.6,"I","White",1,0,"Adenocarcinoma",73
+"13",0,"Male",NA,101.2,"I","White",1,0,"Adenocarcinoma",65
+"14",1,"Female",NA,32.9,"II","Not Reported",0,0,"Adenocarcinoma",69
+"15",1,"Female",27,54.2,"I","Not Reported",0,1,"Adenocarcinoma",62
+"16",0,"Female",10,53.2,"I","White",1,0,"Adenocarcinoma",67

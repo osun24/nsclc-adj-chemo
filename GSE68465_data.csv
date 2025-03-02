@@ -1,444 +1,444 @@
-"","Age","Adjuvant Chemo","Histology","PFS_MONTHS","OS_MONTHS","Race","Sex","Smoked?","OS_STATUS"
-"1",74,0,"Adenocarcinoma",NA,105.6,"White","Female",1,0
-"2",74,0,"Adenocarcinoma",NA,25.2,"White","Female",1,0
-"3",74,0,"Adenocarcinoma",NA,64.8,"White","Female",1,1
-"4",82,0,"Adenocarcinoma",NA,69.2,"Unknown","Female",0,0
-"5",59,0,"Adenocarcinoma",6.6,33.9,"White","Female",0,1
-"6",60,0,"Adenocarcinoma",42.5,83,"White","Female",1,0
-"7",54,0,"Adenocarcinoma",30,69.2,"White","Female",1,0
-"8",63,0,"Adenocarcinoma",3,27.1,"White","Female",1,0
-"9",63,0,"Adenocarcinoma",5.67,5.8,"White","Female",1,1
-"10",66,0,"Adenocarcinoma",NA,50.2,"White","Male",1,1
-"11",52,0,"Adenocarcinoma",56.97,73,"Unknown","Female",1,0
-"12",62,0,"Adenocarcinoma",25,34.8,"White","Female",1,1
-"13",60,0,"Adenocarcinoma",NA,27.6,"White","Male",1,1
-"14",66,0,"Adenocarcinoma",36,48.8,"White","Female",1,1
-"15",61,1,"Adenocarcinoma",9,66.6,"Asian","Female",0,0
-"16",68,0,"Adenocarcinoma",5.3,10.1,"White","Female",1,1
-"17",48,1,"Adenocarcinoma",1,8.7,"White","Female",1,1
-"18",75,0,"Adenocarcinoma",43,61.2,"White","Female",1,1
-"19",50,0,"Adenocarcinoma",NA,132.2,"White","Female",1,0
-"20",75,0,"Adenocarcinoma",NA,128.8,"White","Female",1,1
-"21",72,0,"Adenocarcinoma",NA,43.8,"White","Female",1,1
-"22",72,0,"Adenocarcinoma",NA,5.9,"White","Female",1,1
-"23",71,0,"Adenocarcinoma",NA,2.4,"White","Male",1,1
-"24",58,1,"Adenocarcinoma",9,17.6,"White","Male",1,1
-"25",63,1,"Adenocarcinoma",4,16.3,"Unknown","Male",1,1
-"26",74,1,"Adenocarcinoma",24,29.6,"White","Female",1,1
-"27",76,0,"Adenocarcinoma",NA,81.2,"White","Male",1,1
-"28",59,0,"Adenocarcinoma",NA,59,"White","Male",1,1
-"29",71,0,"Adenocarcinoma",NA,92.6,"White","Male",1,1
-"30",45,0,"Adenocarcinoma",3,4,"White","Female",1,1
-"31",78,1,"Adenocarcinoma",NA,16.8,"White","Female",1,1
-"32",75,0,"Adenocarcinoma",NA,62,"White","Male",1,0
-"33",61,1,"Adenocarcinoma",NA,62.3,"White","Male",1,1
-"34",65,0,"Adenocarcinoma",NA,71.8,"White","Male",1,0
-"35",69,0,"Adenocarcinoma",NA,84,"Black or African American","Male",1,0
-"36",73,0,"Adenocarcinoma",NA,18.6,"White","Male",1,1
-"37",51,0,"Adenocarcinoma",NA,45.8,"White","Male",NA,1
-"38",63,1,"Adenocarcinoma",5,20.6,"Unknown","Female",1,1
-"39",60,0,"Adenocarcinoma",NA,110.5,"White","Male",1,0
-"40",42,0,"Adenocarcinoma",51,133.6,"White","Male",1,0
-"41",56,0,"Adenocarcinoma",30,70.5,"White","Male",1,1
-"42",69,0,"Adenocarcinoma",NA,52.1,"White","Female",1,0
-"43",58,0,"Adenocarcinoma",NA,17.6,"Asian","Female",0,1
-"44",62,0,"Adenocarcinoma",4,16.9,"Black or African American","Male",1,1
-"45",62,0,"Adenocarcinoma",NA,86.8,"White","Female",1,0
-"46",65,0,"Adenocarcinoma",102,103.4,"Unknown","Male",1,0
-"47",73,1,"Adenocarcinoma",NA,117.6,"White","Female",0,0
-"48",52,1,"Adenocarcinoma",34,115.8,"White","Female",1,1
-"49",72,0,"Adenocarcinoma",NA,19,"White","Male",1,1
-"50",65,1,"Adenocarcinoma",79,84.1,"White","Male",1,1
-"51",65,0,"Adenocarcinoma",NA,153.3,"White","Female",1,0
-"52",59,0,"Adenocarcinoma",NA,153.9,"White","Female",NA,0
-"53",62,0,"Adenocarcinoma",NA,162.6,"White","Female",1,0
-"54",63,0,"Adenocarcinoma",NA,63.8,"White","Male",1,0
-"55",54,1,"Adenocarcinoma",94,132.5,"White","Female",1,1
-"56",57,0,"Adenocarcinoma",NA,130.8,"White","Female",NA,0
-"57",59,0,"Adenocarcinoma",NA,159.6,"Black or African American","Female",1,0
-"58",48,0,"Adenocarcinoma",NA,157.7,"White","Female",0,0
-"59",44,0,"Adenocarcinoma",NA,76.3,"White","Female",1,0
-"60",40,0,"Adenocarcinoma",NA,105.9,"White","Female",1,0
-"61",64,0,"Adenocarcinoma",NA,28.2,"Not Reported","Male",1,1
-"62",69,0,"Adenocarcinoma",5,7.2,"White","Male",1,1
-"63",67,0,"Adenocarcinoma",NA,79.5,"White","Male",1,1
-"64",62,0,"Adenocarcinoma",50,82.3,"White","Female",1,0
-"65",60,0,"Adenocarcinoma",NA,101.2,"White","Male",1,0
-"66",46,0,"Adenocarcinoma",NA,168.1,"Asian","Male",1,0
-"67",77,0,"Adenocarcinoma",NA,14.9,"White","Male",1,1
-"68",56,0,"Adenocarcinoma",7,9.6,"White","Male",1,1
-"69",53,0,"Adenocarcinoma",NA,95,"White","Female",1,0
-"70",51,0,"Adenocarcinoma",NA,62.4,"White","Male",1,0
-"71",63,0,"Adenocarcinoma",NA,64.3,"Black or African American","Female",1,0
-"72",85,0,"Adenocarcinoma",NA,20.9,"White","Female",1,1
-"73",60,0,"Adenocarcinoma",22,22.3,"White","Female",1,1
-"74",58,0,"Adenocarcinoma",12,67.9,"White","Male",1,1
-"75",81,0,"Adenocarcinoma",NA,36.3,"White","Male",1,0
-"76",52,1,"Adenocarcinoma",14,22.7,"White","Female",1,1
-"77",81,1,"Adenocarcinoma",NA,32.9,"Not Reported","Female",0,0
-"78",57,0,"Adenocarcinoma",NA,38.1,"Not Reported","Female",0,0
-"79",76,1,"Adenocarcinoma",27,54.2,"Not Reported","Female",0,1
-"80",60,1,"Adenocarcinoma",52,96.1,"White","Female",1,1
-"81",62,0,"Adenocarcinoma",10,53.2,"White","Female",1,0
-"82",68,0,"Adenocarcinoma",NA,12.5,"White","Male",1,1
-"83",73,0,"Adenocarcinoma",NA,29.5,"Not Reported","Male",1,0
-"84",65,0,"Adenocarcinoma",NA,107.5,"White","Female",1,0
-"85",63,0,"Adenocarcinoma",NA,53.7,"White","Male",1,0
-"86",70,0,"Adenocarcinoma",NA,21.8,"White","Male",1,0
-"87",78,0,"Adenocarcinoma",NA,55.8,"White","Male",1,0
-"88",54,0,"Adenocarcinoma",NA,21,"White","Male",1,1
-"89",78,0,"Adenocarcinoma",NA,7.3,"White","Male",1,1
-"90",66,0,"Adenocarcinoma",NA,159.9,"White","Male",NA,0
-"91",72,0,"Adenocarcinoma",NA,60.8,"White","Male",1,0
-"92",81,0,"Adenocarcinoma",8,21.2,"White","Female",0,1
-"93",69,1,"Adenocarcinoma",46,53.6,"White","Female",0,0
-"94",59,0,"Adenocarcinoma",NA,23.2,"White","Male",1,0
-"95",76,0,"Adenocarcinoma",NA,47.27,"White","Female",NA,0
-"96",70,0,"Adenocarcinoma",NA,59.11,"White","Male",NA,1
-"97",58,0,"Adenocarcinoma",NA,51.58,"White","Male",NA,0
-"98",48,0,"Adenocarcinoma",19,36.25,"White","Female",NA,1
-"99",82,0,"Adenocarcinoma",NA,6.6,"White","Male",NA,1
-"100",62,0,"Adenocarcinoma",9.6,54.93,"White","Male",NA,1
-"101",82,0,"Adenocarcinoma",NA,9.74,"White","Male",NA,1
-"102",68,0,"Adenocarcinoma",NA,58.88,"White","Male",NA,0
-"103",58,0,"Adenocarcinoma",NA,51.81,"Black or African American","Male",NA,0
-"104",63,0,"Adenocarcinoma",19.5,21.48,"White","Male",NA,1
-"105",78,0,"Adenocarcinoma",NA,6.38,"White","Male",NA,1
-"106",57,0,"Adenocarcinoma",25,69.01,"Black or African American","Female",NA,1
-"107",77,0,"Adenocarcinoma",64.14,64.14,"White","Female",NA,0
-"108",86,0,"Adenocarcinoma",12,32.24,"White","Female",NA,1
-"109",78,0,"Adenocarcinoma",NA,NA,"White","Female",NA,0
-"110",73,0,"Adenocarcinoma",NA,56.35,"White","Male",NA,0
-"111",70,0,"Adenocarcinoma",NA,69.05,"White","Female",NA,0
-"112",75,0,"Adenocarcinoma",29,56.32,"White","Female",NA,0
-"113",49,0,"Adenocarcinoma",NA,61.25,"White","Female",NA,0
-"114",51,0,"Adenocarcinoma",NA,50.43,"White","Female",NA,0
-"115",66,0,"Adenocarcinoma",NA,73.36,"White","Male",NA,0
-"116",76,0,"Adenocarcinoma",NA,66.74,"White","Female",NA,0
-"117",78,0,"Adenocarcinoma",NA,72.8,"White","Female",NA,0
-"118",76,0,"Adenocarcinoma",NA,19.9,"White","Male",NA,1
-"119",60,0,"Adenocarcinoma",14.3,31.28,"White","Female",NA,1
-"120",73,0,"Adenocarcinoma",NA,45.33,"White","Male",NA,1
-"121",72,0,"Adenocarcinoma",NA,83.95,"White","Female",NA,0
-"122",55,0,"Adenocarcinoma",NA,12.63,"White","Female",NA,1
-"123",64,0,"Adenocarcinoma",NA,77.89,"White","Female",NA,0
-"124",53,0,"Adenocarcinoma",9.6,11.18,"White","Female",NA,0
-"125",77,0,"Adenocarcinoma",NA,30.53,"White","Female",NA,0
-"126",55,0,"Adenocarcinoma",32,73.59,"White","Female",NA,0
-"127",67,0,"Adenocarcinoma",6.2,11.68,"White","Male",NA,1
-"128",70,0,"Adenocarcinoma",NA,74.61,"White","Female",NA,0
-"129",72,0,"Adenocarcinoma",15,31.94,"White","Female",NA,1
-"130",43,0,"Adenocarcinoma",NA,2.24,"White","Male",NA,1
-"131",52,0,"Adenocarcinoma",NA,8.85,"White","Female",NA,1
-"132",69,0,"Adenocarcinoma",NA,92.2,"White","Female",NA,0
-"133",33,0,"Adenocarcinoma",7,90.07,"Not Reported","Female",NA,0
-"134",59,0,"Adenocarcinoma",NA,24.97,"White","Male",NA,1
-"135",62,0,"Adenocarcinoma",41,42.04,"White","Male",NA,1
-"136",70,0,"Adenocarcinoma",NA,12.2,"Unknown","Male",NA,1
-"137",74,0,"Adenocarcinoma",NA,2.7,"Unknown","Male",NA,1
-"138",46,0,"Adenocarcinoma",NA,96,"Unknown","Male",NA,1
-"139",67,0,"Adenocarcinoma",NA,66.1,"Unknown","Male",NA,1
-"140",60,0,"Adenocarcinoma",NA,68.6,"Unknown","Male",NA,1
-"141",75,0,"Adenocarcinoma",NA,48,"Unknown","Male",NA,1
-"142",64,1,"Adenocarcinoma",8,16,"White","Male",1,1
-"143",62,1,"Adenocarcinoma",3,72,"White","Male",1,0
-"144",70,0,"Adenocarcinoma",NA,47,"White","Female",1,0
-"145",67,0,"Adenocarcinoma",50,52,"White","Male",1,1
-"146",56,1,"Adenocarcinoma",14,39,"White","Female",1,1
-"147",57,0,"Adenocarcinoma",NA,66,"White","Male",1,0
-"148",81,0,"Adenocarcinoma",NA,44,"White","Female",0,0
-"149",65,0,"Adenocarcinoma",NA,70,"White","Female",1,0
-"150",73,0,"Adenocarcinoma",NA,75,"White","Female",0,0
-"151",65,0,"Adenocarcinoma",37,92,"White","Male",1,0
-"152",62,0,"Adenocarcinoma",NA,65,"White","Male",1,0
-"153",71,1,"Adenocarcinoma",13,43,"White","Male",1,0
-"154",82,0,"Adenocarcinoma",NA,69,"White","Female",1,0
-"155",68,0,"Adenocarcinoma",23,40,"White","Male",1,1
-"156",48,0,"Adenocarcinoma",NA,21,"White","Female",0,1
-"157",82,1,"Adenocarcinoma",6,29,"White","Female",1,1
-"158",64,1,"Adenocarcinoma",10,26,"White","Male",1,1
-"159",68,0,"Adenocarcinoma",37,77,"White","Male",1,0
-"160",58,0,"Adenocarcinoma",1,2,"White","Male",1,1
-"161",73,0,"Adenocarcinoma",37,66,"White","Male",1,0
-"162",52,1,"Adenocarcinoma",8,14,"White","Female",1,1
-"163",62,0,"Adenocarcinoma",NA,33,"White","Male",1,0
-"164",51,0,"Adenocarcinoma",NA,85,"White","Male",1,0
-"165",62,0,"Adenocarcinoma",35,66,"Black or African American","Male",1,0
-"166",50,0,"Adenocarcinoma",NA,15,"White","Female",1,0
-"167",65,0,"Adenocarcinoma",NA,91,"Asian","Male",1,0
-"168",74,1,"Adenocarcinoma",39,68,"White","Male",1,1
-"169",55,0,"Adenocarcinoma",NA,33,"White","Female",1,0
-"170",54,1,"Adenocarcinoma",8,24,"White","Male",1,1
-"171",76,0,"Adenocarcinoma",NA,62,"White","Male",1,0
-"172",64,1,"Adenocarcinoma",1,114,"White","Female",1,1
-"173",58,0,"Adenocarcinoma",NA,4,"White","Female",1,1
-"174",70,1,"Adenocarcinoma",13,20,"White","Male",1,1
-"175",57,1,"Adenocarcinoma",23,52,"White","Female",1,1
-"176",67,1,"Adenocarcinoma",NA,93,"White","Female",1,0
-"177",74,0,"Adenocarcinoma",NA,14,"White","Female",1,1
-"178",59,1,"Adenocarcinoma",19,100,"White","Female",0,0
-"179",66,0,"Adenocarcinoma",NA,33,"White","Female",1,0
-"180",67,1,"Adenocarcinoma",21,32,"White","Male",0,1
-"181",57,0,"Adenocarcinoma",NA,60,"White","Female",1,0
-"182",64,0,"Adenocarcinoma",NA,50,"White","Male",1,0
-"183",59,0,"Adenocarcinoma",7,15,"Black or African American","Female",1,1
-"184",76,0,"Adenocarcinoma",NA,37,"White","Female",0,0
-"185",82,0,"Adenocarcinoma",NA,54,"White","Female",1,0
-"186",58,0,"Adenocarcinoma",NA,31,"White","Male",1,0
-"187",65,0,"Adenocarcinoma",NA,38,"White","Male",1,0
-"188",49,0,"Adenocarcinoma",NA,115,"White","Female",0,0
-"189",71,0,"Adenocarcinoma",10,36,"White","Female",1,0
-"190",61,1,"Adenocarcinoma",NA,48,"White","Female",1,1
-"191",75,1,"Adenocarcinoma",9,19,"White","Male",1,1
-"192",46,0,"Adenocarcinoma",NA,91,"White","Female",1,0
-"193",74,0,"Adenocarcinoma",NA,204,"Asian","Female",1,1
-"194",51,0,"Adenocarcinoma",NA,50,"White","Female",0,0
-"195",54,0,"Adenocarcinoma",NA,80,"White","Male",1,0
-"196",50,1,"Adenocarcinoma",27,42,"White","Female",1,1
-"197",69,0,"Adenocarcinoma",NA,60,"White","Female",1,0
-"198",63,0,"Adenocarcinoma",NA,26,"White","Female",1,0
-"199",76,0,"Adenocarcinoma",55,62,"White","Female",1,1
-"200",72,0,"Adenocarcinoma",NA,22,"White","Female",1,0
-"201",70,0,"Adenocarcinoma",NA,63,"White","Female",1,0
-"202",76,0,"Adenocarcinoma",NA,68,"White","Male",1,0
-"203",81,0,"Adenocarcinoma",NA,7,"White","Female",1,0
-"204",61,1,"Adenocarcinoma",19,52,"White","Female",0,1
-"205",53,0,"Adenocarcinoma",NA,36,"White","Female",0,0
-"206",72,0,"Adenocarcinoma",5,15,"White","Female",1,1
-"207",53,0,"Adenocarcinoma",13,20,"White","Female",1,1
-"208",61,0,"Adenocarcinoma",26,41,"White","Male",1,0
-"209",66,1,"Adenocarcinoma",10,25,"White","Male",NA,1
-"210",74,0,"Adenocarcinoma",NA,42,"White","Female",1,0
-"211",48,1,"Adenocarcinoma",29,51,"White","Female",1,1
-"212",65,0,"Adenocarcinoma",NA,50,"White","Female",1,0
-"213",70,1,"Adenocarcinoma",5,57,"Black or African American","Female",1,1
-"214",79,1,"Adenocarcinoma",7,13,"White","Female",1,1
-"215",67,1,"Adenocarcinoma",11,78,"White","Male",1,1
-"216",77,0,"Adenocarcinoma",NA,48,"White","Male",1,0
-"217",63,0,"Adenocarcinoma",NA,33,"White","Female",1,1
-"218",76,0,"Adenocarcinoma",NA,37,"White","Female",1,0
-"219",72,1,"Adenocarcinoma",15,17,"White","Male",1,1
-"220",51,0,"Adenocarcinoma",NA,24,"White","Female",1,1
-"221",63,0,"Adenocarcinoma",NA,44,"White","Female",0,0
-"222",80,0,"Adenocarcinoma",NA,30,"White","Female",1,0
-"223",74,1,"Adenocarcinoma",26,50,"White","Female",0,0
-"224",58,0,"Adenocarcinoma",NA,88,"White","Female",1,0
-"225",62,0,"Adenocarcinoma",16,42,"White","Female",1,0
-"226",67,0,"Adenocarcinoma",NA,46,"White","Female",NA,0
-"227",71,0,"Adenocarcinoma",NA,56,"White","Female",1,0
-"228",61,0,"Adenocarcinoma",NA,40,"White","Female",1,0
-"229",38,0,"Adenocarcinoma",NA,38,"White","Female",0,0
-"230",72,0,"Adenocarcinoma",NA,43,"White","Female",1,0
-"231",43,0,"Adenocarcinoma",NA,55,"White","Female",1,0
-"232",65,1,"Adenocarcinoma",7,17,"White","Female",0,1
-"233",54,0,"Adenocarcinoma",NA,36,"White","Female",0,0
-"234",79,0,"Adenocarcinoma",6,10,"White","Female",0,1
-"235",61,1,"Adenocarcinoma",21,23,"White","Male",0,1
-"236",74,0,"Adenocarcinoma",NA,62,"White","Male",1,0
-"237",80,1,"Adenocarcinoma",36,85,"White","Female",1,0
-"238",68,1,"Adenocarcinoma",11,47,"White","Female",1,1
-"239",64,0,"Adenocarcinoma",11,48,"White","Female",1,1
-"240",58,1,"Adenocarcinoma",31,57,"White","Female",1,0
-"241",57,0,"Adenocarcinoma",NA,43,"Unknown","Male",1,0
-"242",57,0,"Adenocarcinoma",NA,41,"White","Female",1,0
-"243",67,0,"Adenocarcinoma",NA,43,"White","Male",0,0
-"244",75,0,"Adenocarcinoma",NA,32,"White","Female",1,0
-"245",74,0,"Adenocarcinoma",NA,64,"White","Male",0,0
-"246",59,0,"Adenocarcinoma",NA,107,"Unknown","Male",1,0
-"247",75,0,"Adenocarcinoma",14,25,"Unknown","Male",1,1
-"248",60,0,"Adenocarcinoma",NA,96,"Unknown","Female",1,0
-"249",41,0,"Adenocarcinoma",2,98,"Unknown","Female",1,0
-"250",59,0,"Adenocarcinoma",17,37,"Unknown","Male",1,1
-"251",60,1,"Adenocarcinoma",NA,90,"Unknown","Female",1,0
-"252",43,0,"Adenocarcinoma",11,40,"White","Male",1,0
-"253",54,1,"Adenocarcinoma",58,71,"Unknown","Male",1,1
-"254",52,1,"Adenocarcinoma",3,9,"Unknown","Female",1,1
-"255",47,1,"Adenocarcinoma",NA,110,"Unknown","Male",1,0
-"256",55,0,"Adenocarcinoma",NA,110,"Unknown","Female",1,0
-"257",66,1,"Adenocarcinoma",3,6,"Unknown","Female",0,1
-"258",70,1,"Adenocarcinoma",77,95,"Unknown","Female",1,1
-"259",68,1,"Adenocarcinoma",35,38,"Unknown","Male",1,1
-"260",61,0,"Adenocarcinoma",5,9,"Unknown","Female",1,1
-"261",60,0,"Adenocarcinoma",NA,87,"Unknown","Female",1,0
-"262",35,0,"Adenocarcinoma",NA,88,"Unknown","Male",1,0
-"263",53,0,"Adenocarcinoma",NA,74,"Unknown","Female",1,0
-"264",54,1,"Adenocarcinoma",6,8,"Unknown","Male",1,1
-"265",73,1,"Adenocarcinoma",44,59,"White","Female",1,0
-"266",38,1,"Adenocarcinoma",NA,55,"Unknown","Female",1,0
-"267",58,0,"Adenocarcinoma",NA,36,"White","Male",1,0
-"268",65,1,"Adenocarcinoma",7,15,"Unknown","Male",1,1
-"269",66,1,"Adenocarcinoma",NA,85,"Unknown","Female",0,0
-"270",66,0,"Adenocarcinoma",6,9,"Unknown","Male",1,1
-"271",76,0,"Adenocarcinoma",4,11,"Native Hawaiian or Other Pacific Islander","Male",1,1
-"272",53,1,"Adenocarcinoma",13,79,"Unknown","Male",1,1
-"273",60,0,"Adenocarcinoma",NA,105,"Unknown","Male",1,0
-"274",40,1,"Adenocarcinoma",NA,97,"Unknown","Female",1,0
-"275",67,0,"Adenocarcinoma",4,4,"Unknown","Male",1,1
-"276",62,1,"Adenocarcinoma",16,36,"Unknown","Male",1,1
-"277",61,0,"Adenocarcinoma",25,44,"White","Male",0,1
-"278",63,0,"Adenocarcinoma",NA,74,"Unknown","Male",1,1
-"279",62,1,"Adenocarcinoma",4,13,"Unknown","Male",1,1
-"280",51,1,"Adenocarcinoma",NA,90,"Unknown","Female",1,0
-"281",53,1,"Adenocarcinoma",NA,85,"Unknown","Female",1,0
-"282",56,1,"Adenocarcinoma",69,71,"Unknown","Female",1,1
-"283",61,1,"Adenocarcinoma",29,64,"Unknown","Male",1,1
-"284",52,1,"Adenocarcinoma",NA,65,"Unknown","Female",1,1
-"285",60,1,"Adenocarcinoma",NA,68,"White","Male",1,0
-"286",57,1,"Adenocarcinoma",NA,64,"White","Male",1,0
-"287",46,0,"Adenocarcinoma",NA,63,"White","Female",NA,0
-"288",71,1,"Adenocarcinoma",11,13,"Unknown","Male",1,1
-"289",53,0,"Adenocarcinoma",NA,95,"Not Reported","Male",1,0
-"290",68,0,"Adenocarcinoma",NA,74,"Not Reported","Male",1,0
-"291",72,0,"Adenocarcinoma",56,57,"Not Reported","Female",1,1
-"292",68,0,"Adenocarcinoma",17,56,"Not Reported","Female",1,1
-"293",65,0,"Adenocarcinoma",NA,48,"Not Reported","Male",1,0
-"294",68,0,"Adenocarcinoma",44,49,"Not Reported","Female",0,0
-"295",68,0,"Adenocarcinoma",NA,28,"Not Reported","Male",1,0
-"296",57,0,"Adenocarcinoma",NA,36,"Not Reported","Female",1,0
-"297",56,1,"Adenocarcinoma",12,40,"Not Reported","Female",NA,0
-"298",56,0,"Adenocarcinoma",NA,37,"Not Reported","Male",1,0
-"299",51,0,"Adenocarcinoma",NA,40,"Not Reported","Female",NA,0
-"300",68,0,"Adenocarcinoma",NA,23,"Not Reported","Female",1,1
-"301",61,0,"Adenocarcinoma",NA,76,"Not Reported","Male",1,0
-"302",62,0,"Adenocarcinoma",28,34,"Not Reported","Female",1,1
-"303",73,0,"Adenocarcinoma",NA,66,"Not Reported","Male",0,0
-"304",63,0,"Adenocarcinoma",17,29,"Not Reported","Female",1,1
-"305",72,0,"Adenocarcinoma",5,7,"Not Reported","Male",0,1
-"306",57,0,"Adenocarcinoma",NA,53,"Not Reported","Female",1,0
-"307",55,0,"Adenocarcinoma",NA,63,"Not Reported","Female",NA,0
-"308",64,0,"Adenocarcinoma",NA,23,"Not Reported","Male",1,0
-"309",40,0,"Adenocarcinoma",NA,62,"Not Reported","Female",1,0
-"310",75,0,"Adenocarcinoma",5,7,"Not Reported","Female",0,1
-"311",60,0,"Adenocarcinoma",NA,26,"Not Reported","Male",1,0
-"312",58,0,"Adenocarcinoma",NA,40,"Not Reported","Female",1,0
-"313",64,0,"Adenocarcinoma",10,30,"Not Reported","Male",1,0
-"314",62,0,"Adenocarcinoma",NA,40,"Not Reported","Male",1,0
-"315",75,0,"Adenocarcinoma",75,84,"Not Reported","Male",0,0
-"316",76,0,"Adenocarcinoma",NA,18,"Not Reported","Male",1,1
-"317",59,0,"Adenocarcinoma",12,25,"Not Reported","Female",1,1
-"318",54,0,"Adenocarcinoma",NA,80,"Not Reported","Male",1,0
-"319",74,0,"Adenocarcinoma",7,12,"Not Reported","Male",1,1
-"320",70,0,"Adenocarcinoma",NA,32,"Not Reported","Female",0,0
-"321",68,0,"Adenocarcinoma",84,105,"Not Reported","Female",1,0
-"322",69,0,"Adenocarcinoma",NA,81,"Not Reported","Male",1,0
-"323",75,0,"Adenocarcinoma",NA,75,"Not Reported","Male",1,0
-"324",64,0,"Adenocarcinoma",NA,97,"Not Reported","Male",1,0
-"325",79,0,"Adenocarcinoma",17,18,"Not Reported","Male",0,1
-"326",69,0,"Adenocarcinoma",12,32,"Not Reported","Male",1,1
-"327",77,0,"Adenocarcinoma",5,10,"Not Reported","Male",1,1
-"328",66,0,"Adenocarcinoma",2.79,44.94,"Black or African American","Female",1,1
-"329",79,0,"Adenocarcinoma",13.54,34.76,"White","Male",1,1
-"330",72,0,"Adenocarcinoma",17.35,19.84,"White","Female",1,1
-"331",67,1,"Adenocarcinoma",0.46,8.61,"White","Male",1,1
-"332",79,0,"Adenocarcinoma",NA,0.53,"White","Female",1,1
-"333",74,0,"Adenocarcinoma",27.14,37.55,"White","Female",1,1
-"334",50,1,"Adenocarcinoma",17.44,106.58,"White","Male",1,0
-"335",40,0,"Adenocarcinoma",NA,123.3,"White","Male",1,0
-"336",79,0,"Adenocarcinoma",NA,56.8,"White","Male",1,1
-"337",75,0,"Adenocarcinoma",NA,30.12,"White","Female",1,1
-"338",64,0,"Adenocarcinoma",12.1,13.33,"White","Female",0,1
-"339",77,0,"Adenocarcinoma",NA,105.99,"White","Female",0,1
-"340",66,0,"Adenocarcinoma",35.19,44.42,"White","Female",1,1
-"341",49,1,"Adenocarcinoma",19.06,20.86,"White","Male",1,1
-"342",62,1,"Adenocarcinoma",26.71,27.63,"White","Male",1,1
-"343",66,0,"Adenocarcinoma",NA,74.18,"White","Male",1,1
-"344",87,0,"Adenocarcinoma",NA,96,"White","Female",0,1
-"345",62,0,"Adenocarcinoma",9.72,41.33,"White","Female",1,1
-"346",82,0,"Adenocarcinoma",NA,5.65,"White","Male",1,1
-"347",77,0,"Adenocarcinoma",NA,0.43,"White","Male",1,1
-"348",61,1,"Adenocarcinoma",NA,16.56,"White","Female",1,1
-"349",81,0,"Adenocarcinoma",NA,61.21,"White","Male",1,1
-"350",72,0,"Adenocarcinoma",NA,104.47,"White","Female",1,0
-"351",67,0,"Adenocarcinoma",70.27,70.6,"White","Female",1,1
-"352",74,0,"Adenocarcinoma",NA,3.52,"White","Female",1,1
-"353",64,0,"Adenocarcinoma",2.53,17.54,"White","Female",1,1
-"354",65,0,"Adenocarcinoma",25.43,27.56,"White","Female",1,1
-"355",76,0,"Adenocarcinoma",8.44,16.39,"White","Male",1,1
-"356",66,0,"Adenocarcinoma",NA,77.7,"White","Female",0,0
-"357",70,0,"Adenocarcinoma",25.17,94.16,"Black or African American","Male",1,0
-"358",66,0,"Adenocarcinoma",NA,73.4,"White","Female",1,0
-"359",70,1,"Adenocarcinoma",17.77,45.24,"White","Male",1,1
-"360",63,0,"Adenocarcinoma",NA,0.03,"White","Male",1,1
-"361",68,0,"Adenocarcinoma",55.62,75.73,"White","Female",0,1
-"362",76,0,"Adenocarcinoma",21.39,39.06,"White","Male",1,1
-"363",49,1,"Adenocarcinoma",39.69,77.6,"White","Male",1,1
-"364",61,1,"Adenocarcinoma",NA,2.27,"White","Male",1,1
-"365",71,0,"Adenocarcinoma",NA,84.44,"White","Male",1,0
-"366",60,0,"Adenocarcinoma",11.04,42.18,"White","Male",1,1
-"367",73,0,"Adenocarcinoma",NA,85.65,"White","Female",1,1
-"368",47,1,"Adenocarcinoma",88.77,92.52,"White","Male",1,0
-"369",64,0,"Adenocarcinoma",13.63,39.36,"White","Male",1,1
-"370",66,0,"Adenocarcinoma",NA,82.5,"White","Female",1,0
-"371",48,1,"Adenocarcinoma",22.21,31.7,"White","Male",1,0
-"372",79,0,"Adenocarcinoma",NA,42.02,"White","Male",1,1
-"373",68,0,"Adenocarcinoma",4.17,5.78,"White","Female",1,1
-"374",68,1,"Adenocarcinoma",3.22,7.69,"White","Female",1,1
-"375",82,0,"Adenocarcinoma",NA,47.9,"White","Female",1,1
-"376",70,0,"Adenocarcinoma",NA,58.84,"White","Male",1,0
-"377",75,0,"Adenocarcinoma",NA,81.54,"White","Male",1,0
-"378",63,0,"Adenocarcinoma",22.18,24.51,"White","Female",1,1
-"379",81,0,"Adenocarcinoma",NA,7.03,"White","Female",1,1
-"380",75,0,"Adenocarcinoma",7.92,9.63,"White","Female",1,1
-"381",60,0,"Adenocarcinoma",NA,40.21,"White","Female",0,1
-"382",60,0,"Adenocarcinoma",NA,66.69,"White","Female",1,0
-"383",71,0,"Adenocarcinoma",NA,40.97,"White","Female",1,1
-"384",73,0,"Adenocarcinoma",NA,76.12,"White","Male",1,0
-"385",77,0,"Adenocarcinoma",37.16,72.64,"White","Male",1,1
-"386",50,0,"Adenocarcinoma",9.26,11.99,"White","Male",1,1
-"387",59,0,"Adenocarcinoma",4.24,6.24,"White","Female",1,1
-"388",70,0,"Adenocarcinoma",6.83,21.88,"White","Male",1,1
-"389",58,0,"Adenocarcinoma",4.67,78.85,"White","Male",1,0
-"390",60,0,"Adenocarcinoma",NA,72.05,"White","Male",1,0
-"391",72,0,"Adenocarcinoma",17.25,28.25,"Asian","Male",1,1
-"392",62,0,"Adenocarcinoma",53.19,53.39,"White","Female",0,0
-"393",77,0,"Adenocarcinoma",NA,39.03,"White","Female",0,0
-"394",82,0,"Adenocarcinoma",NA,52.2,"White","Male",1,1
-"395",73,0,"Adenocarcinoma",13.14,15.77,"White","Male",1,1
-"396",57,0,"Adenocarcinoma",11.3,27.66,"White","Female",1,1
-"397",73,1,"Adenocarcinoma",23.13,29.67,"White","Male",1,1
-"398",70,0,"Adenocarcinoma",NA,12.02,"White","Female",1,1
-"399",53,0,"Adenocarcinoma",NA,150.18,"White","Male",1,0
-"400",75,0,"Adenocarcinoma",11.24,15.47,"Black or African American","Male",1,1
-"401",71,1,"Adenocarcinoma",20.57,24.74,"White","Female",1,1
-"402",36,1,"Adenocarcinoma",5.62,16.49,"White","Male",1,1
-"403",68,1,"Adenocarcinoma",2.53,8.94,"White","Female",1,1
-"404",68,0,"Adenocarcinoma",23.49,26.38,"White","Female",1,1
-"405",65,0,"Adenocarcinoma",16.23,18.2,"White","Male",1,1
-"406",51,1,"Adenocarcinoma",69.32,79.54,"White","Female",0,1
-"407",62,0,"Adenocarcinoma",NA,30.7,"Unknown","Male",NA,1
-"408",72,0,"Adenocarcinoma",NA,80.9,"Unknown","Male",NA,1
-"409",69,0,"Adenocarcinoma",NA,11.7,"Unknown","Male",NA,1
-"410",68,0,"Adenocarcinoma",NA,33.2,"Unknown","Male",NA,1
-"411",57,0,"Adenocarcinoma",NA,42.5,"Unknown","Male",NA,1
-"412",69,0,"Adenocarcinoma",NA,122.4,"Unknown","Male",NA,1
-"413",58,0,"Adenocarcinoma",NA,30.2,"Unknown","Male",NA,1
-"414",72,0,"Adenocarcinoma",NA,78.5,"Unknown","Male",NA,1
-"415",47,0,"Adenocarcinoma",NA,73.2,"Unknown","Male",NA,1
-"416",64,0,"Adenocarcinoma",NA,65.2,"Unknown","Male",NA,1
-"417",59,0,"Adenocarcinoma",NA,145.8,"Unknown","Male",NA,0
-"418",69,0,"Adenocarcinoma",NA,73.7,"Unknown","Male",NA,1
-"419",77,0,"Adenocarcinoma",NA,3.3,"Unknown","Male",NA,1
-"420",77,0,"Adenocarcinoma",NA,19.5,"Unknown","Male",NA,1
-"421",70,0,"Adenocarcinoma",NA,8.4,"Unknown","Male",NA,1
-"422",57,0,"Adenocarcinoma",NA,26.9,"Unknown","Male",NA,1
-"423",67,0,"Adenocarcinoma",NA,129.8,"Unknown","Male",NA,0
-"424",66,0,"Adenocarcinoma",NA,19.6,"Unknown","Male",NA,1
-"425",78,0,"Adenocarcinoma",NA,105.4,"Unknown","Male",NA,1
-"426",46,0,"Adenocarcinoma",NA,157.5,"Unknown","Male",NA,1
-"427",62,0,"Adenocarcinoma",NA,120.5,"Unknown","Male",NA,1
-"428",66,0,"Adenocarcinoma",NA,47.8,"Unknown","Male",NA,1
-"429",65,0,"Adenocarcinoma",NA,130,"Unknown","Male",NA,1
-"430",46,0,"Adenocarcinoma",NA,52.3,"Unknown","Female",NA,0
-"431",63,0,"Adenocarcinoma",NA,69.4,"Unknown","Female",NA,0
-"432",60,0,"Adenocarcinoma",NA,25.95,"Unknown","Male",NA,1
-"433",77,0,"Adenocarcinoma",NA,121.8,"Unknown","Male",NA,0
-"434",44,0,"Adenocarcinoma",NA,32.6,"Unknown","Male",NA,1
-"435",49,0,"Adenocarcinoma",NA,40.2,"Unknown","Male",NA,1
-"436",70,0,"Adenocarcinoma",NA,14.5,"Unknown","Male",NA,1
-"437",68,0,"Adenocarcinoma",NA,9.2,"Unknown","Male",NA,1
-"438",66,0,"Adenocarcinoma",NA,19,"Unknown","Male",NA,1
-"439",74,0,"Adenocarcinoma",NA,121.2,"Unknown","Male",NA,0
-"440",62,0,"Adenocarcinoma",NA,9,"Unknown","Male",NA,1
-"441",81,0,"Adenocarcinoma",NA,97.6,"Unknown","Male",NA,0
-"442",65,0,"Adenocarcinoma",NA,175.9,"Unknown","Male",NA,0
-"443",61,0,"Adenocarcinoma",NA,45.3,"Unknown","Male",NA,1
+"","Age","Adjuvant Chemo","Stage","Histology","PFS_MONTHS","OS_MONTHS","Race","Sex","Smoked?","OS_STATUS"
+"1",74,0,"I","Adenocarcinoma",NA,105.6,"White","Female",1,0
+"2",74,0,"I","Adenocarcinoma",NA,25.2,"White","Female",1,0
+"3",74,0,"I","Adenocarcinoma",NA,64.8,"White","Female",1,1
+"4",82,0,"I","Adenocarcinoma",NA,69.2,"Unknown","Female",0,0
+"5",59,0,"I","Adenocarcinoma",6.6,33.9,"White","Female",0,1
+"6",60,0,"I","Adenocarcinoma",42.5,83,"White","Female",1,0
+"7",54,0,"I","Adenocarcinoma",30,69.2,"White","Female",1,0
+"8",63,0,"I","Adenocarcinoma",3,27.1,"White","Female",1,0
+"9",63,0,"I","Adenocarcinoma",5.67,5.8,"White","Female",1,1
+"10",66,0,"II","Adenocarcinoma",NA,50.2,"White","Male",1,1
+"11",52,0,"I","Adenocarcinoma",56.97,73,"Unknown","Female",1,0
+"12",62,0,"I","Adenocarcinoma",25,34.8,"White","Female",1,1
+"13",60,0,"I","Adenocarcinoma",NA,27.6,"White","Male",1,1
+"14",66,0,"I","Adenocarcinoma",36,48.8,"White","Female",1,1
+"15",61,1,"I","Adenocarcinoma",9,66.6,"Asian","Female",0,0
+"16",68,0,"I","Adenocarcinoma",5.3,10.1,"White","Female",1,1
+"17",48,1,"I","Adenocarcinoma",1,8.7,"White","Female",1,1
+"18",75,0,"I","Adenocarcinoma",43,61.2,"White","Female",1,1
+"19",50,0,"I","Adenocarcinoma",NA,132.2,"White","Female",1,0
+"20",75,0,"I","Adenocarcinoma",NA,128.8,"White","Female",1,1
+"21",72,0,"I","Adenocarcinoma",NA,43.8,"White","Female",1,1
+"22",72,0,"III","Adenocarcinoma",NA,5.9,"White","Female",1,1
+"23",71,0,"IV","Adenocarcinoma",NA,2.4,"White","Male",1,1
+"24",58,1,"III","Adenocarcinoma",9,17.6,"White","Male",1,1
+"25",63,1,"III","Adenocarcinoma",4,16.3,"Unknown","Male",1,1
+"26",74,1,"III","Adenocarcinoma",24,29.6,"White","Female",1,1
+"27",76,0,"I","Adenocarcinoma",NA,81.2,"White","Male",1,1
+"28",59,0,"I","Adenocarcinoma",NA,59,"White","Male",1,1
+"29",71,0,"III","Adenocarcinoma",NA,92.6,"White","Male",1,1
+"30",45,0,"II","Adenocarcinoma",3,4,"White","Female",1,1
+"31",78,1,"III","Adenocarcinoma",NA,16.8,"White","Female",1,1
+"32",75,0,"I","Adenocarcinoma",NA,62,"White","Male",1,0
+"33",61,1,"I","Adenocarcinoma",NA,62.3,"White","Male",1,1
+"34",65,0,"I","Adenocarcinoma",NA,71.8,"White","Male",1,0
+"35",69,0,"I","Adenocarcinoma",NA,84,"Black or African American","Male",1,0
+"36",73,0,"I","Adenocarcinoma",NA,18.6,"White","Male",1,1
+"37",51,0,"I","Adenocarcinoma",NA,45.8,"White","Male",NA,1
+"38",63,1,"I","Adenocarcinoma",5,20.6,"Unknown","Female",1,1
+"39",60,0,"I","Adenocarcinoma",NA,110.5,"White","Male",1,0
+"40",42,0,"I","Adenocarcinoma",51,133.6,"White","Male",1,0
+"41",56,0,"II","Adenocarcinoma",30,70.5,"White","Male",1,1
+"42",69,0,"I","Adenocarcinoma",NA,52.1,"White","Female",1,0
+"43",58,0,"III","Adenocarcinoma",NA,17.6,"Asian","Female",0,1
+"44",62,0,"III","Adenocarcinoma",4,16.9,"Black or African American","Male",1,1
+"45",62,0,"I","Adenocarcinoma",NA,86.8,"White","Female",1,0
+"46",65,0,"I","Adenocarcinoma",102,103.4,"Unknown","Male",1,0
+"47",73,1,"I","Adenocarcinoma",NA,117.6,"White","Female",0,0
+"48",52,1,"II","Adenocarcinoma",34,115.8,"White","Female",1,1
+"49",72,0,"I","Adenocarcinoma",NA,19,"White","Male",1,1
+"50",65,1,"I","Adenocarcinoma",79,84.1,"White","Male",1,1
+"51",65,0,"I","Adenocarcinoma",NA,153.3,"White","Female",1,0
+"52",59,0,"I","Adenocarcinoma",NA,153.9,"White","Female",NA,0
+"53",62,0,"I","Adenocarcinoma",NA,162.6,"White","Female",1,0
+"54",63,0,"I","Adenocarcinoma",NA,63.8,"White","Male",1,0
+"55",54,1,"I","Adenocarcinoma",94,132.5,"White","Female",1,1
+"56",57,0,"I","Adenocarcinoma",NA,130.8,"White","Female",NA,0
+"57",59,0,"I","Adenocarcinoma",NA,159.6,"Black or African American","Female",1,0
+"58",48,0,"I","Adenocarcinoma",NA,157.7,"White","Female",0,0
+"59",44,0,"I","Adenocarcinoma",NA,76.3,"White","Female",1,0
+"60",40,0,"I","Adenocarcinoma",NA,105.9,"White","Female",1,0
+"61",64,0,"III","Adenocarcinoma",NA,28.2,"Not Reported","Male",1,1
+"62",69,0,"III","Adenocarcinoma",5,7.2,"White","Male",1,1
+"63",67,0,"I","Adenocarcinoma",NA,79.5,"White","Male",1,1
+"64",62,0,"I","Adenocarcinoma",50,82.3,"White","Female",1,0
+"65",60,0,"I","Adenocarcinoma",NA,101.2,"White","Male",1,0
+"66",46,0,"I","Adenocarcinoma",NA,168.1,"Asian","Male",1,0
+"67",77,0,"III","Adenocarcinoma",NA,14.9,"White","Male",1,1
+"68",56,0,"III","Adenocarcinoma",7,9.6,"White","Male",1,1
+"69",53,0,"I","Adenocarcinoma",NA,95,"White","Female",1,0
+"70",51,0,"I","Adenocarcinoma",NA,62.4,"White","Male",1,0
+"71",63,0,"II","Adenocarcinoma",NA,64.3,"Black or African American","Female",1,0
+"72",85,0,"I","Adenocarcinoma",NA,20.9,"White","Female",1,1
+"73",60,0,"II","Adenocarcinoma",22,22.3,"White","Female",1,1
+"74",58,0,"II","Adenocarcinoma",12,67.9,"White","Male",1,1
+"75",81,0,"I","Adenocarcinoma",NA,36.3,"White","Male",1,0
+"76",52,1,"II","Adenocarcinoma",14,22.7,"White","Female",1,1
+"77",81,1,"II","Adenocarcinoma",NA,32.9,"Not Reported","Female",0,0
+"78",57,0,"I","Adenocarcinoma",NA,38.1,"Not Reported","Female",0,0
+"79",76,1,"I","Adenocarcinoma",27,54.2,"Not Reported","Female",0,1
+"80",60,1,"II","Adenocarcinoma",52,96.1,"White","Female",1,1
+"81",62,0,"I","Adenocarcinoma",10,53.2,"White","Female",1,0
+"82",68,0,"II","Adenocarcinoma",NA,12.5,"White","Male",1,1
+"83",73,0,"I","Adenocarcinoma",NA,29.5,"Not Reported","Male",1,0
+"84",65,0,"II","Adenocarcinoma",NA,107.5,"White","Female",1,0
+"85",63,0,"I","Adenocarcinoma",NA,53.7,"White","Male",1,0
+"86",70,0,"I","Adenocarcinoma",NA,21.8,"White","Male",1,0
+"87",78,0,"I","Adenocarcinoma",NA,55.8,"White","Male",1,0
+"88",54,0,"II","Adenocarcinoma",NA,21,"White","Male",1,1
+"89",78,0,"II","Adenocarcinoma",NA,7.3,"White","Male",1,1
+"90",66,0,"I","Adenocarcinoma",NA,159.9,"White","Male",NA,0
+"91",72,0,"I","Adenocarcinoma",NA,60.8,"White","Male",1,0
+"92",81,0,"I","Adenocarcinoma",8,21.2,"White","Female",0,1
+"93",69,1,"I","Adenocarcinoma",46,53.6,"White","Female",0,0
+"94",59,0,"IV","Adenocarcinoma",NA,23.2,"White","Male",1,0
+"95",76,0,"I","Adenocarcinoma",NA,47.27,"White","Female",NA,0
+"96",70,0,"I","Adenocarcinoma",NA,59.11,"White","Male",NA,1
+"97",58,0,"I","Adenocarcinoma",NA,51.58,"White","Male",NA,0
+"98",48,0,"I","Adenocarcinoma",19,36.25,"White","Female",NA,1
+"99",82,0,"II","Adenocarcinoma",NA,6.6,"White","Male",NA,1
+"100",62,0,"I","Adenocarcinoma",9.6,54.93,"White","Male",NA,1
+"101",82,0,"III","Adenocarcinoma",NA,9.74,"White","Male",NA,1
+"102",68,0,"I","Adenocarcinoma",NA,58.88,"White","Male",NA,0
+"103",58,0,"I","Adenocarcinoma",NA,51.81,"Black or African American","Male",NA,0
+"104",63,0,"I","Adenocarcinoma",19.5,21.48,"White","Male",NA,1
+"105",78,0,"II","Adenocarcinoma",NA,6.38,"White","Male",NA,1
+"106",57,0,"I","Adenocarcinoma",25,69.01,"Black or African American","Female",NA,1
+"107",77,0,"I","Adenocarcinoma",64.14,64.14,"White","Female",NA,0
+"108",86,0,"III","Adenocarcinoma",12,32.24,"White","Female",NA,1
+"109",78,0,"III","Adenocarcinoma",NA,NA,"White","Female",NA,0
+"110",73,0,"I","Adenocarcinoma",NA,56.35,"White","Male",NA,0
+"111",70,0,"I","Adenocarcinoma",NA,69.05,"White","Female",NA,0
+"112",75,0,"I","Adenocarcinoma",29,56.32,"White","Female",NA,0
+"113",49,0,"I","Adenocarcinoma",NA,61.25,"White","Female",NA,0
+"114",51,0,"I","Adenocarcinoma",NA,50.43,"White","Female",NA,0
+"115",66,0,"I","Adenocarcinoma",NA,73.36,"White","Male",NA,0
+"116",76,0,"I","Adenocarcinoma",NA,66.74,"White","Female",NA,0
+"117",78,0,"I","Adenocarcinoma",NA,72.8,"White","Female",NA,0
+"118",76,0,"I","Adenocarcinoma",NA,19.9,"White","Male",NA,1
+"119",60,0,"III","Adenocarcinoma",14.3,31.28,"White","Female",NA,1
+"120",73,0,"I","Adenocarcinoma",NA,45.33,"White","Male",NA,1
+"121",72,0,"I","Adenocarcinoma",NA,83.95,"White","Female",NA,0
+"122",55,0,"III","Adenocarcinoma",NA,12.63,"White","Female",NA,1
+"123",64,0,"I","Adenocarcinoma",NA,77.89,"White","Female",NA,0
+"124",53,0,"I","Adenocarcinoma",9.6,11.18,"White","Female",NA,0
+"125",77,0,"III","Adenocarcinoma",NA,30.53,"White","Female",NA,0
+"126",55,0,"I","Adenocarcinoma",32,73.59,"White","Female",NA,0
+"127",67,0,"I","Adenocarcinoma",6.2,11.68,"White","Male",NA,1
+"128",70,0,"I","Adenocarcinoma",NA,74.61,"White","Female",NA,0
+"129",72,0,"I","Adenocarcinoma",15,31.94,"White","Female",NA,1
+"130",43,0,"I","Adenocarcinoma",NA,2.24,"White","Male",NA,1
+"131",52,0,"II","Adenocarcinoma",NA,8.85,"White","Female",NA,1
+"132",69,0,"I","Adenocarcinoma",NA,92.2,"White","Female",NA,0
+"133",33,0,"I","Adenocarcinoma",7,90.07,"Not Reported","Female",NA,0
+"134",59,0,"III","Adenocarcinoma",NA,24.97,"White","Male",NA,1
+"135",62,0,"I","Adenocarcinoma",41,42.04,"White","Male",NA,1
+"136",70,0,"I","Adenocarcinoma",NA,12.2,"Unknown","Male",NA,1
+"137",74,0,"III","Adenocarcinoma",NA,2.7,"Unknown","Male",NA,1
+"138",46,0,"I","Adenocarcinoma",NA,96,"Unknown","Male",NA,1
+"139",67,0,"III","Adenocarcinoma",NA,66.1,"Unknown","Male",NA,1
+"140",60,0,"I","Adenocarcinoma",NA,68.6,"Unknown","Male",NA,1
+"141",75,0,"I","Adenocarcinoma",NA,48,"Unknown","Male",NA,1
+"142",64,1,"III","Adenocarcinoma",8,16,"White","Male",1,1
+"143",62,1,"I","Adenocarcinoma",3,72,"White","Male",1,0
+"144",70,0,"I","Adenocarcinoma",NA,47,"White","Female",1,0
+"145",67,0,"IV","Adenocarcinoma",50,52,"White","Male",1,1
+"146",56,1,"II","Adenocarcinoma",14,39,"White","Female",1,1
+"147",57,0,"II","Adenocarcinoma",NA,66,"White","Male",1,0
+"148",81,0,"I","Adenocarcinoma",NA,44,"White","Female",0,0
+"149",65,0,"I","Adenocarcinoma",NA,70,"White","Female",1,0
+"150",73,0,"III","Adenocarcinoma",NA,75,"White","Female",0,0
+"151",65,0,"I","Adenocarcinoma",37,92,"White","Male",1,0
+"152",62,0,"I","Adenocarcinoma",NA,65,"White","Male",1,0
+"153",71,1,"III","Adenocarcinoma",13,43,"White","Male",1,0
+"154",82,0,"I","Adenocarcinoma",NA,69,"White","Female",1,0
+"155",68,0,"I","Adenocarcinoma",23,40,"White","Male",1,1
+"156",48,0,"III","Adenocarcinoma",NA,21,"White","Female",0,1
+"157",82,1,"I","Adenocarcinoma",6,29,"White","Female",1,1
+"158",64,1,"III","Adenocarcinoma",10,26,"White","Male",1,1
+"159",68,0,"I","Adenocarcinoma",37,77,"White","Male",1,0
+"160",58,0,"III","Adenocarcinoma",1,2,"White","Male",1,1
+"161",73,0,"I","Adenocarcinoma",37,66,"White","Male",1,0
+"162",52,1,"III","Adenocarcinoma",8,14,"White","Female",1,1
+"163",62,0,"I","Adenocarcinoma",NA,33,"White","Male",1,0
+"164",51,0,"I","Adenocarcinoma",NA,85,"White","Male",1,0
+"165",62,0,"I","Adenocarcinoma",35,66,"Black or African American","Male",1,0
+"166",50,0,"I","Adenocarcinoma",NA,15,"White","Female",1,0
+"167",65,0,"I","Adenocarcinoma",NA,91,"Asian","Male",1,0
+"168",74,1,"I","Adenocarcinoma",39,68,"White","Male",1,1
+"169",55,0,"II","Adenocarcinoma",NA,33,"White","Female",1,0
+"170",54,1,"IV","Adenocarcinoma",8,24,"White","Male",1,1
+"171",76,0,"I","Adenocarcinoma",NA,62,"White","Male",1,0
+"172",64,1,"III","Adenocarcinoma",1,114,"White","Female",1,1
+"173",58,0,"III","Adenocarcinoma",NA,4,"White","Female",1,1
+"174",70,1,"II","Adenocarcinoma",13,20,"White","Male",1,1
+"175",57,1,"III","Adenocarcinoma",23,52,"White","Female",1,1
+"176",67,1,"II","Adenocarcinoma",NA,93,"White","Female",1,0
+"177",74,0,"I","Adenocarcinoma",NA,14,"White","Female",1,1
+"178",59,1,"II","Adenocarcinoma",19,100,"White","Female",0,0
+"179",66,0,"I","Adenocarcinoma",NA,33,"White","Female",1,0
+"180",67,1,"II","Adenocarcinoma",21,32,"White","Male",0,1
+"181",57,0,"I","Adenocarcinoma",NA,60,"White","Female",1,0
+"182",64,0,"I","Adenocarcinoma",NA,50,"White","Male",1,0
+"183",59,0,"I","Adenocarcinoma",7,15,"Black or African American","Female",1,1
+"184",76,0,"I","Adenocarcinoma",NA,37,"White","Female",0,0
+"185",82,0,"I","Adenocarcinoma",NA,54,"White","Female",1,0
+"186",58,0,"I","Adenocarcinoma",NA,31,"White","Male",1,0
+"187",65,0,"I","Adenocarcinoma",NA,38,"White","Male",1,0
+"188",49,0,"III","Adenocarcinoma",NA,115,"White","Female",0,0
+"189",71,0,"III","Adenocarcinoma",10,36,"White","Female",1,0
+"190",61,1,"I","Adenocarcinoma",NA,48,"White","Female",1,1
+"191",75,1,"III","Adenocarcinoma",9,19,"White","Male",1,1
+"192",46,0,"I","Adenocarcinoma",NA,91,"White","Female",1,0
+"193",74,0,"I","Adenocarcinoma",NA,204,"Asian","Female",1,1
+"194",51,0,"II","Adenocarcinoma",NA,50,"White","Female",0,0
+"195",54,0,"I","Adenocarcinoma",NA,80,"White","Male",1,0
+"196",50,1,"III","Adenocarcinoma",27,42,"White","Female",1,1
+"197",69,0,"I","Adenocarcinoma",NA,60,"White","Female",1,0
+"198",63,0,"II","Adenocarcinoma",NA,26,"White","Female",1,0
+"199",76,0,"I","Adenocarcinoma",55,62,"White","Female",1,1
+"200",72,0,"II","Adenocarcinoma",NA,22,"White","Female",1,0
+"201",70,0,"I","Adenocarcinoma",NA,63,"White","Female",1,0
+"202",76,0,"I","Adenocarcinoma",NA,68,"White","Male",1,0
+"203",81,0,"I","Adenocarcinoma",NA,7,"White","Female",1,0
+"204",61,1,"I","Adenocarcinoma",19,52,"White","Female",0,1
+"205",53,0,"I","Adenocarcinoma",NA,36,"White","Female",0,0
+"206",72,0,"II","Adenocarcinoma",5,15,"White","Female",1,1
+"207",53,0,"II","Adenocarcinoma",13,20,"White","Female",1,1
+"208",61,0,"I","Adenocarcinoma",26,41,"White","Male",1,0
+"209",66,1,"III","Adenocarcinoma",10,25,"White","Male",NA,1
+"210",74,0,"II","Adenocarcinoma",NA,42,"White","Female",1,0
+"211",48,1,"III","Adenocarcinoma",29,51,"White","Female",1,1
+"212",65,0,"I","Adenocarcinoma",NA,50,"White","Female",1,0
+"213",70,1,"I","Adenocarcinoma",5,57,"Black or African American","Female",1,1
+"214",79,1,"I","Adenocarcinoma",7,13,"White","Female",1,1
+"215",67,1,"I","Adenocarcinoma",11,78,"White","Male",1,1
+"216",77,0,"I","Adenocarcinoma",NA,48,"White","Male",1,0
+"217",63,0,"III","Adenocarcinoma",NA,33,"White","Female",1,1
+"218",76,0,"I","Adenocarcinoma",NA,37,"White","Female",1,0
+"219",72,1,"II","Adenocarcinoma",15,17,"White","Male",1,1
+"220",51,0,"I","Adenocarcinoma",NA,24,"White","Female",1,1
+"221",63,0,"I","Adenocarcinoma",NA,44,"White","Female",0,0
+"222",80,0,"I","Adenocarcinoma",NA,30,"White","Female",1,0
+"223",74,1,"II","Adenocarcinoma",26,50,"White","Female",0,0
+"224",58,0,"I","Adenocarcinoma",NA,88,"White","Female",1,0
+"225",62,0,"I","Adenocarcinoma",16,42,"White","Female",1,0
+"226",67,0,"I","Adenocarcinoma",NA,46,"White","Female",NA,0
+"227",71,0,"I","Adenocarcinoma",NA,56,"White","Female",1,0
+"228",61,0,"I","Adenocarcinoma",NA,40,"White","Female",1,0
+"229",38,0,"III","Adenocarcinoma",NA,38,"White","Female",0,0
+"230",72,0,"II","Adenocarcinoma",NA,43,"White","Female",1,0
+"231",43,0,"I","Adenocarcinoma",NA,55,"White","Female",1,0
+"232",65,1,"III","Adenocarcinoma",7,17,"White","Female",0,1
+"233",54,0,"I","Adenocarcinoma",NA,36,"White","Female",0,0
+"234",79,0,"II","Adenocarcinoma",6,10,"White","Female",0,1
+"235",61,1,"I","Adenocarcinoma",21,23,"White","Male",0,1
+"236",74,0,"I","Adenocarcinoma",NA,62,"White","Male",1,0
+"237",80,1,"II","Adenocarcinoma",36,85,"White","Female",1,0
+"238",68,1,"I","Adenocarcinoma",11,47,"White","Female",1,1
+"239",64,0,"I","Adenocarcinoma",11,48,"White","Female",1,1
+"240",58,1,"II","Adenocarcinoma",31,57,"White","Female",1,0
+"241",57,0,"I","Adenocarcinoma",NA,43,"Unknown","Male",1,0
+"242",57,0,"I","Adenocarcinoma",NA,41,"White","Female",1,0
+"243",67,0,"I","Adenocarcinoma",NA,43,"White","Male",0,0
+"244",75,0,"II","Adenocarcinoma",NA,32,"White","Female",1,0
+"245",74,0,"I","Adenocarcinoma",NA,64,"White","Male",0,0
+"246",59,0,"I","Adenocarcinoma",NA,107,"Unknown","Male",1,0
+"247",75,0,"I","Adenocarcinoma",14,25,"Unknown","Male",1,1
+"248",60,0,"I","Adenocarcinoma",NA,96,"Unknown","Female",1,0
+"249",41,0,"I","Adenocarcinoma",2,98,"Unknown","Female",1,0
+"250",59,0,"I","Adenocarcinoma",17,37,"Unknown","Male",1,1
+"251",60,1,"I","Adenocarcinoma",NA,90,"Unknown","Female",1,0
+"252",43,0,"II","Adenocarcinoma",11,40,"White","Male",1,0
+"253",54,1,"I","Adenocarcinoma",58,71,"Unknown","Male",1,1
+"254",52,1,"II","Adenocarcinoma",3,9,"Unknown","Female",1,1
+"255",47,1,"I","Adenocarcinoma",NA,110,"Unknown","Male",1,0
+"256",55,0,"I","Adenocarcinoma",NA,110,"Unknown","Female",1,0
+"257",66,1,"I","Adenocarcinoma",3,6,"Unknown","Female",0,1
+"258",70,1,"II","Adenocarcinoma",77,95,"Unknown","Female",1,1
+"259",68,1,"I","Adenocarcinoma",35,38,"Unknown","Male",1,1
+"260",61,0,"I","Adenocarcinoma",5,9,"Unknown","Female",1,1
+"261",60,0,"I","Adenocarcinoma",NA,87,"Unknown","Female",1,0
+"262",35,0,"I","Adenocarcinoma",NA,88,"Unknown","Male",1,0
+"263",53,0,"II","Adenocarcinoma",NA,74,"Unknown","Female",1,0
+"264",54,1,"II","Adenocarcinoma",6,8,"Unknown","Male",1,1
+"265",73,1,"I","Adenocarcinoma",44,59,"White","Female",1,0
+"266",38,1,"I","Adenocarcinoma",NA,55,"Unknown","Female",1,0
+"267",58,0,"I","Adenocarcinoma",NA,36,"White","Male",1,0
+"268",65,1,"I","Adenocarcinoma",7,15,"Unknown","Male",1,1
+"269",66,1,"I","Adenocarcinoma",NA,85,"Unknown","Female",0,0
+"270",66,0,"II","Adenocarcinoma",6,9,"Unknown","Male",1,1
+"271",76,0,"II","Adenocarcinoma",4,11,"Native Hawaiian or Other Pacific Islander","Male",1,1
+"272",53,1,"I","Adenocarcinoma",13,79,"Unknown","Male",1,1
+"273",60,0,"I","Adenocarcinoma",NA,105,"Unknown","Male",1,0
+"274",40,1,"I","Adenocarcinoma",NA,97,"Unknown","Female",1,0
+"275",67,0,"II","Adenocarcinoma",4,4,"Unknown","Male",1,1
+"276",62,1,"I","Adenocarcinoma",16,36,"Unknown","Male",1,1
+"277",61,0,"II","Adenocarcinoma",25,44,"White","Male",0,1
+"278",63,0,"II","Adenocarcinoma",NA,74,"Unknown","Male",1,1
+"279",62,1,"II","Adenocarcinoma",4,13,"Unknown","Male",1,1
+"280",51,1,"I","Adenocarcinoma",NA,90,"Unknown","Female",1,0
+"281",53,1,"I","Adenocarcinoma",NA,85,"Unknown","Female",1,0
+"282",56,1,"II","Adenocarcinoma",69,71,"Unknown","Female",1,1
+"283",61,1,"II","Adenocarcinoma",29,64,"Unknown","Male",1,1
+"284",52,1,"I","Adenocarcinoma",NA,65,"Unknown","Female",1,1
+"285",60,1,"I","Adenocarcinoma",NA,68,"White","Male",1,0
+"286",57,1,"II","Adenocarcinoma",NA,64,"White","Male",1,0
+"287",46,0,"I","Adenocarcinoma",NA,63,"White","Female",NA,0
+"288",71,1,"II","Adenocarcinoma",11,13,"Unknown","Male",1,1
+"289",53,0,"II","Adenocarcinoma",NA,95,"Not Reported","Male",1,0
+"290",68,0,"II","Adenocarcinoma",NA,74,"Not Reported","Male",1,0
+"291",72,0,"II","Adenocarcinoma",56,57,"Not Reported","Female",1,1
+"292",68,0,"I","Adenocarcinoma",17,56,"Not Reported","Female",1,1
+"293",65,0,"II","Adenocarcinoma",NA,48,"Not Reported","Male",1,0
+"294",68,0,"I","Adenocarcinoma",44,49,"Not Reported","Female",0,0
+"295",68,0,"I","Adenocarcinoma",NA,28,"Not Reported","Male",1,0
+"296",57,0,"I","Adenocarcinoma",NA,36,"Not Reported","Female",1,0
+"297",56,1,"I","Adenocarcinoma",12,40,"Not Reported","Female",NA,0
+"298",56,0,"I","Adenocarcinoma",NA,37,"Not Reported","Male",1,0
+"299",51,0,"I","Adenocarcinoma",NA,40,"Not Reported","Female",NA,0
+"300",68,0,"I","Adenocarcinoma",NA,23,"Not Reported","Female",1,1
+"301",61,0,"I","Adenocarcinoma",NA,76,"Not Reported","Male",1,0
+"302",62,0,"I","Adenocarcinoma",28,34,"Not Reported","Female",1,1
+"303",73,0,"I","Adenocarcinoma",NA,66,"Not Reported","Male",0,0
+"304",63,0,"II","Adenocarcinoma",17,29,"Not Reported","Female",1,1
+"305",72,0,"I","Adenocarcinoma",5,7,"Not Reported","Male",0,1
+"306",57,0,"I","Adenocarcinoma",NA,53,"Not Reported","Female",1,0
+"307",55,0,"I","Adenocarcinoma",NA,63,"Not Reported","Female",NA,0
+"308",64,0,"I","Adenocarcinoma",NA,23,"Not Reported","Male",1,0
+"309",40,0,"I","Adenocarcinoma",NA,62,"Not Reported","Female",1,0
+"310",75,0,"II","Adenocarcinoma",5,7,"Not Reported","Female",0,1
+"311",60,0,"I","Adenocarcinoma",NA,26,"Not Reported","Male",1,0
+"312",58,0,"I","Adenocarcinoma",NA,40,"Not Reported","Female",1,0
+"313",64,0,"I","Adenocarcinoma",10,30,"Not Reported","Male",1,0
+"314",62,0,"I","Adenocarcinoma",NA,40,"Not Reported","Male",1,0
+"315",75,0,"I","Adenocarcinoma",75,84,"Not Reported","Male",0,0
+"316",76,0,"I","Adenocarcinoma",NA,18,"Not Reported","Male",1,1
+"317",59,0,"II","Adenocarcinoma",12,25,"Not Reported","Female",1,1
+"318",54,0,"I","Adenocarcinoma",NA,80,"Not Reported","Male",1,0
+"319",74,0,"II","Adenocarcinoma",7,12,"Not Reported","Male",1,1
+"320",70,0,"I","Adenocarcinoma",NA,32,"Not Reported","Female",0,0
+"321",68,0,"I","Adenocarcinoma",84,105,"Not Reported","Female",1,0
+"322",69,0,"II","Adenocarcinoma",NA,81,"Not Reported","Male",1,0
+"323",75,0,"I","Adenocarcinoma",NA,75,"Not Reported","Male",1,0
+"324",64,0,"I","Adenocarcinoma",NA,97,"Not Reported","Male",1,0
+"325",79,0,"II","Adenocarcinoma",17,18,"Not Reported","Male",0,1
+"326",69,0,"I","Adenocarcinoma",12,32,"Not Reported","Male",1,1
+"327",77,0,"II","Adenocarcinoma",5,10,"Not Reported","Male",1,1
+"328",66,0,"I","Adenocarcinoma",2.79,44.94,"Black or African American","Female",1,1
+"329",79,0,"I","Adenocarcinoma",13.54,34.76,"White","Male",1,1
+"330",72,0,"I","Adenocarcinoma",17.35,19.84,"White","Female",1,1
+"331",67,1,"IV","Adenocarcinoma",0.46,8.61,"White","Male",1,1
+"332",79,0,"III","Adenocarcinoma",NA,0.53,"White","Female",1,1
+"333",74,0,"III","Adenocarcinoma",27.14,37.55,"White","Female",1,1
+"334",50,1,"Unknown","Adenocarcinoma",17.44,106.58,"White","Male",1,0
+"335",40,0,"I","Adenocarcinoma",NA,123.3,"White","Male",1,0
+"336",79,0,"II","Adenocarcinoma",NA,56.8,"White","Male",1,1
+"337",75,0,"II","Adenocarcinoma",NA,30.12,"White","Female",1,1
+"338",64,0,"Unknown","Adenocarcinoma",12.1,13.33,"White","Female",0,1
+"339",77,0,"I","Adenocarcinoma",NA,105.99,"White","Female",0,1
+"340",66,0,"III","Adenocarcinoma",35.19,44.42,"White","Female",1,1
+"341",49,1,"I","Adenocarcinoma",19.06,20.86,"White","Male",1,1
+"342",62,1,"II","Adenocarcinoma",26.71,27.63,"White","Male",1,1
+"343",66,0,"I","Adenocarcinoma",NA,74.18,"White","Male",1,1
+"344",87,0,"I","Adenocarcinoma",NA,96,"White","Female",0,1
+"345",62,0,"II","Adenocarcinoma",9.72,41.33,"White","Female",1,1
+"346",82,0,"II","Adenocarcinoma",NA,5.65,"White","Male",1,1
+"347",77,0,"I","Adenocarcinoma",NA,0.43,"White","Male",1,1
+"348",61,1,"I","Adenocarcinoma",NA,16.56,"White","Female",1,1
+"349",81,0,"I","Adenocarcinoma",NA,61.21,"White","Male",1,1
+"350",72,0,"II","Adenocarcinoma",NA,104.47,"White","Female",1,0
+"351",67,0,"I","Adenocarcinoma",70.27,70.6,"White","Female",1,1
+"352",74,0,"III","Adenocarcinoma",NA,3.52,"White","Female",1,1
+"353",64,0,"I","Adenocarcinoma",2.53,17.54,"White","Female",1,1
+"354",65,0,"I","Adenocarcinoma",25.43,27.56,"White","Female",1,1
+"355",76,0,"II","Adenocarcinoma",8.44,16.39,"White","Male",1,1
+"356",66,0,"I","Adenocarcinoma",NA,77.7,"White","Female",0,0
+"357",70,0,"I","Adenocarcinoma",25.17,94.16,"Black or African American","Male",1,0
+"358",66,0,"I","Adenocarcinoma",NA,73.4,"White","Female",1,0
+"359",70,1,"I","Adenocarcinoma",17.77,45.24,"White","Male",1,1
+"360",63,0,"I","Adenocarcinoma",NA,0.03,"White","Male",1,1
+"361",68,0,"I","Adenocarcinoma",55.62,75.73,"White","Female",0,1
+"362",76,0,"I","Adenocarcinoma",21.39,39.06,"White","Male",1,1
+"363",49,1,"III","Adenocarcinoma",39.69,77.6,"White","Male",1,1
+"364",61,1,"III","Adenocarcinoma",NA,2.27,"White","Male",1,1
+"365",71,0,"Unknown","Adenocarcinoma",NA,84.44,"White","Male",1,0
+"366",60,0,"II","Adenocarcinoma",11.04,42.18,"White","Male",1,1
+"367",73,0,"I","Adenocarcinoma",NA,85.65,"White","Female",1,1
+"368",47,1,"II","Adenocarcinoma",88.77,92.52,"White","Male",1,0
+"369",64,0,"I","Adenocarcinoma",13.63,39.36,"White","Male",1,1
+"370",66,0,"I","Adenocarcinoma",NA,82.5,"White","Female",1,0
+"371",48,1,"II","Adenocarcinoma",22.21,31.7,"White","Male",1,0
+"372",79,0,"III","Adenocarcinoma",NA,42.02,"White","Male",1,1
+"373",68,0,"III","Adenocarcinoma",4.17,5.78,"White","Female",1,1
+"374",68,1,"IV","Adenocarcinoma",3.22,7.69,"White","Female",1,1
+"375",82,0,"I","Adenocarcinoma",NA,47.9,"White","Female",1,1
+"376",70,0,"I","Adenocarcinoma",NA,58.84,"White","Male",1,0
+"377",75,0,"I","Adenocarcinoma",NA,81.54,"White","Male",1,0
+"378",63,0,"I","Adenocarcinoma",22.18,24.51,"White","Female",1,1
+"379",81,0,"I","Adenocarcinoma",NA,7.03,"White","Female",1,1
+"380",75,0,"II","Adenocarcinoma",7.92,9.63,"White","Female",1,1
+"381",60,0,"I","Adenocarcinoma",NA,40.21,"White","Female",0,1
+"382",60,0,"I","Adenocarcinoma",NA,66.69,"White","Female",1,0
+"383",71,0,"I","Adenocarcinoma",NA,40.97,"White","Female",1,1
+"384",73,0,"I","Adenocarcinoma",NA,76.12,"White","Male",1,0
+"385",77,0,"I","Adenocarcinoma",37.16,72.64,"White","Male",1,1
+"386",50,0,"II","Adenocarcinoma",9.26,11.99,"White","Male",1,1
+"387",59,0,"II","Adenocarcinoma",4.24,6.24,"White","Female",1,1
+"388",70,0,"I","Adenocarcinoma",6.83,21.88,"White","Male",1,1
+"389",58,0,"II","Adenocarcinoma",4.67,78.85,"White","Male",1,0
+"390",60,0,"I","Adenocarcinoma",NA,72.05,"White","Male",1,0
+"391",72,0,"II","Adenocarcinoma",17.25,28.25,"Asian","Male",1,1
+"392",62,0,"I","Adenocarcinoma",53.19,53.39,"White","Female",0,0
+"393",77,0,"I","Adenocarcinoma",NA,39.03,"White","Female",0,0
+"394",82,0,"I","Adenocarcinoma",NA,52.2,"White","Male",1,1
+"395",73,0,"I","Adenocarcinoma",13.14,15.77,"White","Male",1,1
+"396",57,0,"II","Adenocarcinoma",11.3,27.66,"White","Female",1,1
+"397",73,1,"II","Adenocarcinoma",23.13,29.67,"White","Male",1,1
+"398",70,0,"III","Adenocarcinoma",NA,12.02,"White","Female",1,1
+"399",53,0,"I","Adenocarcinoma",NA,150.18,"White","Male",1,0
+"400",75,0,"IV","Adenocarcinoma",11.24,15.47,"Black or African American","Male",1,1
+"401",71,1,"II","Adenocarcinoma",20.57,24.74,"White","Female",1,1
+"402",36,1,"II","Adenocarcinoma",5.62,16.49,"White","Male",1,1
+"403",68,1,"III","Adenocarcinoma",2.53,8.94,"White","Female",1,1
+"404",68,0,"II","Adenocarcinoma",23.49,26.38,"White","Female",1,1
+"405",65,0,"III","Adenocarcinoma",16.23,18.2,"White","Male",1,1
+"406",51,1,"III","Adenocarcinoma",69.32,79.54,"White","Female",0,1
+"407",62,0,"I","Adenocarcinoma",NA,30.7,"Unknown","Male",NA,1
+"408",72,0,"II","Adenocarcinoma",NA,80.9,"Unknown","Male",NA,1
+"409",69,0,"III","Adenocarcinoma",NA,11.7,"Unknown","Male",NA,1
+"410",68,0,"III","Adenocarcinoma",NA,33.2,"Unknown","Male",NA,1
+"411",57,0,"II","Adenocarcinoma",NA,42.5,"Unknown","Male",NA,1
+"412",69,0,"I","Adenocarcinoma",NA,122.4,"Unknown","Male",NA,1
+"413",58,0,"I","Adenocarcinoma",NA,30.2,"Unknown","Male",NA,1
+"414",72,0,"II","Adenocarcinoma",NA,78.5,"Unknown","Male",NA,1
+"415",47,0,"I","Adenocarcinoma",NA,73.2,"Unknown","Male",NA,1
+"416",64,0,"III","Adenocarcinoma",NA,65.2,"Unknown","Male",NA,1
+"417",59,0,"II","Adenocarcinoma",NA,145.8,"Unknown","Male",NA,0
+"418",69,0,"I","Adenocarcinoma",NA,73.7,"Unknown","Male",NA,1
+"419",77,0,"II","Adenocarcinoma",NA,3.3,"Unknown","Male",NA,1
+"420",77,0,"I","Adenocarcinoma",NA,19.5,"Unknown","Male",NA,1
+"421",70,0,"II","Adenocarcinoma",NA,8.4,"Unknown","Male",NA,1
+"422",57,0,"III","Adenocarcinoma",NA,26.9,"Unknown","Male",NA,1
+"423",67,0,"I","Adenocarcinoma",NA,129.8,"Unknown","Male",NA,0
+"424",66,0,"III","Adenocarcinoma",NA,19.6,"Unknown","Male",NA,1
+"425",78,0,"I","Adenocarcinoma",NA,105.4,"Unknown","Male",NA,1
+"426",46,0,"I","Adenocarcinoma",NA,157.5,"Unknown","Male",NA,1
+"427",62,0,"I","Adenocarcinoma",NA,120.5,"Unknown","Male",NA,1
+"428",66,0,"I","Adenocarcinoma",NA,47.8,"Unknown","Male",NA,1
+"429",65,0,"II","Adenocarcinoma",NA,130,"Unknown","Male",NA,1
+"430",46,0,"II","Adenocarcinoma",NA,52.3,"Unknown","Female",NA,0
+"431",63,0,"II","Adenocarcinoma",NA,69.4,"Unknown","Female",NA,0
+"432",60,0,"II","Adenocarcinoma",NA,25.95,"Unknown","Male",NA,1
+"433",77,0,"I","Adenocarcinoma",NA,121.8,"Unknown","Male",NA,0
+"434",44,0,"III","Adenocarcinoma",NA,32.6,"Unknown","Male",NA,1
+"435",49,0,"IV","Adenocarcinoma",NA,40.2,"Unknown","Male",NA,1
+"436",70,0,"III","Adenocarcinoma",NA,14.5,"Unknown","Male",NA,1
+"437",68,0,"I","Adenocarcinoma",NA,9.2,"Unknown","Male",NA,1
+"438",66,0,"I","Adenocarcinoma",NA,19,"Unknown","Male",NA,1
+"439",74,0,"III","Adenocarcinoma",NA,121.2,"Unknown","Male",NA,0
+"440",62,0,"III","Adenocarcinoma",NA,9,"Unknown","Male",NA,1
+"441",81,0,"I","Adenocarcinoma",NA,97.6,"Unknown","Male",NA,0
+"442",65,0,"II","Adenocarcinoma",NA,175.9,"Unknown","Male",NA,0
+"443",61,0,"II","Adenocarcinoma",NA,45.3,"Unknown","Male",NA,1
