@@ -1,0 +1,148 @@
+---
+title: "GSE47115"
+output: pdf_document
+date: "2025-01-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+
+```{r}
+# get supplementary files
+# Download the file manually from GEO
+download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE47nnn/GSE47115/matrix/GSE47115_series_matrix.txt.gz",
+              destfile = "GSE47115_series_matrix.txt.gz")
+
+# Load the file
+#GSE47115 <- getGEO(filename = "GSE47115_series_matrix.txt.gz")
+
+
+GSE47115 = getGEO("GSE47115", GSEMatrix = T)
+
+#expression data
+GSE47115.expr = exprs(GSE47115[[1]])
+
+#background correction
+GSE47115_corrected = backgroundCorrect.matrix(GSE47115.expr, method = "normexp")
+
+#normalization
+GSE47115.normalized = normalizeBetweenArrays(GSE47115_corrected, method = "quantile")
+
+
+hist(GSE47115.expr)
+hist(GSE47115_corrected)
+hist(GSE47115.normalized)
+
+#range before and after
+range(GSE47115.expr)
+range(GSE47115.normalized)
+range(GSE47115.expr)
+```
+
+```{r}
+gse = getGEO("GSE47115", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE47115_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "ILMN_Gene")]
+
+
+gset = getGEO("GSE47115", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL14951", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+GSE47115.expr = as.data.frame(t(GSE47115.normalized))
+probes47115 = colnames(GSE47115.expr)
+
+GSE47115.data = as_tibble(gset@phenoData@data) %>%
+  select(-(title:data_row_count))
+
+GSE47115.data = GSE47115.data[, c(2, 3, 4, 5, 8, 10, 11)]
+colnames(GSE47115.data) = c("Adjuvant Chemo", "Age", "OS_STATUS", "Sex", "OS_MONTHS", "Smoked?", "Stage")
+
+unique(GSE47115.data$`Smoked?`)
+GSE47115.data$Age = as.numeric(GSE47115.data$Age)
+GSE47115.data$OS_MONTHS = as.numeric(GSE47115.data$OS_MONTHS)
+GSE47115.data$OS_STATUS <- ifelse(GSE47115.data$OS_STATUS == "Yes", 1, 0)
+GSE47115.data$`Adjuvant Chemo` <- ifelse(GSE47115.data$`Adjuvant Chemo` == "yes", 1, 0)
+GSE47115.data$Sex[GSE47115.data$Sex == "male"] <- "Male"
+GSE47115.data$Sex[GSE47115.data$Sex == "female"] <- "Female"
+GSE47115.data$`Smoked?` <- ifelse(GSE47115.data$`Smoked?` %in% c("former", "active"), 1, 0)
+
+# fetch feature data to get gene symbols
+#feature.dat = gse$GSE47115_series_matrix.txt.gz@featureData@data 
+#GSE47115.symbol = feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+#write.csv(GSE47115.symbol, "GSE47115_symbol.csv")
+
+
+
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE47115merged = cbind(GSE47115.data, GSE47115.expr)
+
+GSE47115data.expr = GSE47115merged[, 1:7]
+```
+
+```{r}
+write.csv(GSE47115.data, 
+          file = "GSE47115_data.csv")
+
+write.csv(GSE47115.expr, 
+          file = "GSE47115_expr.csv")
+
+write.csv(GSE47115merged, 
+          "GSE47115merged.csv")
+```
+
+```{r}
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("illuminaHumanv4.db")
+library(illuminaHumanv4.db)
+
+# Map probe IDs to gene symbols
+annotation47115 <- select(illuminaHumanv4.db,
+                     keys = probes47115,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation47115)
+
+# Unique Symbols
+unique47115 = unique(annotation47115$SYMBOL)
+print(length(unique47115))
+
+duplicate_genes47115 <- annotation47115[duplicated(annotation47115$PROBEID), ]
+print(duplicate_genes47115)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes47115 <- annotation47115[duplicated(annotation47115$SYMBOL) | duplicated(annotation47115$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes47115 <- duplicate_genes47115[order(duplicate_genes47115$SYMBOL), ]
+
+print(duplicate_genes47115)
+```
+

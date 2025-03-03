@@ -1,0 +1,157 @@
+---
+title: "GSE63384"
+output: pdf_document
+date: "2025-02-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+
+```{r}
+# get supplementary files
+# Download the file manually from GEO
+download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE47nnn/GSE63384/matrix/GSE63384_series_matrix.txt.gz",
+              destfile = "GSE63384_series_matrix.txt.gz")
+
+# Load the file
+#GSE63384 <- getGEO(filename = "GSE63384_series_matrix.txt.gz")
+
+
+GSE63384 = getGEO("GSE63384", GSEMatrix = T)
+
+#expression data
+GSE63384.expr = exprs(GSE63384[[1]])
+
+#background correction
+GSE63384_corrected = backgroundCorrect.matrix(GSE63384.expr, method = "normexp")
+
+#normalization
+GSE63384.normalized = normalizeBetweenArrays(GSE63384_corrected, method = "quantile")
+
+
+hist(GSE63384.expr)
+hist(GSE63384_corrected)
+hist(GSE63384.normalized)
+
+#range before and after
+range(GSE63384.expr)
+range(GSE63384.normalized)
+range(GSE63384.expr)
+```
+
+```{r}
+gse = getGEO("GSE63384", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE63384_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "ILMN_Gene")]
+
+
+gset = getGEO("GSE63384", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL8490", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+GSE63384.expr = as.data.frame(t(GSE63384.normalized))
+probes63384 = colnames(GSE63384.expr)
+
+GSE63384.data = as_tibble(gset@phenoData@data) %>%
+  select(-(title:data_row_count))
+
+GSE63384.data = GSE63384.data[, c(1, 2, 4, 6, 10, 11, 13, 14)]
+colnames(GSE63384.data) = c("Stage", "Age", "OS_STATUS", "Histology", "Race", "Sex", "Smoked?", "OS_MONTHS")
+
+GSE63384.data$`OS_MONTHS` <- round(as.numeric(GSE63384.data$`OS_MONTHS`) / 30.44, 2)
+unique(GSE63384.data$`Smoked?`)
+GSE63384.data$Age = as.numeric(GSE63384.data$Age)
+GSE63384.data$OS_STATUS <- ifelse(GSE63384.data$OS_STATUS == "no", 1, 0)
+GSE63384.data$Histology[GSE63384.data$Histology == "adenocarcinoma"] <- "Adenocarcinoma"
+GSE63384.data$Histology[GSE63384.data$Histology == "normal"] <- "Normal"
+GSE63384.data$Stage[GSE63384.data$Stage == "Ia"  ] <- "IA"
+GSE63384.data$Stage[GSE63384.data$Stage == "Ib"  ] <- "IB"
+GSE63384.data$Stage[GSE63384.data$Stage == "IIa"  ] <- "IIA"
+GSE63384.data$Stage[GSE63384.data$Stage == "IIb"  ] <- "IIB"
+GSE63384.data$`Smoked?` <- ifelse(GSE63384.data$`Smoked?` == "ever", 1,
+                            ifelse(GSE63384.data$`Smoked?` == "never", 0, NA))
+
+
+# fetch feature data to get gene symbols
+#feature.dat = gse$GSE63384_series_matrix.txt.gz@featureData@data 
+#GSE63384.symbol = feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+#write.csv(GSE63384.symbol, "GSE63384_symbol.csv")
+
+
+
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE63384merged = cbind(GSE63384.data, GSE63384.expr)
+
+GSE63384data.expr = GSE63384merged[, 1:8]
+```
+
+```{r}
+write.csv(GSE63384.data, 
+          file = "GSE63384_data.csv")
+
+write.csv(GSE63384.expr, 
+          file = "GSE63384_expr.csv")
+
+write.csv(GSE63384merged, 
+          "GSE63384merged.csv")
+```
+
+```{r}
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("IlluminaHumanMethylation27kanno.ilmn12.hg19")
+library(IlluminaHumanMethylation27kanno.ilmn12.hg19)
+
+# Map probe IDs to gene symbols
+anno_27k <- getAnnotation(IlluminaHumanMethylation27kanno.ilmn12.hg19)
+probe_id = (rownames(anno_27k))
+
+valid_probes <- probes63384[probes63384 %in% probe_id]
+
+annotation63384 <- anno_27k[valid_probes, c("Gene_ID", "Symbol")]
+
+# Convert row names (probe IDs) to a column for clarity
+annotation63384 <- data.frame(Probe_ID = rownames(annotation63384), annotation63384, row.names = NULL)
+
+# View the results
+print(annotation63384)
+
+# Unique Symbols
+unique63384 = unique(annotation63384$Symbol)
+print(length(unique63384))
+
+#duplicate_genes63384 <- annotation63384[duplicated(annotation63384$Probe_ID), ]
+#print(duplicate_genes63384)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes63384 <- annotation63384[duplicated(annotation63384$Symbol) | duplicated(annotation63384$Symbol, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes63384 <- duplicate_genes63384[order(duplicate_genes63384$Symbol), ]
+
+print(duplicate_genes63384)
+```
