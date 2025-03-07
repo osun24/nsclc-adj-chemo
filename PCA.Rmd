@@ -56,7 +56,7 @@ fviz_pca_ind(pca_corrected,
 
 GPL96.expr = expr_pair_corrected
 write.csv(GPL96.expr, 
-          "GPL596expr.csv",
+          "GPL96expr.csv",
           row.names = F)
 
 GPL96merged = cbind(GPL96, GPL96.expr)
