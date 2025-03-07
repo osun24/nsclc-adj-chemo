@@ -1,0 +1,121 @@
+---
+title: "PCA"
+output: pdf_document
+date: "2025-02-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)   # For data manipulation
+library(survival)    # For survival analysis
+install.packages("survminer")
+library(survminer)   # For survival visualization
+install.packages("ggfortify")
+library(ggfortify)   # For PCA visualization
+install.packages("factoextra")
+library(factoextra)
+install.packages("sva")
+library(sva)
+```
+
+```{r}
+# Directly combine datasets by rows (subjects)
+expr_pair <- rbind(GSE68465.expr, GSE14814.expr)
+
+# Generate batch labels clearly identifying samples
+batch_labels <- c(rep("GSE68465", nrow(GSE68465.expr)),
+                  rep("GSE14814", nrow(GSE14814.expr)))
+
+pca_res <- prcomp(expr_pair, scale=TRUE)
+fviz_pca_ind(pca_res,
+             geom = "point",
+             col.ind = batch_labels,
+             addEllipses = TRUE,
+             legend.title = "Dataset")
+
+```
+
+```{r}
+library(sva)
+
+expr_pair_combat <- ComBat(dat = t(expr_pair), batch = batch_labels, mod = NULL)
+
+# transpose back for PCA
+expr_pair_corrected <- t(expr_pair_combat)
+
+# PCA after correction
+pca_corrected <- prcomp(expr_pair_corrected, scale=TRUE)
+fviz_pca_ind(pca_corrected,
+             geom = "point",
+             col.ind = batch_labels,
+             addEllipses = TRUE,
+             legend.title = "Dataset (Corrected)")
+
+GPL96.expr = expr_pair_corrected
+write.csv(GPL96.expr, 
+          "GPL596expr.csv",
+          row.names = F)
+
+GPL96merged = cbind(GPL96, GPL96.expr)
+write.csv(GPL96merged, 
+          "GPL96merged.csv",
+          row.names = F)
+```
+
+
+
+```{r}
+expr_all <- rbind(GSE29013.expr, 
+                  GSE37745.expr, 
+                  GSE50081.expr,
+                  GSE31908.expr,
+                  GSE31210.expr)
+
+# Create batch labels for all samples
+batch_labels_all <- c(rep("GSE29013", nrow(GSE29013.expr)),
+                      rep("GSE37745", nrow(GSE37745.expr)),
+                      rep("GSE50081", nrow(GSE50081.expr)),
+                      rep("GSE31908", nrow(GSE31908.expr)),
+                      rep("GSE31210", nrow(GSE31210.expr)))
+
+library(factoextra)
+pca_before <- prcomp(expr_all, scale=TRUE)
+fviz_pca_ind(pca_before,
+             geom = "point",
+             col.ind = batch_labels_all,
+             addEllipses = TRUE,
+             legend.title = "Dataset (Before Correction)")
+
+```
+
+
+```{r}
+library(sva)
+expr_all_combat <- ComBat(dat = t(expr_all), batch = batch_labels_all, mod = NULL)
+
+# transpose back for PCA and downstream analyses
+expr_all_corrected <- t(expr_all_combat)
+
+pca_after <- prcomp(expr_all_corrected, scale=TRUE)
+fviz_pca_ind(pca_after,
+             geom = "point",
+             col.ind = batch_labels_all,
+             addEllipses = TRUE,
+             legend.title = "Dataset (After Correction)")
+
+GPL570.expr = expr_all_corrected
+
+write.csv(GPL570.expr, 
+          "GPL570expr.csv",
+          row.names = F)
+
+GPL570merged = cbind(GPL570, GPL570.expr)
+write.csv(GPL570merged, 
+          "GPL570merged.csv",
+          row.names = F)
+```
+
+
