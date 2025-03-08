@@ -1,0 +1,161 @@
+---
+title: "GSE50081"
+output: pdf_document
+date: "2025-01-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+options(timeout = 10000)
+getGEOSuppFiles("GSE50081")
+
+# untar files
+untar("GSE50081/GSE50081_RAW.tar",exdir='GSE50081/CEL')
+
+celfiles = list.files("GSE50081/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE50081.raw = read.celfiles(celfiles)
+
+# normalization 
+GSE50081.rma = rma(GSE50081.raw)
+
+write.csv(GSE50081.rma, 
+          "GSE50081rma.csv",
+          row.names = F)
+
+# Get the data to be used in R
+GSE50081.expr = as.data.frame(t(exprs(GSE50081.rma)))
+
+probesGSE50081 = colnames(GSE50081.expr)
+
+write.csv(GSE50081.expr, 
+          "GSE50081expr.csv",
+          row.names = F)
+
+```
+
+# map probe IDs to gene symbols
+```{r}
+# fetch feature data to get gene symbols
+
+gse = getGEO("GSE50081", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE50081_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "Gene Symbol")]
+
+gset = getGEO("GSE50081", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL570", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+# Extract microarray expression values from NCBI
+GSE50081.gset = as_tibble(t(exprs(gset)))
+
+# Next, we want to append clinical information onto gene expression data
+GSE50081.data = as_tibble(gset@phenoData@data) %>%
+  select(-c(title:data_row_count))
+
+GSE50081.data = GSE50081.data[, c(1, 3, 7, 8, 9, 10, 11)]
+
+colnames(GSE50081.data) = c("Age", "Histology", "Sex", "Smoked?", "Stage", "OS_STATUS", "OS_MONTHS")
+
+GSE50081.data$OS_MONTHS = GSE50081.data$OS_MONTHS*12
+GSE50081.data$OS_STATUS <- ifelse(GSE50081.data$OS_STATUS == "dead", 1, 0)
+GSE50081.data$`Smoked?` <- ifelse(GSE50081.data$`Smoked?` %in% c("Current", "Ex-smoker"), 1,
+                                  ifelse(GSE50081.data$`Smoked?` == "Never", 0, NA))
+GSE50081.data$Age = as.numeric(GSE50081.data$Age)
+GSE50081.data$Sex <- ifelse(GSE50081.data$Sex == "M", "Male", "Female")
+GSE50081.data$Histology[GSE50081.data$Histology == "adenosquamous carcinoma"] <- "Adenosquamous Carcinoma"
+GSE50081.data$Histology[GSE50081.data$Histology == "adenocarcinoma"] <- "Adenocarcinoma"
+GSE50081.data$Histology[GSE50081.data$Histology == "squamous cell carcinoma"] <- "Squamous Cell Carcinoma"
+GSE50081.data$Histology[GSE50081.data$Histology == "large cell carcinoma"] <- "Large Cell Carcinoma"
+GSE50081.data$Histology[GSE50081.data$Histology == "NSClarge cell carcinoma-mixed"] <- "NSClarge Cell Carcinoma-Mixed"
+GSE50081.data$Histology[GSE50081.data$Histology == "NSCLC-favor adenocarcinoma" ] <- "NSCLC-Favor Adenocarcinoma" 
+GSE50081.data$Histology[GSE50081.data$Histology == "squamous cell carcinoma X2"  ] <- "Squamous cell Carcinoma X2" 
+GSE50081.data$Stage[GSE50081.data$Stage == "1A"  ] <- "IA"
+GSE50081.data$Stage[GSE50081.data$Stage == "1B"  ] <- "IB"
+GSE50081.data$Stage[GSE50081.data$Stage == "2A"  ] <- "IIA"
+GSE50081.data$Stage[GSE50081.data$Stage == "2B"  ] <- "IIB"
+GSE50081.data$OS_MONTHS = as.numeric(GSE50081.data$OS_MONTHS)
+GSE50081.data$"Adjuvant Chemo" = 0
+GSE50081.data$Race = "Unknown"
+
+# fetch feature data to get gene symbols
+feature.dat = gse$GSE50081_series_matrix.txt.gz@featureData@data 
+GSE50081.symbol = 
+  feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+
+```
+
+```{r}
+write.csv(feature.df, 
+          "GSE50081symbol.csv", 
+          row.names = F)
+
+write.csv(GSE50081.symbol, 
+          "GSE50081_symbol.csv")
+
+write.csv(GSE50081.data, 
+          file = "GSE50081_data.csv")
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE50081.merged = cbind(GSE50081.data, GSE50081.expr)
+write.csv(GSE50081.merged, 
+          "GSE50081merged.csv")
+
+GSE50081data.expr = GSE50081.merged[, 1:7]
+```
+
+```{r}
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("hgu133plus2.db")
+library(hgu133plus2.db)
+
+# Map probe IDs to gene symbols
+annotation50081 <- select(hgu133plus2.db,
+                     keys = probesGSE50081,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation50081)
+
+# Unique Symbols
+unique50081 = unique(annotation50081$SYMBOL)
+print(length(unique50081))
+
+duplicate_genes50081 <- annotation50081[duplicated(annotation50081$PROBEID), ]
+print(duplicate_genes50081)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes50081 <- annotation50081[duplicated(annotation50081$SYMBOL) | duplicated(annotation50081$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes50081 <- duplicate_genes50081[order(duplicate_genes50081$SYMBOL), ]
+
+print(duplicate_genes50081)
+```
+

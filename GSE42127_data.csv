@@ -1,177 +1,177 @@
-"","Age at Surgery","Final_Pat_Stage","Gender","Adjuvant Chemo","Histology","Survival Months","Survival Status"
-"1","63.8","IB","M","FALSE","Adenocarcinoma","33.6","D"
-"2","60.4","IB","F","FALSE","Adenocarcinoma","33.6","D"
-"3","84.4","IIB","M","FALSE","Squamous","120","D"
-"4","67.6","IIIB","M","FALSE","Adenocarcinoma","106.8","D"
-"5","68.5","IA","F","FALSE","Adenocarcinoma","132","A"
-"6","53.5","IB","F","FALSE","Adenocarcinoma","117.6","A"
-"7","78.4","IB","M","FALSE","Adenocarcinoma","88.8","D"
-"8","69.2","IA","F","FALSE","Squamous","54","D"
-"9","58.6","IA","F","FALSE","Adenocarcinoma","127.2","A"
-"10","74.1","IB","M","FALSE","Squamous","128.4","A"
-"11","55.7","IB","M","FALSE","Adenocarcinoma","129.6","A"
-"12","51.4","IA","M","FALSE","Adenocarcinoma","127.2","A"
-"13","69.8","IIIA","F","FALSE","Adenocarcinoma","14.4","D"
-"14","46.9","IB","M","FALSE","Adenocarcinoma","91.2","A"
-"15","70.8","IA","M","FALSE","Adenocarcinoma","27.6","D"
-"16","59.8","IB","M","FALSE","Squamous","104.4","D"
-"17","77.1","IB","F","FALSE","Squamous","6","D"
-"18","61.4","IIB","F","FALSE","Adenocarcinoma","122.4","A"
-"19","47.4","IB","M","FALSE","Adenocarcinoma","7.2","A"
-"20","52.1","IIB","M","FALSE","Squamous","1.2","A"
-"21","73.5","IIIA","F","FALSE","Adenocarcinoma","34.8","D"
-"22","64.7","IIB","M","FALSE","Adenocarcinoma","38.4","D"
-"23","59.8","IB","F","FALSE","Adenocarcinoma","14.4","D"
-"24","60.3","IB","M","FALSE","Adenocarcinoma","118.8","A"
-"25","72.6","IB","M","FALSE","Adenocarcinoma","21.6","D"
-"26","83.4","IB","M","FALSE","Adenocarcinoma","31.2","D"
-"27","75.9","IIIA","M","FALSE","Adenocarcinoma","50.4","D"
-"28","58.4","IB","M","FALSE","Squamous","114","A"
-"29","76.5","IB","M","FALSE","Adenocarcinoma","96","D"
-"30","71.9","IIA","F","FALSE","Adenocarcinoma","106.8","A"
-"31","63.5","IIB","M","FALSE","Adenocarcinoma","120","A"
-"32","78.0","IA","M","FALSE","Squamous","16.8","D"
-"33","80.0","IIB","M","FALSE","Adenocarcinoma","82.8","D"
-"34","64.8","IIB","F","FALSE","Adenocarcinoma","114","A"
-"35","59.4","IB","M","FALSE","Adenocarcinoma","115.2","A"
-"36","76.0","IB","M","FALSE","Squamous","81.6","D"
-"37","75.3","IA","F","FALSE","Squamous","115.2","A"
-"38","62.3","IB","F","FALSE","Squamous","40.8","D"
-"39","72.2","IIB","F","FALSE","Adenocarcinoma","12","D"
-"40","50.1","IB","M","FALSE","Adenocarcinoma","62.4","D"
-"41","67.3","IIIB","F","FALSE","Squamous","31.2","D"
-"42","65.6","IIIB","M","FALSE","Squamous","33.6","D"
-"43","60.1","IIB","F","FALSE","Squamous","111.6","A"
-"44","56.1","IIIA","M","TRUE","Squamous","90","A"
-"45","58.2","IB","F","FALSE","Adenocarcinoma","88.8","A"
-"46","66.8","IIB","M","FALSE","Squamous","104.4","A"
-"47","66.9","unknown","M","FALSE","Adenocarcinoma","80.4","D"
-"48","61.8","IB","F","FALSE","Squamous","48","D"
-"49","60.3","IB","F","FALSE","Adenocarcinoma","0","D"
-"50","49.3","IA","F","FALSE","Adenocarcinoma","84","A"
-"51","45.8","IA","F","FALSE","Adenocarcinoma","76.8","A"
-"52","61.1","IIA","F","FALSE","Adenocarcinoma","40.8","D"
-"53","67.9","IIB","M","FALSE","Squamous","37.2","D"
-"54","73.0","IB","M","FALSE","Squamous","76.8","A"
-"55","60.6","IB","F","FALSE","Adenocarcinoma","61.2","D"
-"56","73.8","IIIA","M","FALSE","Squamous","70.8","D"
-"57","68.6","IIB","M","FALSE","Adenocarcinoma","4.8","D"
-"58","51.1","IB","F","FALSE","Adenocarcinoma","73.2","D"
-"59","61.2","IA","F","FALSE","Adenocarcinoma","55.2","D"
-"60","62.7","IIA","M","FALSE","Adenocarcinoma","27.6","D"
-"61","64.4","IA","M","FALSE","Squamous","20.4","D"
-"62","63.4","IIA","F","FALSE","Squamous","52.8","D"
-"63","61.0","IIIA","F","FALSE","Squamous","75.6","A"
-"64","72.3","IIIB","M","TRUE","Adenocarcinoma","82.8","A"
-"65","74.4","IIA","M","FALSE","Adenocarcinoma","72","A"
-"66","65.2","IA","M","FALSE","Adenocarcinoma","66","A"
-"67","74.5","IIIB","M","FALSE","Squamous","62.4","D"
-"68","65.0","IB","F","FALSE","Adenocarcinoma","51.6","D"
-"69","76.0","IB","M","FALSE","Adenocarcinoma","76.8","A"
-"70","69.0","IA","M","FALSE","Adenocarcinoma","66","A"
-"71","77.0","IB","F","FALSE","Adenocarcinoma","26.4","D"
-"72","48.2","IA","F","FALSE","Adenocarcinoma","64.8","A"
-"73","71.3","IB","F","FALSE","Adenocarcinoma","74.4","A"
-"74","75.0","IB","M","TRUE","Adenocarcinoma","64.8","A"
-"75","48.7","IIIB","M","TRUE","Adenocarcinoma","60","A"
-"76","71.1","IIB","F","FALSE","Adenocarcinoma","69.6","A"
-"77","72.2","IIIB","F","FALSE","Adenocarcinoma","68.4","A"
-"78","67.2","IB","F","TRUE","Adenocarcinoma","72","A"
-"79","74.8","IIIB","M","TRUE","Adenocarcinoma","72","A"
-"80","74.9","IIIA","M","FALSE","Squamous","18","D"
-"81","47.6","IIB","M","FALSE","Adenocarcinoma","15.6","D"
-"82","60.0","IB","F","TRUE","Adenocarcinoma","63.6","A"
-"83","57.9","IB","F","TRUE","Adenocarcinoma","62.4","A"
-"84","70.2","IA","F","FALSE","Adenocarcinoma","48","A"
-"85","64.2","IB","M","TRUE","Squamous","57.6","A"
-"86","84.3","IA","M","FALSE","Squamous","61.2","A"
-"87","77.6","IA","M","FALSE","Squamous","0","D"
-"88","63.8","IIB","M","FALSE","Adenocarcinoma","70.8","A"
-"89","66.3","IA","F","FALSE","Adenocarcinoma","69.6","A"
-"90","73.7","IB","F","TRUE","Adenocarcinoma","70.8","A"
-"91","63.0","IB","F","TRUE","Squamous","36","A"
-"92","77.0","IA","F","FALSE","Squamous","39.6","D"
-"93","63.0","IIB","F","TRUE","Adenocarcinoma","49.2","A"
-"94","61.0","IIB","M","FALSE","Squamous","39.6","D"
-"95","73.4","IB","F","FALSE","Adenocarcinoma","60","A"
-"96","79.4","IIB","M","FALSE","Adenocarcinoma","64.8","A"
-"97","68.2","IB","F","FALSE","Adenocarcinoma","68.4","A"
-"98","67.9","IB","F","FALSE","Adenocarcinoma","62.4","A"
-"99","79.1","IB","F","FALSE","Squamous","67.2","A"
-"100","65.7","IB","F","TRUE","Adenocarcinoma","62.4","A"
-"101","81.5","IB","F","FALSE","Adenocarcinoma","34.8","D"
-"102","81.6","IIA","M","FALSE","Adenocarcinoma","40.8","D"
-"103","58.1","IB","M","TRUE","Adenocarcinoma","64.8","A"
-"104","42.3","IB","F","TRUE","Adenocarcinoma","45.6","A"
-"105","75.5","IA","F","FALSE","Adenocarcinoma","61.2","A"
-"106","59.9","IIA","M","TRUE","Squamous","56.4","A"
-"107","81.7","IB","M","TRUE","Adenocarcinoma","56.4","A"
-"108","57.6","IIB","M","TRUE","Adenocarcinoma","49.2","D"
-"109","64.8","IIIB","M","TRUE","Squamous","16.8","D"
-"110","57.3","IB","F","TRUE","Adenocarcinoma","58.8","A"
-"111","61.5","IIIB","M","TRUE","Adenocarcinoma","51.6","A"
-"112","67.6","IA","F","TRUE","Squamous","57.6","A"
-"113","65.4","IIB","M","TRUE","Adenocarcinoma","28.8","D"
-"114","60.3","IB","M","TRUE","Adenocarcinoma","58.8","A"
-"115","56.4","IA","F","TRUE","Adenocarcinoma","39.6","A"
-"116","58.3","IA","M","FALSE","Adenocarcinoma","50.4","A"
-"117","74.3","IB","F","TRUE","Adenocarcinoma","43.2","A"
-"118","75.0","IIIA","M","TRUE","Adenocarcinoma","52.8","A"
-"119","44.3","IB","M","TRUE","Adenocarcinoma","39.6","D"
-"120","57.7","IB","M","TRUE","Adenocarcinoma","45.6","A"
-"121","78.5","IIIA","M","TRUE","Adenocarcinoma","22.8","D"
-"122","64.6","IIIA","M","TRUE","Squamous","49.2","A"
-"123","80.0","IB","M","FALSE","Adenocarcinoma","8.4","D"
-"124","74.6","IB","M","FALSE","Adenocarcinoma","0","D"
-"125","77.1","IB","M","TRUE","Adenocarcinoma","52.8","A"
-"126","71.3","IIIB","M","TRUE","Adenocarcinoma","33.6","D"
-"127","75.1","IA","F","FALSE","Adenocarcinoma","50.4","A"
-"128","73.4","IA","M","FALSE","Adenocarcinoma","38.4","A"
-"129","66.8","IB","F","TRUE","Squamous","46.8","A"
-"130","60.9","IIB","M","TRUE","Adenocarcinoma","12","D"
-"131","76.1","IA","M","FALSE","Adenocarcinoma","14.4","D"
-"132","75.7","IIIB","F","TRUE","Adenocarcinoma","16.8","A"
-"133","62.7","IB","F","FALSE","Adenocarcinoma","43.2","A"
-"134","63.1","IA","M","FALSE","Adenocarcinoma","50.4","A"
-"135","60.7","IA","F","FALSE","Adenocarcinoma","31.2","A"
-"136","64.5","IIA","M","TRUE","Adenocarcinoma","38.4","A"
-"137","66.6","IA","M","FALSE","Adenocarcinoma","50.4","A"
-"138","55.3","IIIA","F","TRUE","Adenocarcinoma","36","A"
-"139","81.5","IV","M","FALSE","Adenocarcinoma","4.8","D"
-"140","76.5","IIIB","F","FALSE","Adenocarcinoma","49.2","A"
-"141","50.2","IB","F","FALSE","Adenocarcinoma","34.8","A"
-"142","53.6","IB","M","FALSE","Adenocarcinoma","45.6","A"
-"143","66.0","IA","M","FALSE","Adenocarcinoma","24","A"
-"144","68.9","IA","F","FALSE","Adenocarcinoma","48","A"
-"145","61.3","IB","F","TRUE","Adenocarcinoma","43.2","A"
-"146","77.9","IIIA","M","FALSE","Squamous","18","D"
-"147","65.3","IIB","F","TRUE","Squamous","36","A"
-"148","56.2","IB","F","FALSE","Squamous","43.2","A"
-"149","72.3","IB","M","TRUE","Adenocarcinoma","38.4","A"
-"150","60.1","IIIB","M","TRUE","Adenocarcinoma","24","A"
-"151","59.4","IB","F","TRUE","Adenocarcinoma","27.6","D"
-"152","68.3","IA","M","FALSE","Adenocarcinoma","32.4","A"
-"153","65.7","IA","F","FALSE","Squamous","19.2","A"
-"154","81.9","IA","F","FALSE","Adenocarcinoma","20.4","A"
-"155","74.3","IB","M","FALSE","Adenocarcinoma","30","A"
-"156","77.2","IB","M","TRUE","Adenocarcinoma","20.4","A"
-"157","73.1","IB","F","FALSE","Adenocarcinoma","28.8","A"
-"158","52.6","IB","F","TRUE","Adenocarcinoma","28.8","A"
-"159","48.1","IB","F","FALSE","Adenocarcinoma","2.4","A"
-"160","80.3","IIIB","M","FALSE","Adenocarcinoma","18","D"
-"161","55.4","IA","F","FALSE","Adenocarcinoma","13.2","A"
-"162","66.7","IIA","M","TRUE","Squamous","22.8","A"
-"163","71.4","IB","M","FALSE","Adenocarcinoma","25.2","A"
-"164","64.6","IA","F","FALSE","Adenocarcinoma","22.8","D"
-"165","55.5","IA","M","FALSE","Adenocarcinoma","25.2","A"
-"166","81.8","IA","F","FALSE","Adenocarcinoma","24","A"
-"167","86.2","IIIB","F","FALSE","Adenocarcinoma","14.4","A"
-"168","69.9","IA","F","FALSE","Squamous","19.2","A"
-"169","82.1","IIIB","M","TRUE","Adenocarcinoma","14.4","D"
-"170","50.3","IA","F","FALSE","Adenocarcinoma","20.4","A"
-"171","72.2","IA","F","FALSE","Adenocarcinoma","14.4","A"
-"172","82.1","IIIA","M","FALSE","Adenocarcinoma","1.2","A"
-"173","44.2","IIB","M","TRUE","Adenocarcinoma","4.8","A"
-"174","66.3","IB","F","FALSE","Adenocarcinoma","19.2","A"
-"175","51.2","IA","F","FALSE","Adenocarcinoma","18","A"
-"176","59.8","IB","F","TRUE","Adenocarcinoma","20.4","A"
+"","Age","Stage","Sex","Adjuvant Chemo","Histology","OS_MONTHS","OS_STATUS"
+"1",63.8,"IB","Male",0,"Adenocarcinoma",33.6,1
+"2",60.4,"IB","Female",0,"Adenocarcinoma",33.6,1
+"3",84.4,"IIB","Male",0,"Squamous Cell Carcinoma",120,1
+"4",67.6,"IIIB","Male",0,"Adenocarcinoma",106.8,1
+"5",68.5,"IA","Female",0,"Adenocarcinoma",132,0
+"6",53.5,"IB","Female",0,"Adenocarcinoma",117.6,0
+"7",78.4,"IB","Male",0,"Adenocarcinoma",88.8,1
+"8",69.2,"IA","Female",0,"Squamous Cell Carcinoma",54,1
+"9",58.6,"IA","Female",0,"Adenocarcinoma",127.2,0
+"10",74.1,"IB","Male",0,"Squamous Cell Carcinoma",128.4,0
+"11",55.7,"IB","Male",0,"Adenocarcinoma",129.6,0
+"12",51.4,"IA","Male",0,"Adenocarcinoma",127.2,0
+"13",69.8,"IIIA","Female",0,"Adenocarcinoma",14.4,1
+"14",46.9,"IB","Male",0,"Adenocarcinoma",91.2,0
+"15",70.8,"IA","Male",0,"Adenocarcinoma",27.6,1
+"16",59.8,"IB","Male",0,"Squamous Cell Carcinoma",104.4,1
+"17",77.1,"IB","Female",0,"Squamous Cell Carcinoma",6,1
+"18",61.4,"IIB","Female",0,"Adenocarcinoma",122.4,0
+"19",47.4,"IB","Male",0,"Adenocarcinoma",7.2,0
+"20",52.1,"IIB","Male",0,"Squamous Cell Carcinoma",1.2,0
+"21",73.5,"IIIA","Female",0,"Adenocarcinoma",34.8,1
+"22",64.7,"IIB","Male",0,"Adenocarcinoma",38.4,1
+"23",59.8,"IB","Female",0,"Adenocarcinoma",14.4,1
+"24",60.3,"IB","Male",0,"Adenocarcinoma",118.8,0
+"25",72.6,"IB","Male",0,"Adenocarcinoma",21.6,1
+"26",83.4,"IB","Male",0,"Adenocarcinoma",31.2,1
+"27",75.9,"IIIA","Male",0,"Adenocarcinoma",50.4,1
+"28",58.4,"IB","Male",0,"Squamous Cell Carcinoma",114,0
+"29",76.5,"IB","Male",0,"Adenocarcinoma",96,1
+"30",71.9,"IIA","Female",0,"Adenocarcinoma",106.8,0
+"31",63.5,"IIB","Male",0,"Adenocarcinoma",120,0
+"32",78,"IA","Male",0,"Squamous Cell Carcinoma",16.8,1
+"33",80,"IIB","Male",0,"Adenocarcinoma",82.8,1
+"34",64.8,"IIB","Female",0,"Adenocarcinoma",114,0
+"35",59.4,"IB","Male",0,"Adenocarcinoma",115.2,0
+"36",76,"IB","Male",0,"Squamous Cell Carcinoma",81.6,1
+"37",75.3,"IA","Female",0,"Squamous Cell Carcinoma",115.2,0
+"38",62.3,"IB","Female",0,"Squamous Cell Carcinoma",40.8,1
+"39",72.2,"IIB","Female",0,"Adenocarcinoma",12,1
+"40",50.1,"IB","Male",0,"Adenocarcinoma",62.4,1
+"41",67.3,"IIIB","Female",0,"Squamous Cell Carcinoma",31.2,1
+"42",65.6,"IIIB","Male",0,"Squamous Cell Carcinoma",33.6,1
+"43",60.1,"IIB","Female",0,"Squamous Cell Carcinoma",111.6,0
+"44",56.1,"IIIA","Male",1,"Squamous Cell Carcinoma",90,0
+"45",58.2,"IB","Female",0,"Adenocarcinoma",88.8,0
+"46",66.8,"IIB","Male",0,"Squamous Cell Carcinoma",104.4,0
+"47",66.9,"unknown","Male",0,"Adenocarcinoma",80.4,1
+"48",61.8,"IB","Female",0,"Squamous Cell Carcinoma",48,1
+"49",60.3,"IB","Female",0,"Adenocarcinoma",0,1
+"50",49.3,"IA","Female",0,"Adenocarcinoma",84,0
+"51",45.8,"IA","Female",0,"Adenocarcinoma",76.8,0
+"52",61.1,"IIA","Female",0,"Adenocarcinoma",40.8,1
+"53",67.9,"IIB","Male",0,"Squamous Cell Carcinoma",37.2,1
+"54",73,"IB","Male",0,"Squamous Cell Carcinoma",76.8,0
+"55",60.6,"IB","Female",0,"Adenocarcinoma",61.2,1
+"56",73.8,"IIIA","Male",0,"Squamous Cell Carcinoma",70.8,1
+"57",68.6,"IIB","Male",0,"Adenocarcinoma",4.8,1
+"58",51.1,"IB","Female",0,"Adenocarcinoma",73.2,1
+"59",61.2,"IA","Female",0,"Adenocarcinoma",55.2,1
+"60",62.7,"IIA","Male",0,"Adenocarcinoma",27.6,1
+"61",64.4,"IA","Male",0,"Squamous Cell Carcinoma",20.4,1
+"62",63.4,"IIA","Female",0,"Squamous Cell Carcinoma",52.8,1
+"63",61,"IIIA","Female",0,"Squamous Cell Carcinoma",75.6,0
+"64",72.3,"IIIB","Male",1,"Adenocarcinoma",82.8,0
+"65",74.4,"IIA","Male",0,"Adenocarcinoma",72,0
+"66",65.2,"IA","Male",0,"Adenocarcinoma",66,0
+"67",74.5,"IIIB","Male",0,"Squamous Cell Carcinoma",62.4,1
+"68",65,"IB","Female",0,"Adenocarcinoma",51.6,1
+"69",76,"IB","Male",0,"Adenocarcinoma",76.8,0
+"70",69,"IA","Male",0,"Adenocarcinoma",66,0
+"71",77,"IB","Female",0,"Adenocarcinoma",26.4,1
+"72",48.2,"IA","Female",0,"Adenocarcinoma",64.8,0
+"73",71.3,"IB","Female",0,"Adenocarcinoma",74.4,0
+"74",75,"IB","Male",1,"Adenocarcinoma",64.8,0
+"75",48.7,"IIIB","Male",1,"Adenocarcinoma",60,0
+"76",71.1,"IIB","Female",0,"Adenocarcinoma",69.6,0
+"77",72.2,"IIIB","Female",0,"Adenocarcinoma",68.4,0
+"78",67.2,"IB","Female",1,"Adenocarcinoma",72,0
+"79",74.8,"IIIB","Male",1,"Adenocarcinoma",72,0
+"80",74.9,"IIIA","Male",0,"Squamous Cell Carcinoma",18,1
+"81",47.6,"IIB","Male",0,"Adenocarcinoma",15.6,1
+"82",60,"IB","Female",1,"Adenocarcinoma",63.6,0
+"83",57.9,"IB","Female",1,"Adenocarcinoma",62.4,0
+"84",70.2,"IA","Female",0,"Adenocarcinoma",48,0
+"85",64.2,"IB","Male",1,"Squamous Cell Carcinoma",57.6,0
+"86",84.3,"IA","Male",0,"Squamous Cell Carcinoma",61.2,0
+"87",77.6,"IA","Male",0,"Squamous Cell Carcinoma",0,1
+"88",63.8,"IIB","Male",0,"Adenocarcinoma",70.8,0
+"89",66.3,"IA","Female",0,"Adenocarcinoma",69.6,0
+"90",73.7,"IB","Female",1,"Adenocarcinoma",70.8,0
+"91",63,"IB","Female",1,"Squamous Cell Carcinoma",36,0
+"92",77,"IA","Female",0,"Squamous Cell Carcinoma",39.6,1
+"93",63,"IIB","Female",1,"Adenocarcinoma",49.2,0
+"94",61,"IIB","Male",0,"Squamous Cell Carcinoma",39.6,1
+"95",73.4,"IB","Female",0,"Adenocarcinoma",60,0
+"96",79.4,"IIB","Male",0,"Adenocarcinoma",64.8,0
+"97",68.2,"IB","Female",0,"Adenocarcinoma",68.4,0
+"98",67.9,"IB","Female",0,"Adenocarcinoma",62.4,0
+"99",79.1,"IB","Female",0,"Squamous Cell Carcinoma",67.2,0
+"100",65.7,"IB","Female",1,"Adenocarcinoma",62.4,0
+"101",81.5,"IB","Female",0,"Adenocarcinoma",34.8,1
+"102",81.6,"IIA","Male",0,"Adenocarcinoma",40.8,1
+"103",58.1,"IB","Male",1,"Adenocarcinoma",64.8,0
+"104",42.3,"IB","Female",1,"Adenocarcinoma",45.6,0
+"105",75.5,"IA","Female",0,"Adenocarcinoma",61.2,0
+"106",59.9,"IIA","Male",1,"Squamous Cell Carcinoma",56.4,0
+"107",81.7,"IB","Male",1,"Adenocarcinoma",56.4,0
+"108",57.6,"IIB","Male",1,"Adenocarcinoma",49.2,1
+"109",64.8,"IIIB","Male",1,"Squamous Cell Carcinoma",16.8,1
+"110",57.3,"IB","Female",1,"Adenocarcinoma",58.8,0
+"111",61.5,"IIIB","Male",1,"Adenocarcinoma",51.6,0
+"112",67.6,"IA","Female",1,"Squamous Cell Carcinoma",57.6,0
+"113",65.4,"IIB","Male",1,"Adenocarcinoma",28.8,1
+"114",60.3,"IB","Male",1,"Adenocarcinoma",58.8,0
+"115",56.4,"IA","Female",1,"Adenocarcinoma",39.6,0
+"116",58.3,"IA","Male",0,"Adenocarcinoma",50.4,0
+"117",74.3,"IB","Female",1,"Adenocarcinoma",43.2,0
+"118",75,"IIIA","Male",1,"Adenocarcinoma",52.8,0
+"119",44.3,"IB","Male",1,"Adenocarcinoma",39.6,1
+"120",57.7,"IB","Male",1,"Adenocarcinoma",45.6,0
+"121",78.5,"IIIA","Male",1,"Adenocarcinoma",22.8,1
+"122",64.6,"IIIA","Male",1,"Squamous Cell Carcinoma",49.2,0
+"123",80,"IB","Male",0,"Adenocarcinoma",8.4,1
+"124",74.6,"IB","Male",0,"Adenocarcinoma",0,1
+"125",77.1,"IB","Male",1,"Adenocarcinoma",52.8,0
+"126",71.3,"IIIB","Male",1,"Adenocarcinoma",33.6,1
+"127",75.1,"IA","Female",0,"Adenocarcinoma",50.4,0
+"128",73.4,"IA","Male",0,"Adenocarcinoma",38.4,0
+"129",66.8,"IB","Female",1,"Squamous Cell Carcinoma",46.8,0
+"130",60.9,"IIB","Male",1,"Adenocarcinoma",12,1
+"131",76.1,"IA","Male",0,"Adenocarcinoma",14.4,1
+"132",75.7,"IIIB","Female",1,"Adenocarcinoma",16.8,0
+"133",62.7,"IB","Female",0,"Adenocarcinoma",43.2,0
+"134",63.1,"IA","Male",0,"Adenocarcinoma",50.4,0
+"135",60.7,"IA","Female",0,"Adenocarcinoma",31.2,0
+"136",64.5,"IIA","Male",1,"Adenocarcinoma",38.4,0
+"137",66.6,"IA","Male",0,"Adenocarcinoma",50.4,0
+"138",55.3,"IIIA","Female",1,"Adenocarcinoma",36,0
+"139",81.5,"IV","Male",0,"Adenocarcinoma",4.8,1
+"140",76.5,"IIIB","Female",0,"Adenocarcinoma",49.2,0
+"141",50.2,"IB","Female",0,"Adenocarcinoma",34.8,0
+"142",53.6,"IB","Male",0,"Adenocarcinoma",45.6,0
+"143",66,"IA","Male",0,"Adenocarcinoma",24,0
+"144",68.9,"IA","Female",0,"Adenocarcinoma",48,0
+"145",61.3,"IB","Female",1,"Adenocarcinoma",43.2,0
+"146",77.9,"IIIA","Male",0,"Squamous Cell Carcinoma",18,1
+"147",65.3,"IIB","Female",1,"Squamous Cell Carcinoma",36,0
+"148",56.2,"IB","Female",0,"Squamous Cell Carcinoma",43.2,0
+"149",72.3,"IB","Male",1,"Adenocarcinoma",38.4,0
+"150",60.1,"IIIB","Male",1,"Adenocarcinoma",24,0
+"151",59.4,"IB","Female",1,"Adenocarcinoma",27.6,1
+"152",68.3,"IA","Male",0,"Adenocarcinoma",32.4,0
+"153",65.7,"IA","Female",0,"Squamous Cell Carcinoma",19.2,0
+"154",81.9,"IA","Female",0,"Adenocarcinoma",20.4,0
+"155",74.3,"IB","Male",0,"Adenocarcinoma",30,0
+"156",77.2,"IB","Male",1,"Adenocarcinoma",20.4,0
+"157",73.1,"IB","Female",0,"Adenocarcinoma",28.8,0
+"158",52.6,"IB","Female",1,"Adenocarcinoma",28.8,0
+"159",48.1,"IB","Female",0,"Adenocarcinoma",2.4,0
+"160",80.3,"IIIB","Male",0,"Adenocarcinoma",18,1
+"161",55.4,"IA","Female",0,"Adenocarcinoma",13.2,0
+"162",66.7,"IIA","Male",1,"Squamous Cell Carcinoma",22.8,0
+"163",71.4,"IB","Male",0,"Adenocarcinoma",25.2,0
+"164",64.6,"IA","Female",0,"Adenocarcinoma",22.8,1
+"165",55.5,"IA","Male",0,"Adenocarcinoma",25.2,0
+"166",81.8,"IA","Female",0,"Adenocarcinoma",24,0
+"167",86.2,"IIIB","Female",0,"Adenocarcinoma",14.4,0
+"168",69.9,"IA","Female",0,"Squamous Cell Carcinoma",19.2,0
+"169",82.1,"IIIB","Male",1,"Adenocarcinoma",14.4,1
+"170",50.3,"IA","Female",0,"Adenocarcinoma",20.4,0
+"171",72.2,"IA","Female",0,"Adenocarcinoma",14.4,0
+"172",82.1,"IIIA","Male",0,"Adenocarcinoma",1.2,0
+"173",44.2,"IIB","Male",1,"Adenocarcinoma",4.8,0
+"174",66.3,"IB","Female",0,"Adenocarcinoma",19.2,0
+"175",51.2,"IA","Female",0,"Adenocarcinoma",18,0
+"176",59.8,"IB","Female",1,"Adenocarcinoma",20.4,0

@@ -1,0 +1,165 @@
+---
+title: "GSE68465"
+output: pdf_document
+date: "2025-01-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+options(timeout = 10000)
+getGEOSuppFiles("GSE68465")
+
+# untar files
+untar("GSE68465/GSE68465_RAW.tar",exdir='GSE68465/CEL')
+
+celfiles = list.files("GSE68465/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE68465.raw = read.celfiles(celfiles)
+
+# normalization 
+GSE68465.rma = rma(GSE68465.raw)
+
+write.csv(GSE68465.rma, 
+          "GSE68465rma.csv",
+          row.names = F)
+
+# Get the data to be used in R
+GSE68465.expr = as.data.frame(t(exprs(GSE68465.rma)))
+
+probesGSE68465 = colnames(GSE68465.expr)
+
+write.csv(GSE68465.expr, 
+          "GSE68465expr.csv",
+          row.names = F)
+
+```
+
+# map probe IDs to gene symbols
+```{r}
+# fetch feature data to get gene symbols
+gse = getGEO("GSE68465", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE68465_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "Gene Symbol")]
+
+write.csv(feature.df, 
+          "GSE68465symbol.csv", 
+          row.names = F)
+
+gset = getGEO("GSE68465", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL201", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+# Extract microarray expression values from NCBI
+GSE68465.gset = as_tibble(t(exprs(gset)))
+
+# Next, we want to append clinical information onto gene expression data
+GSE68465.data = as_tibble(gset@phenoData@data) %>%
+  select(-c(title:data_row_count))
+
+GSE68465.data = GSE68465.data[, c(1, 2, 4, 5, 8, 9, 12, 13, 14, 16)]
+
+colnames(GSE68465.data) = c("Age", "Adjuvant Chemo", "Stage","Histology", "PFS_MONTHS", "OS_MONTHS", "Race", "Sex", "Smoked?", "OS_STATUS")
+
+unique(GSE68465.data$Stage)
+GSE68465.data$Age = as.numeric(GSE68465.data$Age)
+GSE68465.data$PFS_MONTHS = as.numeric(GSE68465.data$PFS_MONTHS)
+GSE68465.data$OS_MONTHS = as.numeric(GSE68465.data$OS_MONTHS)
+GSE68465.data$OS_STATUS <- ifelse(GSE68465.data$OS_STATUS == "Dead", 1, 0)
+GSE68465.data$`Adjuvant Chemo` <- ifelse(GSE68465.data$`Adjuvant Chemo` == "Yes", 1, 0)
+GSE68465.data$Histology[GSE68465.data$Histology == "Lung Adenocarcinoma"] <- "Adenocarcinoma"
+GSE68465.data$`Smoked?` <- ifelse(GSE68465.data$`Smoked?` %in% c("Smoked in the past", "Currently smoking"), 1,
+                                  ifelse(GSE68465.data$`Smoked?` == "Never smoked", 0, NA))
+GSE68465.data <- subset(GSE68465.data, !is.na(OS_STATUS))
+
+convert_stage <- function(tnm) {
+  if (tnm %in% c("pN0pT1", "pN0pT2")) {
+    return("I")
+  } else if (tnm %in% c("pN0pT3", "pN1pT1", "pN1pT2")) {
+    return("II")
+  } else if (tnm %in% c("pN2pT1", "pN2pT2", "pN1pT3", "pN0pT4", "pN1pT4")) {
+    return("III")
+  } else if (tnm %in% c("pN2pT3", "pN2pT4")) {
+    return("IV")
+  } else {
+    return("Unknown")  # Handling "pp", "pNXpT1", or other undefined cases
+  }
+}
+
+# Apply the function to convert TNM stages to clinical stages
+GSE68465.data$Stage <- sapply(GSE68465.data$Stage, convert_stage)
+
+# fetch feature data to get gene symbols
+feature.dat = gse$GSE68465_series_matrix.txt.gz@featureData@data 
+GSE68465.symbol = 
+  feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+write.csv(GSE68465.symbol, 
+          "GSE68465_symbol.csv")
+
+write.csv(GSE68465.data, 
+          file = "GSE68465_data.csv")
+```
+
+```{r}
+#Merge clinical data and expression data
+GSE68465.merged = cbind(GSE68465.data, GSE68465.expr)
+GSE68465.merged <- subset(GSE68465.merged, !is.na(OS_STATUS))
+write.csv(GSE68465.merged, 
+          "GSE68465merged.csv")
+
+GSE68465.expr = GSE68465.merged[, -c(1:9)]
+GSE68465data.expr = GSE68465.merged[, 1:9]
+```
+
+```{r}
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("hgu133a.db")
+library(hgu133a.db)
+
+
+# Map probe IDs to gene symbols
+annotation68465 <- select(hgu133a.db,
+                     keys = probesGSE68465,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation68465)
+
+# Unique Symbols
+unique68465 = unique(annotation68465$SYMBOL)
+print(length(unique68465))
+
+duplicate_genes68465 <- annotation68465[duplicated(annotation68465$PROBEID), ]
+print(duplicate_genes68465)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes68465 <- annotation68465[duplicated(annotation68465$SYMBOL) | duplicated(annotation68465$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes68465 <- duplicate_genes68465[order(duplicate_genes68465$SYMBOL), ]
+
+print(duplicate_genes68465)
+``` 

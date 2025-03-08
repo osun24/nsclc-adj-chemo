@@ -1,0 +1,143 @@
+---
+title: "GSE42127 Data"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(BiocManager)
+BiocManager::install("GEOquery")
+library(GEOquery) 
+library(tidyverse)
+library(limma)
+BiocManager::install("oligo")
+library(oligo)
+library(magrittr)
+library(curl)
+```
+
+
+```{r}
+# get supplementary files
+# Download the file manually from GEO
+download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE42nnn/GSE42127/matrix/GSE42127_series_matrix.txt.gz",
+              destfile = "GSE42127_series_matrix.txt.gz")
+
+# Load the file
+#gse42127 <- getGEO(filename = "GSE42127_series_matrix.txt.gz")
+
+gse42127 = getGEO("GSE42127", GSEMatrix = T)
+
+#expression data
+gse42127.expr = exprs(gse42127[[1]])
+
+#background correction
+gse42127_corrected = backgroundCorrect.matrix(gse42127.expr, method = "normexp")
+
+#normalization
+gse42127.normalized = normalizeBetweenArrays(gse42127_corrected, method = "quantile")
+
+
+hist(gse42127.expr)
+hist(gse42127_corrected)
+hist(gse42127.normalized)
+
+#range before and after
+range(gse42127.expr)
+range(gse42127.normalized)
+```
+
+```{r}
+gse = getGEO("GSE42127", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE42127_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "ILMN_Gene")]
+
+write.csv(feature.df, 
+          "GSE42127symbol.csv", 
+          row.names = F)
+
+gset = getGEO("GSE42127", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL570", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+GSE42127.expr = as.data.frame(t(gse42127.normalized))
+probes42127 = colnames(GSE42127.expr)
+
+GSE42127.data = as_tibble(gset@phenoData@data) %>%
+  select(-(title:data_row_count))
+
+# Next, we want to append clinical information onto gene expression data
+  
+colnames(GSE42127.data) = c("Age", "Stage", "Sex", "Adjuvant Chemo", "Histology", "OS_MONTHS", "OS_STATUS")
+
+unique(GSE42127.data$Histology)
+GSE42127.data$Age = as.numeric(GSE42127.data$Age)
+GSE42127.data$OS_MONTHS = as.numeric(GSE42127.data$OS_MONTHS)
+GSE42127.data$OS_STATUS <- ifelse(GSE42127.data$OS_STATUS == "D", 1, 0)
+GSE42127.data$`Adjuvant Chemo` <- ifelse(GSE42127.data$`Adjuvant Chemo` == "TRUE", 1, 0)
+GSE42127.data$Histology[GSE42127.data$Histology == "Squamous"] <- "Squamous Cell Carcinoma"
+GSE42127.data$Sex[GSE42127.data$Sex == "M"] <- "Male"
+GSE42127.data$Sex[GSE42127.data$Sex == "F"] <- "Female"
+
+# fetch feature data to get gene symbols
+#feature.dat = gse$GSE42127_series_matrix.txt.gz@featureData@data 
+#GSE42127.symbol = feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+#write.csv(GSE42127.symbol, "GSE42127_symbol.csv")
+
+write.csv(gse42127.data, 
+          file = "GSE42127_data.csv")
+
+write.csv(gse42127.normalized, 
+          file = "GSE42127expr.csv")
+
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE42127merged = cbind(GSE42127.data, GSE42127.expr)
+write.csv(GSE42127merged, 
+          "GSE42127merged.csv")
+
+GSE42127data.expr = GSE42127merged[, 1:7]
+```
+
+```{r}
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("illuminaHumanv3.db")
+library(illuminaHumanv3.db)
+
+
+# Map probe IDs to gene symbols
+annotation42127 <- select(illuminaHumanv3.db,
+                     keys = probes42127,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+# View the results
+print(annotation42127)
+
+# Unique Symbols
+unique42127 = unique(annotation42127$SYMBOL)
+print(length(unique42127))
+
+duplicate_genes42127 <- annotation42127[duplicated(annotation42127$PROBEID), ]
+print(duplicate_genes42127)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes42127 <- annotation42127[duplicated(annotation42127$SYMBOL) | duplicated(annotation42127$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes42127 <- duplicate_genes42127[order(duplicate_genes42127$SYMBOL), ]
+
+print(duplicate_genes42127)
+```
