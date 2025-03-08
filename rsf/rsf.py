@@ -10,15 +10,16 @@ import joblib
 
 def create_rsf(df, name, trees=1000):
     # Create structured array for survival analysis
-    surv_data = Surv.from_dataframe('PFS_STATUS', 'PFS_MONTHS', df)
+    surv_data = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', df)
     
-    covariates = df.columns.difference(['PFS_STATUS', 'PFS_MONTHS'])
+    covariates = df.columns.difference(['OS_STATUS', 'OS_MONTHS'])
     
     # Identify binary columns (assuming these are already binary 0/1)
-    binary_columns = ['EGFR_DRIVER', 'STK11_DRIVER', 'ERBB2_DRIVER', 'IS_FEMALE'] 
+    # please change sex to IS_FEMALE/IS_MALE for clarity
+    binary_columns = ['Adjuvant Chemo', 'Sex'] 
     df[binary_columns] = df[binary_columns].astype(int)
     # print(df[binary_columns].describe())
-    continuous_columns = df.columns.difference(['PFS_STATUS', 'PFS_MONTHS', *binary_columns])
+    continuous_columns = df.columns.difference(['OS_STATUS', 'OS_MONTHS', *binary_columns])
     
     # Check that binary columns are not scaled
     for col in binary_columns:
@@ -30,19 +31,19 @@ def create_rsf(df, name, trees=1000):
 
     print(X_train.columns)
     # Fit the Random Survival Forest model
-    rsf = RandomSurvivalForest(n_estimators=trees, min_samples_split=15, min_samples_leaf=7, random_state=42)
+    rsf = RandomSurvivalForest(n_estimators=trees, min_samples_split=75, min_samples_leaf=30, random_state=42, n_jobs= -1, max_features = "sqrt") # run on all processors
     rsf.fit(X_train, y_train)
 
     # Evaluate model performance
-    c_index = concordance_index_censored(y_test['PFS_STATUS'], y_test['PFS_MONTHS'], rsf.predict(X_test))
+    c_index = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], rsf.predict(X_test))
     print(f"C-index: {c_index[0]:.3f}")
     
     # Train c-index
-    train_c_index = concordance_index_censored(y_train['PFS_STATUS'], y_train['PFS_MONTHS'], rsf.predict(X_train))
+    train_c_index = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], rsf.predict(X_train))
     print(f"Train C-index: {train_c_index[0]:.3f}")
 
     # Save the RSF model to a file
-    joblib.dump(rsf, f'rsf_model-{trees}-c{c_index[0]:.3f}.pkl')
+    #joblib.dump(rsf, f'rsf_model-{trees}-c{c_index[0]:.3f}.pkl')
 
     result = permutation_importance(rsf, X_test, y_test, n_repeats=5, random_state=42)
 
@@ -72,6 +73,21 @@ def create_rsf(df, name, trees=1000):
 # Without treatment data
 surv = pd.read_csv('GPL570merged.csv')
 
-print(surv.info(verbose = True))
+# one-hot encode #"Stage", "Histology, "Race"
+surv = pd.get_dummies(surv, columns=["Stage", "Histology", "Race"])
 
-create_rsf(surv, 'MSK MIND LUAD', 50)
+# drop PFS & RFS
+surv = surv.drop(columns=['PFS_MONTHS','RFS_MONTHS'])
+
+# only print those with NA values
+print(surv.columns[surv.isna().any()].tolist())
+
+# print number of smoking with na
+print(surv['Smoked?'].isna().sum()) # 121
+
+# drop those with NA values
+surv = surv.dropna()
+
+# left with 457
+
+create_rsf(surv, 'GPL570', 300)
