@@ -35,6 +35,7 @@ GSE68465.raw = read.celfiles(celfiles)
 
 # normalization 
 GSE68465.rma = rma(GSE68465.raw)
+GSE68465.rma = as.data.frame(exprs(GSE68465.rma))
 
 write.csv(GSE68465.rma, 
           "GSE68465rma.csv",
@@ -49,6 +50,37 @@ write.csv(GSE68465.expr,
           "GSE68465expr.csv",
           row.names = F)
 
+```
+
+```{r}
+# Remove probes without a gene symbol
+annotation68465 <- annotation68465[!is.na(annotation68465$SYMBOL) & annotation68465$SYMBOL != "", ]
+
+# Keep only probes that have a mapped gene symbol
+GSE68465.rma <- GSE68465.rma[rownames(GSE68465.rma) %in% annotation68465$PROBEID, ]
+
+# Create a column with gene symbols
+GSE68465.rma$Symbol <- annotation68465$SYMBOL[match(rownames(GSE68465.rma), annotation68465$PROBEID)]
+
+# Convert to a data frame
+GSE68465.rma <- as.data.frame(GSE68465.rma)
+
+# Group by gene symbol and compute the median expression across all samples
+GSE68465.rma <- GSE68465.rma %>%
+  group_by(Symbol) %>%
+  summarise_all(median) %>%
+  ungroup()  # Ensure row names don't reset
+
+# Explicitly set gene symbols as row names
+GSE68465.rma <- as.data.frame(GSE68465.rma)  # Convert back to a data frame
+rownames(GSE68465.rma) <- GSE68465.rma$Symbol  # Set row names
+GSE68465.rma <- GSE68465.rma[, -1]  # Remove the "Symbol" column
+
+# Check for duplicates
+any(duplicated(rownames(GSE68465.rma)))  # Should return FALSE
+
+# Transpose for final expression matrix
+GSE68465.expr <- as.data.frame(t(GSE68465.rma))
 ```
 
 # map probe IDs to gene symbols
@@ -81,7 +113,7 @@ GSE68465.data = GSE68465.data[, c(1, 2, 4, 5, 8, 9, 12, 13, 14, 16)]
 
 colnames(GSE68465.data) = c("Age", "Adjuvant Chemo", "Stage","Histology", "PFS_MONTHS", "OS_MONTHS", "Race", "Sex", "Smoked?", "OS_STATUS")
 
-unique(GSE68465.data$Stage)
+unique(GSE68465.data$Race)
 GSE68465.data$Age = as.numeric(GSE68465.data$Age)
 GSE68465.data$PFS_MONTHS = as.numeric(GSE68465.data$PFS_MONTHS)
 GSE68465.data$OS_MONTHS = as.numeric(GSE68465.data$OS_MONTHS)
@@ -90,7 +122,9 @@ GSE68465.data$`Adjuvant Chemo` <- ifelse(GSE68465.data$`Adjuvant Chemo` == "Yes"
 GSE68465.data$Histology[GSE68465.data$Histology == "Lung Adenocarcinoma"] <- "Adenocarcinoma"
 GSE68465.data$`Smoked?` <- ifelse(GSE68465.data$`Smoked?` %in% c("Smoked in the past", "Currently smoking"), 1,
                                   ifelse(GSE68465.data$`Smoked?` == "Never smoked", 0, NA))
-GSE68465.data <- subset(GSE68465.data, !is.na(OS_STATUS))
+
+GSE68465.data$Sex = ifelse(GSE68465.data$Sex == "Male", 1, 0)
+GSE68465.data$Race[GSE68465.data$Race == "Not Reported"] <- "Unknown"
 
 convert_stage <- function(tnm) {
   if (tnm %in% c("pN0pT1", "pN0pT2")) {
@@ -124,10 +158,11 @@ write.csv(GSE68465.data,
 #Merge clinical data and expression data
 GSE68465.merged = cbind(GSE68465.data, GSE68465.expr)
 GSE68465.merged <- subset(GSE68465.merged, !is.na(OS_STATUS))
+GSE68465.data <- subset(GSE68465.data, !is.na(OS_STATUS))
 write.csv(GSE68465.merged, 
           "GSE68465merged.csv")
 
-GSE68465.expr = GSE68465.merged[, -c(1:9)]
+GSE68465.expr = GSE68465.merged[, -c(1:10)]
 GSE68465data.expr = GSE68465.merged[, 1:9]
 ```
 
@@ -163,3 +198,17 @@ duplicate_genes68465 <- duplicate_genes68465[order(duplicate_genes68465$SYMBOL),
 
 print(duplicate_genes68465)
 ``` 
+
+```{r}
+probe_to_symbol <- annotation68465[, c("PROBEID", "SYMBOL")]
+
+# Match probe IDs in GSE29013.expr with their corresponding gene symbols
+mapped_symbols <- probe_to_symbol$SYMBOL[match(colnames(GSE68465.expr), probe_to_symbol$PROBEID)]
+
+# Replace rownames of GSE29013.expr with gene symbols
+colnames(GSE68465.expr)<- mapped_symbols
+```
+
+
+
+

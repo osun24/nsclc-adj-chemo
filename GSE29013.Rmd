@@ -18,6 +18,7 @@ if(!require("BiocManager", quietly = T))
 BiocManager::install("oligo")
 library(oligo)
 library(limma)
+library(dplyr)
 ```
 
 ```{r}
@@ -33,6 +34,7 @@ GSE29013.raw = read.celfiles(celfiles)
 
 # normalization 
 GSE29013.rma = rma(GSE29013.raw)
+GSE29013.rma = as.data.frame(exprs(GSE29013.rma))
 
 write.csv(GSE29013.rma, 
           "GSE29013rma.csv",
@@ -46,6 +48,38 @@ probesGSE29013 = colnames(GSE29013.expr)
 write.csv(GSE29013.expr, 
           "GSE29013expr.csv",
           row.names = F)
+
+```
+
+```{r}
+# Remove probes without a gene symbol
+annotation29013 <- annotation29013[!is.na(annotation29013$SYMBOL) & annotation29013$SYMBOL != "", ]
+
+# Keep only probes that have a mapped gene symbol
+GSE29013.rma <- GSE29013.rma[rownames(GSE29013.rma) %in% annotation29013$PROBEID, ]
+
+# Create a column with gene symbols
+GSE29013.rma$Symbol <- annotation29013$SYMBOL[match(rownames(GSE29013.rma), annotation29013$PROBEID)]
+
+# Convert to a data frame
+GSE29013.rma <- as.data.frame(GSE29013.rma)
+
+# Group by gene symbol and compute the median expression across all samples
+GSE29013.rma <- GSE29013.rma %>%
+  group_by(Symbol) %>%
+  summarise_all(median) %>%
+  ungroup()  # Ensure row names don't reset
+
+# Explicitly set gene symbols as row names
+GSE29013.rma <- as.data.frame(GSE29013.rma)  # Convert back to a data frame
+rownames(GSE29013.rma) <- GSE29013.rma$Symbol  # Set row names
+GSE29013.rma <- GSE29013.rma[, -1]  # Remove the "Symbol" column
+
+# Check for duplicates
+any(duplicated(rownames(GSE29013.rma)))  # Should return FALSE
+
+# Transpose for final expression matrix
+GSE29013.expr <- as.data.frame(t(GSE29013.rma))
 
 ```
 
@@ -75,15 +109,16 @@ GSE29013.data = as_tibble(gset@phenoData@data) %>%
 GSE29013.data = GSE29013.data[,c(1, 2, 3, 4, 5, 6, 7, 9, 10, 12)] 
 colnames(GSE29013.data) = c("Adjuvant Chemo", "Age", "OS_STATUS", "OS_MONTHS", "Stage",  "Sex", "Histology", "Race", "Smoked?", "PFS_MONTHS")
 
-GSE29013.data$OS_MONTHS = GSE29013.data$OS_MONTHS*12
 GSE29013.data$Age = as.numeric(GSE29013.data$Age)
-GSE29013.data$Sex <- ifelse(GSE29013.data$Sex == "M", "Male", "Female")
+GSE29013.data$Sex <- ifelse(GSE29013.data$Sex == "M", 1, 0)
 GSE29013.data$`Adjuvant Chemo` <- ifelse(GSE29013.data$`Adjuvant Chemo` == "Yes", 1, 0)
 GSE29013.data$Histology[GSE29013.data$Histology == "Squamous"] <- "Squamous Cell Carcinoma"
 GSE29013.data$OS_STATUS = as.numeric(GSE29013.data$OS_STATUS)
 GSE29013.data$OS_MONTHS = as.numeric(GSE29013.data$OS_MONTHS)
 GSE29013.data$`Smoked?` = as.numeric(GSE29013.data$`Smoked?`)
 GSE29013.data$PFS_MONTHS = as.numeric(GSE29013.data$PFS_MONTHS)
+GSE29013.data$OS_MONTHS = GSE29013.data$OS_MONTHS*12
+GSE29013.data$PFS_MONTHS = GSE29013.data$PFS_MONTHS*12
 
 # fetch feature data to get gene symbols
 feature.dat = gse$GSE29013_series_matrix.txt.gz@featureData@data 
@@ -109,7 +144,6 @@ GSE29013merged = cbind(GSE29013.data, GSE29013.expr)
 write.csv(GSE29013merged, 
           "GSE29013merged.csv")
 
-GSE29013data.expr = GSE29013merged[, 1:10]
 ``` 
 
 ```{r}
@@ -146,6 +180,19 @@ duplicate_genes29013 <- duplicate_genes29013[order(duplicate_genes29013$SYMBOL),
 
 print(duplicate_genes29013)
 ```
+
+```{r}
+
+probe_to_symbol <- annotation29013[, c("PROBEID", "SYMBOL")]
+
+# Match probe IDs in GSE29013.expr with their corresponding gene symbols
+mapped_symbols <- probe_to_symbol$SYMBOL[match(colnames(GSE29013.expr), probe_to_symbol$PROBEID)]
+
+# Replace rownames of GSE29013.expr with gene symbols
+colnames(GSE29013.expr)<- mapped_symbols
+```
+
+
 
 ```{r}
 boxplot(GSE29013.expr, outline = FALSE, las = 2,

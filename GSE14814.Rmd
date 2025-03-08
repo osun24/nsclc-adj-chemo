@@ -34,6 +34,7 @@ GSE14814.raw = read.celfiles(celfiles)
 
 # normalization 
 GSE14814.rma = rma(GSE14814.raw)
+GSE14814.rma = as.data.frame(exprs(GSE14814.rma))
 
 write.csv(GSE14814.rma, 
           "GSE14814rma.csv",
@@ -48,6 +49,37 @@ write.csv(GSE14814.expr,
           "GSE14814expr.csv",
           row.names = F)
 
+```
+
+```{r}
+# Remove probes without a gene symbol
+annotation14814 <- annotation14814[!is.na(annotation14814$SYMBOL) & annotation14814$SYMBOL != "", ]
+
+# Keep only probes that have a mapped gene symbol
+GSE14814.rma <- GSE14814.rma[rownames(GSE14814.rma) %in% annotation14814$PROBEID, ]
+
+# Create a column with gene symbols
+GSE14814.rma$Symbol <- annotation14814$SYMBOL[match(rownames(GSE14814.rma), annotation14814$PROBEID)]
+
+# Convert to a data frame
+GSE14814.rma <- as.data.frame(GSE14814.rma)
+
+# Group by gene symbol and compute the median expression across all samples
+GSE14814.rma <- GSE14814.rma %>%
+  group_by(Symbol) %>%
+  summarise_all(median) %>%
+  ungroup()  # Ensure row names don't reset
+
+# Explicitly set gene symbols as row names
+GSE14814.rma <- as.data.frame(GSE14814.rma)  # Convert back to a data frame
+rownames(GSE14814.rma) <- GSE14814.rma$Symbol  # Set row names
+GSE14814.rma <- GSE14814.rma[, -1]  # Remove the "Symbol" column
+
+# Check for duplicates
+any(duplicated(rownames(GSE14814.rma)))  # Should return FALSE
+
+# Transpose for final expression matrix
+GSE14814.expr <- as.data.frame(t(GSE14814.rma))
 ```
 
 # map probe IDs to gene symbols
@@ -90,7 +122,8 @@ GSE14814.data$Histology[GSE14814.data$Histology == "ADC"] <- "Adenocarcinoma"
 GSE14814.data$Histology[GSE14814.data$Histology == "SQCC"] <- "Squamous Cell Carcinoma"
 GSE14814.data$Histology[GSE14814.data$Histology == "LCUC"] <- "Large Cell Undifferentiated Carcinoma"
 GSE14814.data$"Smoked?" = NA
-GSE14814.data$Race = "Not Reported"
+GSE14814.data$Race = "Unknown"
+GSE14814.data$Sex = ifelse(GSE14814.data$Sex == "Male", 1, 0)
 
 # fetch feature data to get gene symbols
 feature.dat = gse$GSE14814_series_matrix.txt.gz@featureData@data 
@@ -143,4 +176,16 @@ duplicate_genes14814 <- duplicate_genes14814[order(duplicate_genes14814$SYMBOL),
 
 print(duplicate_genes14814)
 ```
+
+```{r}
+probe_to_symbol <- annotation14814[, c("PROBEID", "SYMBOL")]
+
+# Match probe IDs in GSE29013.expr with their corresponding gene symbols
+mapped_symbols <- probe_to_symbol$SYMBOL[match(colnames(GSE14814.expr), probe_to_symbol$PROBEID)]
+
+# Replace rownames of GSE29013.expr with gene symbols
+colnames(GSE14814.expr)<- mapped_symbols
+```
+
+
 

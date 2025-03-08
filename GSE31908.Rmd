@@ -34,6 +34,7 @@ GSE31908.raw = read.celfiles(celfiles[1:17])
 
 # normalization 
 GSE31908.rma = rma(GSE31908.raw)
+GSE31908.rma = as.data.frame(exprs(GSE31908.rma))
 
 write.csv(GSE31908.rma, 
           "GSE31908rma.csv",
@@ -48,6 +49,37 @@ write.csv(GSE31908.expr,
           "GSE31908expr.csv",
           row.names = F)
 
+```
+
+```{r}
+# Remove probes without a gene symbol
+annotation31908 <- annotation31908[!is.na(annotation31908$SYMBOL) & annotation31908$SYMBOL != "", ]
+
+# Keep only probes that have a mapped gene symbol
+GSE31908.rma <- GSE31908.rma[rownames(GSE31908.rma) %in% annotation31908$PROBEID, ]
+
+# Create a column with gene symbols
+GSE31908.rma$Symbol <- annotation31908$SYMBOL[match(rownames(GSE31908.rma), annotation31908$PROBEID)]
+
+# Convert to a data frame
+GSE31908.rma <- as.data.frame(GSE31908.rma)
+
+# Group by gene symbol and compute the median expression across all samples
+GSE31908.rma <- GSE31908.rma %>%
+  group_by(Symbol) %>%
+  summarise_all(median) %>%
+  ungroup()  # Ensure row names don't reset
+
+# Explicitly set gene symbols as row names
+GSE31908.rma <- as.data.frame(GSE31908.rma)  # Convert back to a data frame
+rownames(GSE31908.rma) <- GSE31908.rma$Symbol  # Set row names
+GSE31908.rma <- GSE31908.rma[, -1]  # Remove the "Symbol" column
+
+# Check for duplicates
+any(duplicated(rownames(GSE31908.rma)))  # Should return FALSE
+
+# Transpose for final expression matrix
+GSE31908.expr <- as.data.frame(t(GSE31908.rma))
 ```
 
 # map probe IDs to gene symbols
@@ -79,10 +111,10 @@ GSE31908.data = as_tibble(gset@phenoData@data) %>%
 GSE31908.data$`gender:ch1` = coalesce(GSE31908.data$`gender:ch1`, GSE31908.data$`Sex:ch1`)
 GSE31908.data = GSE31908.data[, c(1, 5, 8, 10, 11, 13, 15, 17)]
 GSE31908.data$Histology = "Adenocarcinoma"
-GSE31908.data$Age = c(73, 69, 67, 67, 67, 59, 74, 65, 73, 73, 65, 73, 65, 69, 62, 67)
+
 
 # Next, we want to append clinical information onto gene expression data
-colnames(GSE31908.data) = c("Adjuvant Chemo", "Sex", "PFS_MONTHS", "OS_MONTHS", "Stage","Race", "Smoked?", "OS_STATUS", "Histology", "Age")
+colnames(GSE31908.data) = c("Adjuvant Chemo", "Sex", "PFS_MONTHS", "OS_MONTHS", "Stage","Race", "Smoked?", "OS_STATUS", "Histology")
 
 unique(GSE31908.data$Stage)
 GSE31908.data$`Adjuvant Chemo` <- ifelse(GSE31908.data$`Adjuvant Chemo` == "Yes", 1, 0)
@@ -92,8 +124,9 @@ GSE31908.data$Histology[GSE31908.data$Histology == "Squamous"] <- "Squamous Cell
 GSE31908.data$OS_STATUS = as.numeric(GSE31908.data$OS_STATUS)
 GSE31908.data$OS_MONTHS = as.numeric(GSE31908.data$OS_MONTHS)
 GSE31908.data$PFS_MONTHS = as.numeric(GSE31908.data$PFS_MONTHS)
-GSE31908.data <- subset(GSE31908.data, !is.na(OS_STATUS))
 GSE31908.data$Stage <- ifelse(GSE31908.data$Stage == "N0, ACCORDING TO AJCC CRITERIA", "I", "II")
+GSE31908.data$Sex <- ifelse(GSE31908.data$Sex == "Male", 1, 0)
+GSE31908.data$Age = c(73, 69, 67, 67, 67, 59, 74, 65, 73, 73, 65, 73, 65, 69, 62, 67, NA)
 
 
 
@@ -113,12 +146,13 @@ write.csv(GSE31908.data,
 #Merge clinical data and expression data
 GSE31908merged = cbind(GSE31908.data, GSE31908.expr)
 GSE31908merged <- subset(GSE31908merged, !is.na(OS_STATUS))
+GSE31908.data <- subset(GSE31908.data, !is.na(OS_STATUS))
+
 write.csv(GSE31908merged, 
           "GSE31908merged.csv")
 
 GSE31908.expr = GSE31908merged[, -c(1:10)]
 
-GSE31908data.expr = GSE31908merged[, 1:7]
 ``` 
 
 ```{r}
@@ -155,3 +189,17 @@ duplicate_genes31908 <- duplicate_genes31908[order(duplicate_genes31908$SYMBOL),
 
 print(duplicate_genes31908)
 ```
+
+```{r}
+probe_to_symbol <- annotation31908[, c("PROBEID", "SYMBOL")]
+
+# Match probe IDs in GSE29013.expr with their corresponding gene symbols
+mapped_symbols <- probe_to_symbol$SYMBOL[match(colnames(GSE31908.expr), probe_to_symbol$PROBEID)]
+
+# Replace rownames of GSE29013.expr with gene symbols
+colnames(GSE31908.expr)<- mapped_symbols
+```
+
+
+
+

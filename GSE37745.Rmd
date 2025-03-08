@@ -33,6 +33,7 @@ GSE37745.raw = read.celfiles(celfiles)
 
 # normalization 
 GSE37745.rma = rma(GSE37745.raw)
+GSE37745.rma = as.data.frame(exprs(GSE37745.rma))
 
 write.csv(GSE37745.rma, 
           "GSE37745rma.csv",
@@ -45,6 +46,38 @@ probesGSE37745 = colnames(GSE37745.expr)
 
 
 ```
+
+```{r}
+# Remove probes without a gene symbol
+annotation37745 <- annotation37745[!is.na(annotation37745$SYMBOL) & annotation37745$SYMBOL != "", ]
+
+# Keep only probes that have a mapped gene symbol
+GSE37745.rma <- GSE37745.rma[rownames(GSE37745.rma) %in% annotation37745$PROBEID, ]
+
+# Create a column with gene symbols
+GSE37745.rma$Symbol <- annotation37745$SYMBOL[match(rownames(GSE37745.rma), annotation37745$PROBEID)]
+
+# Convert to a data frame
+GSE37745.rma <- as.data.frame(GSE37745.rma)
+
+# Group by gene symbol and compute the median expression across all samples
+GSE37745.rma <- GSE37745.rma %>%
+  group_by(Symbol) %>%
+  summarise_all(median) %>%
+  ungroup()  # Ensure row names don't reset
+
+# Explicitly set gene symbols as row names
+GSE37745.rma <- as.data.frame(GSE37745.rma)  # Convert back to a data frame
+rownames(GSE37745.rma) <- GSE37745.rma$Symbol  # Set row names
+GSE37745.rma <- GSE37745.rma[, -1]  # Remove the "Symbol" column
+
+# Check for duplicates
+any(duplicated(rownames(GSE37745.rma)))  # Should return FALSE
+
+# Transpose for final expression matrix
+GSE37745.expr <- as.data.frame(t(GSE37745.rma))
+```
+
 
 # map probe IDs to gene symbols
 ```{r}
@@ -71,16 +104,13 @@ GSE37745.data = as_tibble(gset1@phenoData@data) %>%
 as.numeric(GSE37745.data$`days to determined death status:ch1`)
 GSE37745.data$`OS_MONTHS` <- round(as.numeric(GSE37745.data$`days to determined death status:ch1`) / 30.44, 2)
 GSE37745.data$`RFS_MONTHS` <- round(as.numeric(GSE37745.data$`days to recurrence / to last visit:ch1`) / 30.44, 2)
-GSE37745.data$'Smoked?' = NA
-GSE37745.data$Race = "Unknown"
-
 # Next, we want to append clinical information onto gene expression data
 GSE37745.data = GSE37745.data[,c(1, 2, 5, 6, 7, 8, 9, 10)] 
 colnames(GSE37745.data) = c("Adjuvant Chemo", "Age", "OS_STATUS", "Sex", "Histology", "Stage", "OS_MONTHS", "RFS_MONTHS")
 
 GSE37745.data$OS_STATUS <- ifelse(GSE37745.data$OS_STATUS == "yes", 1, 0)
 GSE37745.data$Age = as.numeric(GSE37745.data$Age)
-GSE37745.data$Sex <- ifelse(GSE37745.data$Sex == "male", "Male", "Female")
+GSE37745.data$Sex <- ifelse(GSE37745.data$Sex == "male", 1, 0)
 GSE37745.data$Histology[GSE37745.data$Histology == "adeno"] <- "Adenocarcinoma"
 GSE37745.data$Histology[GSE37745.data$Histology == "squamous"] <- "Squamous Cell Carcinoma"
 GSE37745.data$Histology[GSE37745.data$Histology == "large"] <- "Large Cell Carcinoma"
@@ -91,6 +121,8 @@ GSE37745.data$Stage[GSE37745.data$Stage == "2b"  ] <- "IIB"
 GSE37745.data$Stage[GSE37745.data$Stage == "3a"  ] <- "IIIA"
 GSE37745.data$Stage[GSE37745.data$Stage == "3b"  ] <- "IIIB"
 GSE37745.data$Stage[GSE37745.data$Stage == "4"  ] <- "IV"
+GSE37745.data$'Smoked?' = NA
+GSE37745.data$Race = "Unknown"
 
 
 # fetch feature data to get gene symbols
@@ -106,12 +138,11 @@ GSE37745.symbol =
 GSE37745merged = cbind(GSE37745.data, GSE37745.expr)
 GSE37745merged <- GSE37745merged[(GSE37745merged$`Adjuvant Chemo`) != "not known", ]
 
-
 GSE37745.data = GSE37745.data[(GSE37745.data$`Adjuvant Chemo`) != "not known", ]
 GSE37745.data$`Adjuvant Chemo` <- ifelse(GSE37745.data$`Adjuvant Chemo` == "yes", 1, 0)
-GSE37745.expr = GSE37745merged[, -c(1:8)]
+GSE37745merged$`Adjuvant Chemo` <- ifelse(GSE37745merged$`Adjuvant Chemo` == "yes", 1, 0)
+GSE37745.expr = GSE37745merged[, -c(1:10)]
 
-GSE37745data.expr = GSE37745merged[, 1:8]
 ```
 
 ```{r}
@@ -158,6 +189,9 @@ duplicate_genes37745 <- duplicate_genes37745[order(duplicate_genes37745$SYMBOL),
 
 print(duplicate_genes37745)
 ```
+
+
+
 
 ```{r}
 matrix37745 = as.matrix(GSE37745.expr)

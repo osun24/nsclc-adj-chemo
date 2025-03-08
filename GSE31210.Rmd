@@ -34,6 +34,7 @@ GSE31210.raw = read.celfiles(celfiles)
 
 # normalization 
 GSE31210.rma = rma(GSE31210.raw)
+GSE31210.rma = as.data.frame(exprs(GSE31210.rma))
 
 write.csv(GSE31210.rma, 
           "GSE31210rma.csv",
@@ -47,6 +48,38 @@ probes31210 = colnames(GSE31210.expr)
 write.csv(GSE31210.expr, 
           "GSE31210expr.csv",
           row.names = F)
+
+```
+
+```{r}
+# Remove probes without a gene symbol
+annotation31210 <- annotation31210[!is.na(annotation31210$SYMBOL) & annotation31210$SYMBOL != "", ]
+
+# Keep only probes that have a mapped gene symbol
+GSE31210.rma <- GSE31210.rma[rownames(GSE31210.rma) %in% annotation31210$PROBEID, ]
+
+# Create a column with gene symbols
+GSE31210.rma$Symbol <- annotation31210$SYMBOL[match(rownames(GSE31210.rma), annotation31210$PROBEID)]
+
+# Convert to a data frame
+GSE31210.rma <- as.data.frame(GSE31210.rma)
+
+# Group by gene symbol and compute the median expression across all samples
+GSE31210.rma <- GSE31210.rma %>%
+  group_by(Symbol) %>%
+  summarise_all(median) %>%
+  ungroup()  # Ensure row names don't reset
+
+# Explicitly set gene symbols as row names
+GSE31210.rma <- as.data.frame(GSE31210.rma)  # Convert back to a data frame
+rownames(GSE31210.rma) <- GSE31210.rma$Symbol  # Set row names
+GSE31210.rma <- GSE31210.rma[, -1]  # Remove the "Symbol" column
+
+# Check for duplicates
+any(duplicated(rownames(GSE31210.rma)))  # Should return FALSE
+
+# Transpose for final expression matrix
+GSE31210.expr <- as.data.frame(t(GSE31210.rma))
 
 ```
 
@@ -81,11 +114,10 @@ colnames(GSE31210.data) = c("Age", "OS_STATUS", "Sex", "RFS_MONTHS","Stage", "Sm
 
 GSE31210.data$OS_STATUS <- ifelse(GSE31210.data$OS_STATUS == "dead", 1, 0)
 GSE31210.data$Age = as.numeric(GSE31210.data$Age)
-GSE31210.data$Sex <- ifelse(GSE31210.data$Sex == "male", "Male", "Female")
+GSE31210.data$Sex <- ifelse(GSE31210.data$Sex == "male", 1, 0)
 GSE31210.data$`Smoked?` <- ifelse(GSE31210.data$`Smoked?` == "Never-smoker", "0", "1")
 GSE31210.data$`Smoked?` = as.numeric(GSE31210.data$`Smoked?`)
-GSE31210.data <- subset(GSE31210.data, !is.na(OS_STATUS))
-GSE31210.data$"Adjuvant Chemo" = NA
+GSE31210.data$"Adjuvant Chemo" = 0
 GSE31210.data$Race = "Unknown"
 GSE31210.data$RFS_MONTHS <- sapply(strsplit(as.character(GSE31210.data$RFS_MONTHS), ";"), function(x) round(as.numeric(x[1]), 2))
 
@@ -106,10 +138,10 @@ write.csv(GSE31210.data,
 #Merge clinical data and expression data
 GSE31210merged = cbind(GSE31210.data, GSE31210.expr)
 GSE31210merged <- subset(GSE31210merged, !is.na(OS_STATUS))
+GSE31210.data = subset(GSE31210.data, !is.na(OS_STATUS))
 write.csv(GSE31210merged, 
           "GSE31210merged.csv")
-GSE31210.expr = GSE31210merged[, -c(1:7)]
-GSE31210data.expr = GSE31210merged[, 1:7]
+GSE31210.expr = GSE31210merged[, -c(1:10)]
 ```
 
 ```{r}
@@ -146,4 +178,16 @@ duplicate_genes31210 <- duplicate_genes31210[order(duplicate_genes31210$SYMBOL),
 
 print(duplicate_genes31210)
 ```
+
+```{r}
+probe_to_symbol <- annotation31210[, c("PROBEID", "SYMBOL")]
+
+# Match probe IDs in GSE29013.expr with their corresponding gene symbols
+mapped_symbols <- probe_to_symbol$SYMBOL[match(colnames(GSE31210.expr), probe_to_symbol$PROBEID)]
+
+# Replace rownames of GSE29013.expr with gene symbols
+colnames(GSE31210.expr)<- mapped_symbols
+```
+
+
 
