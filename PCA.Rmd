@@ -19,6 +19,7 @@ install.packages("factoextra")
 library(factoextra)
 install.packages("sva")
 library(sva)
+library(dplyr)
 ```
 
 ```{r}
@@ -39,7 +40,6 @@ fviz_pca_ind(pca_res,
 ```
 
 ```{r}
-library(sva)
 
 expr_pair_combat <- ComBat(dat = t(expr_pair), batch = batch_labels, mod = NULL)
 
@@ -54,12 +54,17 @@ fviz_pca_ind(pca_corrected,
              addEllipses = TRUE,
              legend.title = "Dataset (Corrected)")
 
+GPL96.data = bind_rows(GSE68465.data, GSE14814.data)
+write.csv(GPL96.data, 
+          "GPL96_data.csv",
+          row.names = F)
+
 GPL96.expr = expr_pair_corrected
 write.csv(GPL96.expr, 
           "GPL96expr.csv",
           row.names = F)
 
-GPL96merged = cbind(GPL96, GPL96.expr)
+GPL96merged = cbind(GPL96.data, GPL96.expr)
 write.csv(GPL96merged, 
           "GPL96merged.csv",
           row.names = F)
@@ -93,7 +98,6 @@ fviz_pca_ind(pca_before,
 
 
 ```{r}
-library(sva)
 expr_all_combat <- ComBat(dat = t(expr_all), batch = batch_labels_all, mod = NULL)
 
 # transpose back for PCA and downstream analyses
@@ -106,16 +110,33 @@ fviz_pca_ind(pca_after,
              addEllipses = TRUE,
              legend.title = "Dataset (After Correction)")
 
-GPL570.expr = expr_all_corrected
+GPL570.expr = as.data.frame(expr_all_corrected)
+
+GPL570.data = bind_rows(GSE29013.data, GSE31908.data, GSE31210.data, GSE37745.data, GSE50081.data)
+write.csv(GPL570.data, 
+          "GPL570_data.csv",
+          row.names = F)
 
 write.csv(GPL570.expr, 
           "GPL570expr.csv",
           row.names = F)
 
-GPL570merged = cbind(GPL570, GPL570.expr)
+GPL570merged = cbind(GPL570.data, GPL570.expr)
 write.csv(GPL570merged, 
           "GPL570merged.csv",
           row.names = F)
 ```
 
+```{r}
+# Remove duplicates: Keep the first occurrence of each gene symbol
+GPL570.genesymbols <- annotation29013[!duplicated(annotation29013$SYMBOL), ]
+write.csv(GPL570.genesymbols, 
+          "GPL570symbols.csv",
+          row.names = F)
+
+GPL96.genesymbols <- annotation68465[!duplicated(annotation68465$SYMBOL), ]
+write.csv(GPL96.genesymbols, 
+          "GPL96symbols.csv",
+          row.names = F)
+```
 
