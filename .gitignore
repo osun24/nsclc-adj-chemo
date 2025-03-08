@@ -13,3 +13,6 @@ GSE39279merged.csv
 nsclc-adj-chemo.Rproj
 >>>>>>> a8731af13e330b7f4a5b252dfd4f34da087f209c
 .RData
+clinical_variables_heatmap_updated.png
+Clinical Variables - RAW - Feb. 5.csv
+clinical-variable-heatmap.py
