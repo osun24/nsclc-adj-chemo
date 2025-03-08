@@ -238,7 +238,109 @@ surv = surv.dropna()  # left with 457 samples
 
 # --- New code to subset to clinical and top 100 genomic features ---
 importances = pd.read_csv('rsf_results_GPL570_rsf_preselection_importances.csv')
-selected_genes = importances['Feature'].tolist()[:80]
+#selected_genes = importances['Feature'].tolist()[:80]
+selected_genes = [
+    "TP53",
+    "KRAS",
+    "EGFR",
+    "ERCC1",
+    "BRCA1",
+    "RRM1",
+    "BRAF",
+    "MET",
+    "ALK",
+    "STK11",
+    "RB1",
+    "CCNB1",
+    "CCND1",
+    "CDKN2A",
+    "CDK4",
+    "CDK6",
+    "MYC",
+    "BCL2",
+    "BAX",
+    "MLH1",
+    "MSH2",
+    "MSH6",
+    "ATM",
+    "ATR",
+    "CHEK1",
+    "CHEK2",
+    "FANCA",
+    "FANCD2",
+    "XRCC1",
+    "XRCC2",
+    "XRCC3",
+    "RAD51",
+    "TYMS",
+    "TUBB3",
+    "ABCC1",
+    "ABCB1",
+    "KEAP1",
+    "NFE2L2",
+    "PTEN",
+    "PIK3CA",
+    "AKT1",
+    "ERBB2",
+    "FGFR1",
+    "CUL3",
+    "GSTM1",
+    "GSTP1",
+    "SOD2",
+    "CASP3",
+    "CASP9",
+    "MDM2",
+    "CDKN1A",
+    "CDKN1B",
+    "PARP1",
+    "MTHFR",
+    "DUT",
+    "SLFN11",
+    "PDK1",
+    "MCL1",
+    "CCNE1",
+    "PKM",
+    "HIF1A",
+    "VEGFA",
+    "E2F1",
+    "BRCC3",
+    "MRE11",
+    "NBN",
+    "RAD50",
+    "RAD17",     # Alternative to CHEK1 duplication
+    "APAF1",
+    "ATG5",
+    "ATG7",
+    "SIRT1",
+    "MTHFD2",
+    "DNMT1",
+    "DNMT3A",
+    "TLE1",
+    "SOX2",
+    "NKX2-1",
+    "GTF2I",
+    "PRC1",
+    "KDM5B",
+    "SMARCA4",
+    "ARID1A",
+    "BRIP1",
+    "POLD1",
+    "POLE",
+    "MCM2",
+    "MCM4",
+    "CDC20",
+    "CDH1",
+    "VIM",
+    "SPARC",
+    "SNAI1",
+    "TWIST1",
+    "ERBB3",
+    "HERPUD1",
+    "GAPDH",
+    "ACTB",
+    "CD8A",
+    "CD274"
+]
 # Adjust clinical features for those that were one-hotencoded:
 selected_clinical = ["Adjuvant Chemo", "Age", "Sex", "Smoked?"]
 dummy_cols = [col for col in surv.columns if col.startswith('Stage_') or col.startswith('Histology_') or col.startswith('Race_')]
@@ -258,8 +360,8 @@ low_variance = surv.columns[~selector.get_support()]
 print(f"Dropping low variance columns: {low_variance}")
 surv = surv.drop(columns=low_variance)
 
-#optimize_penalties(surv, 'GPL570')
+optimize_penalties(surv, 'GPL570')
 
 # DROP those with low variance
 # Optimal parameters: lambda (penalty strength) = 0.244205309454865 and l1_ratio (L1 weight) = 0.25 with Test C-index = 0.6658395368072787
-run_model(surv, 'GPL570', penalizer=0.244205309454865, l1_ratio=0.25)
+#run_model(surv, 'GPL570', penalizer=0.244205309454865, l1_ratio=0.25)

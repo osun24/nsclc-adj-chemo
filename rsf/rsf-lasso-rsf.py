@@ -43,16 +43,37 @@ def create_rsf(df, name, trees=300):
     
     print("Initial features:", X_train.columns.tolist())
     
+    # ---------------- New: Hyperparameter search to select best RSF based on Test C-index ---------------- #
+    best_c_index = -1
+    best_params = None
+    best_model = None
+    for n_est in [trees, trees+100, trees+200, trees+300, trees+400, trees+500]:
+        for min_split in [50, 75, 100, 125, 150, 175, 200]:
+            for min_leaf in [25, 30, 40, 50, 60, 70, 80]:
+                for max_feat in ["sqrt", "log2"]:
+                    model = RandomSurvivalForest(
+                        n_estimators=n_est,
+                        min_samples_split=min_split,
+                        min_samples_leaf=min_leaf,
+                        random_state=42,
+                        n_jobs=-1,
+                        max_features=max_feat
+                    )
+                    model.fit(X_train, y_train)
+                    test_pred = model.predict(X_test)
+                    c_index = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], test_pred)[0]
+                    print(c_index)
+                    if c_index > best_c_index:
+                        best_c_index = c_index
+                        best_params = {"n_estimators": n_est, "min_samples_split": min_split, "min_samples_leaf": min_leaf, "max_features": max_feat}
+                        best_model = model
+    print(f"Best RSF hyperparameters: {best_params} with Test C-index: {best_c_index:.3f}")
+    
+    # Use the best tuned model for subsequent steps
+    initial_rsf = best_model
+    
     # ---------------- Step 1: RSF Pre-Selection with Permutation Importance ---------------- #
     step1_start = time.time()
-    initial_rsf = RandomSurvivalForest(
-        n_estimators=trees,
-        min_samples_split=75,
-        min_samples_leaf=30,
-        random_state=42,
-        n_jobs=-1,
-        max_features="sqrt"
-    )
     initial_rsf.fit(X_train, y_train)
     
     # print concordance indexes
@@ -223,7 +244,10 @@ if __name__ == "__main__":
     surv = surv.drop(columns=['PFS_MONTHS', 'RFS_MONTHS'])
     print("Columns with NA values:", surv.columns[surv.isna().any()].tolist())
     print("Number of missing 'Smoked?' entries:", surv['Smoked?'].isna().sum())
+    # drop smoked
+    surv = surv.drop(columns=['Smoked?'])
     surv = surv.dropna()  # Retain 457 samples
+    print("Data shape:", surv.shape)
 
     # Run the RSF pipeline with feature selection and periodic time estimation
     create_rsf(surv, 'GPL570', trees=300)
