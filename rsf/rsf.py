@@ -11,7 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D    # new import for 3D plotting
 
 def create_rsf(df, name, trees=1000):
     # Subset df using preselected covariates and clinical variables
-    selected_csv = pd.read_csv('rsf_results_GPL570_rsf_preselection_importances.csv', index_col=0)
+    selected_csv = pd.read_csv('rsf/rsf_results_GPL570_rsf_preselection_importances.csv', index_col=0)
     top_100 = [
     # ---- Top 60 Core Genes ----
     "TP53","KRAS","STK11","KEAP1","NFE2L2","RB1","MYC","CDKN2A","CDK4","CDK6",
@@ -178,7 +178,7 @@ def create_rsf(df, name, trees=1000):
     "CD8A",
     "CD274"
 ]
-    top_100 = list(set(top_100[:77]))
+    top_100 = selected_csv.index[:75]
     
     clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "Sex", "Histology", "Race", "Smoked?"] + [col for col in surv.columns if col.startswith('Race')] + [col for col in surv.columns if col.startswith('Histology')] 
     selected_covariates = list(set(top_100[:77]).union(set(clinical_vars)))
@@ -219,7 +219,7 @@ def create_rsf(df, name, trees=1000):
     print(f"Train C-index: {train_c_index[0]:.3f}")
 
     # Save the RSF model to a file
-    #joblib.dump(rsf, f'rsf_model-{trees}-c{c_index[0]:.3f}.pkl')
+    joblib.dump(rsf, f'rsf_model-{trees}-c{c_index[0]:.3f}.pkl')
 
     result = permutation_importance(rsf, X_test, y_test, n_repeats=5, random_state=42)
 
@@ -229,6 +229,12 @@ def create_rsf(df, name, trees=1000):
     }, index=X_test.columns).sort_values(by="importances_mean", ascending=False)
 
     print(importances_df)
+    
+    # save to csv   
+    importances_df.to_csv(f'rsf/rsf_results_{name}_rsf_importances.csv')
+    
+    # take only top 30
+    importances_df = importances_df.head(30)
 
     importances_df = importances_df.sort_values(by="importances_mean", ascending=True)  # Ascending for better barh plot
 
@@ -248,8 +254,10 @@ def create_rsf(df, name, trees=1000):
 
 def search_feature_space_rsf(df, name, trees=300):
     # Load preselected gene features (use top 30)
-    selected_csv = pd.read_csv('rsf_results_GPL570_rsf_preselection_importances.csv', index_col=0)
-    candidate_genes =[
+    selected_csv = pd.read_csv('rsf/rsf_results_GPL570_rsf_preselection_importances.csv', index_col=0)
+    # get first 100
+    candidate_genes = selected_csv.index[:100]
+    """candidate_genes =[
     # ---- Top 60 Core Genes ----
     "TP53","KRAS","STK11","KEAP1","NFE2L2","RB1","MYC","CDKN2A","CDK4","CDK6",
     "CCND1","MMP2","MMP9","BCL2","BCL2L1","BCL2L11","CASP3","CASP8","CASP9","NKX2-1",
@@ -413,7 +421,7 @@ def search_feature_space_rsf(df, name, trees=300):
     "ACTB",
     "CD8A",
     "CD274"
-]
+]"""
     # Clinical variables (must be included)
     clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "Sex", "Histology", "Race", "Smoked?"]
     clinical_vars = [var for var in clinical_vars if var in df.columns]
@@ -459,8 +467,28 @@ def search_feature_space_rsf(df, name, trees=300):
             train_c_indexes.append(train_ci)
             print(f"Gene features: {m}, Estimators: {n_est}, Total features: {len(feature_cols)}, Test C-index: {test_ci:.3f}, Train C-index: {train_ci:.3f}")
             
-            if test_ci > 0.6:
-                joblib.dump(rsf, f'rsf_model-{trees}-c{test_ci:.3f}.pkl')
+            if test_ci > 0.64:
+                joblib.dump(rsf, f'rsf_model-{trees}-c{test_ci:.3f}-rsfselected.pkl')
+                
+                # run permutation importance
+                result = permutation_importance(rsf, X_test, y_test, n_repeats=5, random_state=42)
+                importances_df = pd.DataFrame({
+                    "importances_mean": result.importances_mean,
+                    "importances_std": result.importances_std
+                }, index=X_test.columns).sort_values(by="importances_mean", ascending=False)
+                importances_df.to_csv(f'rsf/rsf_results_{name}_rsf_importances_{m}genes_{n_est}estimators.csv')
+                
+                # plot
+                importances_df = importances_df.head(33)
+                importances_df = importances_df.sort_values(by="importances_mean", ascending=True)  # Ascending for better barh plot
+                plt.figure(figsize=(12, 8))
+                plt.barh(importances_df.index, importances_df["importances_mean"], xerr=importances_df["importances_std"], color=(9/255,117/255,181/255))
+                plt.xlabel("Permutation Feature Importance")
+                plt.ylabel("Feature")
+                plt.title(f"Random Survival Forest: Feature Importances (C-index: {test_ci:.3f})")
+                plt.tight_layout()
+                name = name.replace(' ', '-')
+                plt.savefig(f'rsf-importances-{name}-{m}genes-{n_est}estimators-{test_size}testsize.png')
     
     # Find optimal setting based on test performance
     optimal_index = np.argmax(test_c_indexes)

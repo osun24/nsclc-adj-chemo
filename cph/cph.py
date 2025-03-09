@@ -237,7 +237,7 @@ print(surv['Smoked?'].isna().sum())  # 121
 surv = surv.dropna()  # left with 457 samples
 
 # --- New code to subset to clinical and top 100 genomic features ---
-importances = pd.read_csv('rsf_results_GPL570_rsf_preselection_importances.csv')
+importances = pd.read_csv('rsf/rsf_results_GPL570_rsf_preselection_importances.csv')
 #selected_genes = importances['Feature'].tolist()[:80]
 selected_genes = [
     "TP53",
@@ -341,6 +341,16 @@ selected_genes = [
     "CD8A",
     "CD274"
 ]
+
+selected_genes = [
+    "TP53", "KRAS", "EGFR", "ALK", "MET", "STK11", "KEAP1", "BRAF",
+    "PTEN", "RB1", "PIK3CA", "NF1", "SMARCA4", "MDM2", "CDKN2A",
+    "MYC", "ATM", "BRCA1", "BRCA2", "PIK3R1"
+]
+
+# importances take top 500
+selected_genes = importances['Feature'].tolist()[:50]
+
 # Adjust clinical features for those that were one-hotencoded:
 selected_clinical = ["Adjuvant Chemo", "Age", "Sex", "Smoked?"]
 dummy_cols = [col for col in surv.columns if col.startswith('Stage_') or col.startswith('Histology_') or col.startswith('Race_')]
@@ -360,8 +370,8 @@ low_variance = surv.columns[~selector.get_support()]
 print(f"Dropping low variance columns: {low_variance}")
 surv = surv.drop(columns=low_variance)
 
-optimize_penalties(surv, 'GPL570')
+#optimize_penalties(surv, 'GPL570')
 
 # DROP those with low variance
 # Optimal parameters: lambda (penalty strength) = 0.244205309454865 and l1_ratio (L1 weight) = 0.25 with Test C-index = 0.6658395368072787
-#run_model(surv, 'GPL570', penalizer=0.244205309454865, l1_ratio=0.25)
+run_model(surv, 'GPL570 - RSF Selected 50', penalizer=0.244205309454865, l1_ratio=0.25)

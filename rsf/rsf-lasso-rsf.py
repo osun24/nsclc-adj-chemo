@@ -40,8 +40,13 @@ def create_rsf(df, name, trees=300):
     test_size = 0.2
     features = continuous_columns.union(binary_columns)
     X_train, X_test, y_train, y_test = train_test_split(df[features], surv_data, test_size=test_size, random_state=42)
+    # Count number of events in training and test sets
+    train_events = np.sum(y_train['OS_STATUS'])
+    test_events = np.sum(y_test['OS_STATUS'])
+    print(f"Number of events in training set: {train_events}")
+    print(f"Number of events in test set: {test_events}")
     
-    print("Initial features:", X_train.columns.tolist())
+    #print("Initial features:", X_train.columns.tolist())
     
     # ---------------- New: Hyperparameter search to select best RSF based on Test C-index ---------------- #
     best_c_index = -1
