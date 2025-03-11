@@ -7,8 +7,18 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 import joblib
+from mpl_toolkits.mplot3d import Axes3D    # new import for 3D plotting
 
 def create_rsf(df, name, trees=1000):
+    # Subset df using preselected covariates and clinical variables
+    selected_csv = pd.read_csv('rsf/rsf_results_GPL570_rsf_preselection_importances.csv', index_col=0)
+    top_100 = selected_csv.index[:75]
+    
+    clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "Sex", "Histology", "Race", "Smoked?"] + [col for col in surv.columns if col.startswith('Race')] + [col for col in surv.columns if col.startswith('Histology')] 
+    selected_covariates = list(set(top_100[:77]).union(set(clinical_vars)))
+    selected_covariates = [col for col in selected_covariates if col in df.columns]
+    df = df[['OS_STATUS', 'OS_MONTHS'] + selected_covariates]
+    
     # Create structured array for survival analysis
     surv_data = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', df)
     
@@ -18,7 +28,7 @@ def create_rsf(df, name, trees=1000):
     # please change sex to IS_FEMALE/IS_MALE for clarity
     binary_columns = ['Adjuvant Chemo', 'Sex'] 
     df[binary_columns] = df[binary_columns].astype(int)
-    # print(df[binary_columns].describe())
+    
     continuous_columns = df.columns.difference(['OS_STATUS', 'OS_MONTHS', *binary_columns])
     
     # Check that binary columns are not scaled
@@ -31,7 +41,7 @@ def create_rsf(df, name, trees=1000):
 
     print(X_train.columns)
     # Fit the Random Survival Forest model
-    rsf = RandomSurvivalForest(n_estimators=trees, min_samples_split=75, min_samples_leaf=30, random_state=42, n_jobs= -1, max_features = "sqrt") # run on all processors
+    rsf = RandomSurvivalForest(n_estimators=trees, min_samples_split=75, min_samples_leaf=30, random_state=42, n_jobs= -1, max_features = None) # run on all processors
     rsf.fit(X_train, y_train)
 
     # Evaluate model performance
@@ -43,7 +53,7 @@ def create_rsf(df, name, trees=1000):
     print(f"Train C-index: {train_c_index[0]:.3f}")
 
     # Save the RSF model to a file
-    #joblib.dump(rsf, f'rsf_model-{trees}-c{c_index[0]:.3f}.pkl')
+    joblib.dump(rsf, f'rsf_model-{trees}-c{c_index[0]:.3f}.pkl')
 
     result = permutation_importance(rsf, X_test, y_test, n_repeats=5, random_state=42)
 
@@ -53,6 +63,12 @@ def create_rsf(df, name, trees=1000):
     }, index=X_test.columns).sort_values(by="importances_mean", ascending=False)
 
     print(importances_df)
+    
+    # save to csv   
+    importances_df.to_csv(f'rsf/rsf_results_{name}_rsf_importances.csv')
+    
+    # take only top 30
+    importances_df = importances_df.head(30)
 
     importances_df = importances_df.sort_values(by="importances_mean", ascending=True)  # Ascending for better barh plot
 
@@ -70,24 +86,14 @@ def create_rsf(df, name, trees=1000):
     plt.savefig(f'rsf-importances-{name}-{trees}trees-{test_size}testsize.png')
     plt.show()
 
-# Without treatment data
+# Data preprocessing (unchanged)
 surv = pd.read_csv('GPL570merged.csv')
-
-# one-hot encode #"Stage", "Histology, "Race"
 surv = pd.get_dummies(surv, columns=["Stage", "Histology", "Race"])
-
-# drop PFS & RFS
 surv = surv.drop(columns=['PFS_MONTHS','RFS_MONTHS'])
-
-# only print those with NA values
 print(surv.columns[surv.isna().any()].tolist())
+print(surv['Smoked?'].isna().sum())  # 121
+surv = surv.dropna()  # left with 457 samples
 
-# print number of smoking with na
-print(surv['Smoked?'].isna().sum()) # 121
-
-# drop those with NA values
-surv = surv.dropna()
-
-# left with 457
-
-create_rsf(surv, 'GPL570', 300)
+#print(optimal_features)
+#create_rsf(surv, 'GPL570', 50)
+# Optimal: Gene features: 77, Estimators: 50 (Test C-index: 0.641)
