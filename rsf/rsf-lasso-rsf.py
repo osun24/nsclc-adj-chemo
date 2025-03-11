@@ -53,6 +53,8 @@ def create_rsf(df, name, trees=300):
     best_params = None
     best_model = None
     results = []
+    iteration = 0              # Added counter for iterations
+    save_interval = 50         # Save partial results every 50 iterations
     kf = KFold(n_splits=5, shuffle=True, random_state=42)
     for n_est in [trees, trees+100, trees+200]:
         for min_split in [5, 10, 15, 20, 25, 30, 35, 40]:
@@ -109,6 +111,11 @@ def create_rsf(df, name, trees=300):
                         best_params = {"n_estimators": n_est, "min_samples_split": min_split,
                                        "min_samples_leaf": min_leaf, "max_features": max_feat}
                         best_model = model
+                    iteration += 1
+                    if iteration % save_interval == 0:
+                        partial_csv = os.path.join(output_dir, f"{name}_rsf_hyperparameter_results_partial.csv")
+                        pd.DataFrame(results).to_csv(partial_csv, index=False)
+                        print(f"Partial hyperparameter results saved to {partial_csv}")
     results_df = pd.DataFrame(results)
     results_csv = os.path.join(output_dir, f"{name}_rsf_hyperparameter_results.csv")
     results_df.to_csv(results_csv, index=False)
