@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 import os
 
 # Load CSV file
-data_file = "GPL570merged.csv"  # adjust path if needed
+data_file = "GPL96merged.csv"  # adjust path if needed
 df = pd.read_csv(data_file)
 
 # Print unique values for non-numeric columns before any processing
@@ -21,6 +21,7 @@ print(unique_items)
 df = pd.get_dummies(df, columns=["Stage", "Histology", "Race", "Smoked?"])
 
 # Drop PFS/RFS 
+# No RFS for GPL96, so only drop PFS
 df = df.drop(columns=['PFS_MONTHS', 'RFS_MONTHS'])
 
 print("Columns with NA values:", df.columns[df.isna().any()].tolist())
@@ -51,9 +52,9 @@ smoked_columns = df.columns[df.columns.str.contains("Smoked")]
 print(f"Columns with 'Smoked' in the name: {len(smoked_columns)}")
 
 # Save outputs to CSV files
-train.to_csv("GPL570train.csv", index=False)
-test.to_csv("GPL570test.csv", index=False)
-validation.to_csv("GPL570validation.csv", index=False)
+train.to_csv("GPL96train.csv", index=False)
+test.to_csv("GPL96test.csv", index=False)
+validation.to_csv("GPL96validation.csv", index=False)
 
 print(f"Training set: {len(train)} samples")
 print(f"Testing set: {len(test)} samples")
@@ -68,3 +69,23 @@ print(f"Validation set: {len(validation[validation['OS_STATUS'] == 1])} events, 
 # Check for non-numeric columns
 non_numeric_columns = df.columns[df.apply(lambda col: pd.to_numeric(col, errors='coerce').isna().any())]
 print("Non-numeric columns at the end of preprocessing:", non_numeric_columns.tolist())
+
+"""GPL96:
+Unique values in 'Stage' before processing: ['II' 'IB' 'III' 'IA' 'IV']
+Unique values in 'Histology' before processing: ['Squamous Cell Carcinoma' 'Adenocarcinoma' 'Large Cell Carcinoma'
+ 'Adenosquamous Carcinoma']
+Unique values in 'Race' before processing: ['Caucasian' 'African American' 'Unknown' 'Asian']
+Unique values in 'Smoked?' before processing: ['Yes' 'No' 'Unknown']
+Unique items in column 'Race':
+['Caucasian' 'African American' 'Unknown' 'Asian']
+Columns with NA values: []
+Shape before dropping NA (578, 21379)
+Data shape: (578, 21379)
+Columns with 'Smoked' in the name: 3
+Training set: 346 samples
+Testing set: 116 samples
+Validation set: 116 samples
+Training set: 122 events, 224 censored
+Testing set: 41 events, 75 censored
+Validation set: 41 events, 75 censored
+Non-numeric columns at the end of preprocessing: []"""
