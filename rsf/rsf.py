@@ -11,13 +11,21 @@ from sklearn.inspection import permutation_importance
 import joblib
 from mpl_toolkits.mplot3d import Axes3D    # new import for 3D plotting
 
+def rsf_concordance_score(estimator, X, y):
+    preds = estimator.predict(X)
+    return concordance_index_censored(y['OS_STATUS'], y['OS_MONTHS'], preds)[0]
+
 def create_rsf(train_df, valid_df, name, trees=1000):
     # Subset using preselected covariates
     selected_csv = pd.read_csv('rsf/rsf_results_GPL570 3-13-25 RS_rsf_preselection_importances.csv', index_col=0)
     """[:10]
     Validation C-index: 0.728
     Train C-index: 0.821"""
-    top_100 = selected_csv.index[:10]
+    top_100 = selected_csv.index[:0]
+    
+    """[:0] - no genetic
+    Validation C-index: 0.697
+    Train C-index: 0.686"""
     clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"] + \
                     [col for col in train_df.columns if col.startswith('Race')] + \
                     [col for col in train_df.columns if col.startswith('Histology')] + \
@@ -133,10 +141,40 @@ def open_rsf(train_df, valid_df, filepath, feature_selected=False):
     print(f"Min samples leaf: {rsf.min_samples_leaf}")
     print(f"Max features: {rsf.max_features}")
     
-    
     print(f"Loaded RSF Model from {filepath}")
     print(f"Train C-index: {train_c_index[0]:.3f}")
     print(f"Validation C-index: {valid_c_index[0]:.3f}")
+    
+    # Run permutation feature importance
+    perm_result = permutation_importance(rsf, X_train, y_train,
+                                           scoring=rsf_concordance_score,
+                                           n_repeats=5, random_state=42, n_jobs=-1)
+    importances = perm_result.importances_mean
+    importance_df = pd.DataFrame({
+        "Feature": X_train.columns,
+        "Importance": importances,
+        "Std": perm_result.importances_std
+    }).sort_values(by="Importance", ascending=False)
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(script_dir, "rsf_results")
+    os.makedirs(output_dir, exist_ok=True)
+    
+    preselect_csv = os.path.join(output_dir, f"1SE_rsf_preselection_importances.csv")
+    importance_df.to_csv(preselect_csv, index=False)
+    print(f"RSF pre-selection importances saved to {preselect_csv}")
+    
+    top_preselect = importance_df.head(50)
+    plt.figure(figsize=(12, 8))
+    plt.barh(top_preselect["Feature"][::-1], top_preselect["Importance"][::-1],
+             xerr=top_preselect["Std"][::-1], color=(9/255, 117/255, 181/255))
+    plt.xlabel("Permutation Importance")
+    plt.title("RSF Pre-Selection (Top 50 Features)")
+    plt.tight_layout()
+    preselect_plot = os.path.join(output_dir, f"1SE_rsf_preselection_importances.png")
+    plt.savefig(preselect_plot)
+    plt.close()
+    print(f"RSF pre-selection plot saved to {preselect_plot}")
 
 if __name__ == "__main__":
     # Data Loading and Preprocessing for train data
@@ -152,13 +190,13 @@ if __name__ == "__main__":
     print("Validation data shape:", valid.shape)
     
     # Run the RSF pipeline with provided train and validation data
-    create_rsf(train, valid, 'GPL570', trees=100)
+    #create_rsf(train, valid, 'GPL570', trees=100)
     
     # Example usage of open_rsf:
     # Update the filepath below to the actual saved model filename if different.
     model_filepath = "rsf/rsf_results_GPL570 3-13-25 RS_final_rsf_model_1se.pkl"
     # Set feature_selected=True to use preselected features, or False to use all features.
-    #open_rsf(train, valid, model_filepath, feature_selected=False)
+    open_rsf(train, valid, model_filepath, feature_selected=False)
 
 
     """Loading train data from: GPL570train.csv
