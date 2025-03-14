@@ -5,20 +5,20 @@ import numpy as np
 from sksurv.ensemble import RandomSurvivalForest
 from sksurv.util import Surv
 from sksurv.metrics import concordance_index_censored
-from sksurv.linear_model import CoxnetSurvivalAnalysis
-from sklearn.model_selection import train_test_split, KFold
+from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 import joblib
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.metrics import make_scorer
 
 # Determine script directory for consistent path handling in a VM
 script_dir = os.path.dirname(os.path.abspath(__file__))
 output_dir = os.path.join(script_dir, "rsf_results")
 os.makedirs(output_dir, exist_ok=True)
 
-def rsf_concordance_score(estimator, X, y):
-    preds = estimator.predict(X)
-    return concordance_index_censored(y['OS_STATUS'], y['OS_MONTHS'], preds)[0]
+def rsf_concordance_metric(y, y_pred):
+    return concordance_index_censored(y['OS_STATUS'], y['OS_MONTHS'], y_pred)[0]
 
 def create_rsf(train_df, test_df, name):
     overall_start = time.time()
@@ -45,95 +45,66 @@ def create_rsf(train_df, test_df, name):
     print(f"Number of events in training set: {train_events}")
     print(f"Number of events in test set: {test_events}")
     
-    # ---------------- Hyperparameter search with Cross Validation ---------------- #
-    best_c_index = -1
-    best_cv_std = None
-    best_params = None
-    best_model = None
-    results = []
-    iteration = 0              # Counter for iterations
-    save_interval = 50         # Save partial results every 50 iterations
-    kf = KFold(n_splits=5, shuffle=True, random_state=42)
-    for n_est in [100, 200, 300, 400, 500]:
-        for min_split in [5, 10, 15, 20, 25, 30, 35, 40]:
-            for min_leaf in [5, 10, 15, 20, 25, 30]:
-                for max_feat in ["sqrt", "log2"]:
-                    model = RandomSurvivalForest(
-                        n_estimators=n_est,
-                        min_samples_split=min_split,
-                        min_samples_leaf=min_leaf,
-                        random_state=42,
-                        n_jobs=-1,
-                        max_features=max_feat
-                    )
-                    model.fit(X_train, y_train)
-                    test_pred = model.predict(X_test)
-                    c_index_test = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], test_pred)[0]
-                    
-                    cv_scores = []
-                    for train_idx, val_idx in kf.split(X_train):
-                        X_cv_train = X_train.iloc[train_idx]
-                        y_cv_train = y_train[train_idx]
-                        X_cv_val  = X_train.iloc[val_idx]
-                        y_cv_val  = y_train[val_idx]
-                        model_cv = RandomSurvivalForest(
-                            n_estimators=n_est,
-                            min_samples_split=min_split,
-                            min_samples_leaf=min_leaf,
-                            random_state=42,
-                            n_jobs=-1,
-                            max_features=max_feat
-                        )
-                        model_cv.fit(X_cv_train, y_cv_train)
-                        pred_cv = model_cv.predict(X_cv_val)
-                        cv_score = concordance_index_censored(
-                            y_cv_val['OS_STATUS'], y_cv_val['OS_MONTHS'], pred_cv)[0]
-                        cv_scores.append(cv_score)
-                    cv_mean = np.mean(cv_scores)
-                    cv_std = np.std(cv_scores)
-                    
-                    results.append({
-                        "n_estimators": n_est,
-                        "min_samples_split": min_split,
-                        "min_samples_leaf": min_leaf,
-                        "max_features": max_feat,
-                        "cv_mean": cv_mean,
-                        "cv_std": cv_std,
-                        "test_c_index": c_index_test,
-                        "model_obj": model  # store model for later use
-                    })
-                    print(f"CV mean: {cv_mean:.3f}, CV std: {cv_std:.3f}, Test C-index: {c_index_test:.3f}")
-                    
-                    if cv_mean > best_c_index:
-                        best_c_index = cv_mean
-                        best_cv_std = cv_std  # store the corresponding std error
-                        best_params = {"n_estimators": n_est, "min_samples_split": min_split,
-                                       "min_samples_leaf": min_leaf, "max_features": max_feat}
-                        best_model = model
-                    iteration += 1
-                    if iteration % save_interval == 0:
-                        partial_csv = os.path.join(output_dir, f"{name}_rsf_hyperparameter_results_partial.csv")
-                        pd.DataFrame(results).to_csv(partial_csv, index=False)
-                        print(f"Partial hyperparameter results saved to {partial_csv}")
-    results_df = pd.DataFrame(results)
+    # ---------------- Hyperparameter search with RandomizedSearchCV ---------------- #
+    # Define custom scoring function for concordance index
+    rsf_score = make_scorer(rsf_concordance_metric, greater_is_better=True)
+
+    param_distributions = {
+        "n_estimators": [100, 200, 300, 400, 500],
+        "min_samples_split": [5, 10, 15, 20, 25, 30, 35, 40],
+        "min_samples_leaf": [5, 10, 15, 20, 25, 30],
+        "max_features": ["sqrt", "log2"]
+    }
+
+    rsf = RandomSurvivalForest(random_state=42, n_jobs=-1)
+    cv = KFold(n_splits=5, shuffle=True, random_state=42)
+    random_search = RandomizedSearchCV(estimator=rsf,
+                                    param_distributions=param_distributions,
+                                    n_iter=50,
+                                    cv=cv,
+                                    scoring=rsf_score,
+                                    random_state=42,
+                                    n_jobs=-1,
+                                    verbose=1)
+    random_search.fit(X_train, y_train)
+
+    best_model = random_search.best_estimator_
+    best_params = random_search.best_params_
+    best_c_index = random_search.best_score_
+    print(f"Best RSF hyperparameters: {best_params} with CV mean C-index: {best_c_index:.3f}")
+
+    # Save all CV results to CSV
+    results_df = pd.DataFrame(random_search.cv_results_)
     results_csv = os.path.join(output_dir, f"{name}_rsf_hyperparameter_results.csv")
     results_df.to_csv(results_csv, index=False)
     print(f"RSF hyperparameter results saved to {results_csv}")
-    print(f"Best RSF hyperparameters: {best_params} with CV mean C-index: {best_c_index:.3f}")
-    
+
     # ---------------- Select simplest model using the 1 SE rule ---------------- #
-    one_se_threshold = best_c_index - best_cv_std
-    one_se_candidates = [res for res in results if res["cv_mean"] >= one_se_threshold]
-    # Define simplicity: lower n_estimators is simpler; if tied, prefer a higher (min_samples_split + min_samples_leaf)
-    one_se_candidates_sorted = sorted(one_se_candidates, key=lambda r: (r["n_estimators"], -(r["min_samples_split"] + r["min_samples_leaf"]), r["max_features"]))
+    best_index = random_search.best_index_
+    best_std = random_search.cv_results_['std_test_score'][best_index]
+    one_se_threshold = best_c_index - best_std
+
+    # Select candidate parameters within 1 SE
+    candidates = []
+    for i, mean_score in enumerate(random_search.cv_results_['mean_test_score']):
+        if mean_score >= one_se_threshold:
+            params = random_search.cv_results_['params'][i]
+            params['mean_test_score'] = mean_score
+            params['std_test_score'] = random_search.cv_results_['std_test_score'][i]
+            candidates.append(params)
+
+    one_se_candidates_sorted = sorted(candidates, key=lambda r: (r["n_estimators"], -(r["min_samples_split"] + r["min_samples_leaf"]), r["max_features"]))
     one_se_candidate = one_se_candidates_sorted[0]
-    one_se_model = one_se_candidate["model_obj"]
     one_se_params = {"n_estimators": one_se_candidate["n_estimators"],
-                     "min_samples_split": one_se_candidate["min_samples_split"],
-                     "min_samples_leaf": one_se_candidate["min_samples_leaf"],
-                     "max_features": one_se_candidate["max_features"]}
-    print(f"1 SE RSF hyperparameters: {one_se_params} with CV mean C-index: {one_se_candidate['cv_mean']:.3f} (threshold: {one_se_threshold:.3f})")
-    
+                    "min_samples_split": one_se_candidate["min_samples_split"],
+                    "min_samples_leaf": one_se_candidate["min_samples_leaf"],
+                    "max_features": one_se_candidate["max_features"]}
+    print(f"1 SE RSF hyperparameters: {one_se_params} with CV mean C-index: {one_se_candidate['mean_test_score']:.3f} (threshold: {one_se_threshold:.3f})")
+
+    # Re-fit the 1 SE model on the full training set
+    one_se_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **one_se_params)
+    one_se_model.fit(X_train, y_train)
+
     # Use the best tuned model for subsequent steps
     initial_rsf = best_model
     
@@ -146,7 +117,20 @@ def create_rsf(train_df, test_df, name):
     one_se_model_file = os.path.join(output_dir, f"{name}_final_rsf_model_1se.pkl")
     joblib.dump(one_se_model, one_se_model_file)
     print(f"1 SE RSF model saved to {one_se_model_file}")
-    
+
+    # ---------------- Evaluate Best and 1 SE RSF models ---------------- #
+    best_pred_train = best_model.predict(X_train)
+    best_train_c_index = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], best_pred_train)[0]
+    best_pred_test = best_model.predict(X_test)
+    best_test_c_index = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], best_pred_test)[0]
+    print(f"Best RSF: Train C-index: {best_train_c_index:.3f}, Test C-index: {best_test_c_index:.3f}")
+
+    one_se_pred_train = one_se_model.predict(X_train)
+    one_se_train_c_index = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], one_se_pred_train)[0]
+    one_se_pred_test = one_se_model.predict(X_test)
+    one_se_test_c_index = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], one_se_pred_test)[0]
+    print(f"1 SE RSF: Train C-index: {one_se_train_c_index:.3f}, Test C-index: {one_se_test_c_index:.3f}")
+
     # ---------------- Step 1: RSF Pre-Selection with Permutation Importance ---------------- #
     step1_start = time.time()
     initial_rsf.fit(X_train, y_train)
@@ -159,7 +143,7 @@ def create_rsf(train_df, test_df, name):
     print(f"Initial RSF Train C-index: {train_c_index[0]:.3f}")
     
     perm_result = permutation_importance(initial_rsf, X_train, y_train,
-                                           scoring=rsf_concordance_score,
+                                           scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
                                            n_repeats=5, random_state=42, n_jobs=-1)
     importances = perm_result.importances_mean
     importance_df = pd.DataFrame({
@@ -209,4 +193,4 @@ if __name__ == "__main__":
     print("Validation data shape:", valid.shape)
     
     # Run the RSF pipeline with provided train and validation data
-    create_rsf(train, valid, 'GPL570 3-13-25')
+    create_rsf(train, valid, 'GPL570 3-13-25 RS')

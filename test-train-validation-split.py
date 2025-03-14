@@ -70,7 +70,7 @@ print(f"Validation set: {len(validation[validation['OS_STATUS'] == 1])} events, 
 non_numeric_columns = df.columns[df.apply(lambda col: pd.to_numeric(col, errors='coerce').isna().any())]
 print("Non-numeric columns at the end of preprocessing:", non_numeric_columns.tolist())
 
-"""GPL96:
+"""GPL570:
 Unique values in 'Stage' before processing: ['II' 'IB' 'III' 'IA' 'IV']
 Unique values in 'Histology' before processing: ['Squamous Cell Carcinoma' 'Adenocarcinoma' 'Large Cell Carcinoma'
  'Adenosquamous Carcinoma']
@@ -88,4 +88,26 @@ Validation set: 116 samples
 Training set: 122 events, 224 censored
 Testing set: 41 events, 75 censored
 Validation set: 41 events, 75 censored
+Non-numeric columns at the end of preprocessing: []"""
+
+"""GPL96:
+Unique values in 'Stage' before processing: ['IA' 'IB' 'II' 'III' 'Unknown' 'I']
+Unique values in 'Histology' before processing: ['Adenocarcinoma' 'Squamous Cell Carcinoma'
+ 'Large Cell Undifferentiated Carcinoma']
+Unique values in 'Race' before processing: ['White' 'Unknown' 'Asian' 'Black or African American'
+ 'Native Hawaiian or Other Pacific Islander']
+Unique values in 'Smoked?' before processing: ['Yes' 'No' 'Unknown']
+Unique items in column 'Race':
+['White' 'Unknown' 'Asian' 'Black or African American'
+ 'Native Hawaiian or Other Pacific Islander']
+Columns with NA values: ['OS_MONTHS']
+Shape before dropping NA (576, 13061)
+Data shape: (575, 13061)
+Columns with 'Smoked' in the name: 3
+Training set: 344 samples
+Testing set: 115 samples
+Validation set: 116 samples
+Training set: 177 events, 167 censored
+Testing set: 59 events, 56 censored
+Validation set: 60 events, 56 censored
 Non-numeric columns at the end of preprocessing: []"""
