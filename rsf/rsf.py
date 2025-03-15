@@ -481,14 +481,14 @@ if __name__ == "__main__":
                    [col for col in train.columns if col.startswith('Race')] + \
                    [col for col in train.columns if col.startswith('Histology')] + \
                    [col for col in train.columns if col.startswith('Smoked?')]
-    clinical_vars = [var for var in clinical_vars if var in train.columns]
+    #clinical_vars = [var for var in clinical_vars if var in train.columns]
     
-    genomic = ['GDF9', 'LOC105375172', 'RTL3', 'NDFIP2', 'LOC105378231']
-    selected_covariates = list(set(genomic).union(set(clinical_vars)))
+    #genomic = ['GDF9', 'LOC105375172', 'RTL3', 'NDFIP2', 'LOC105378231']
+    #selected_covariates = list(set(genomic).union(set(clinical_vars)))
     
-    selected_features = selected_covariates
+    #selected_features = selected_covariates
     
-    selected_features = ['Smoked?_Unknown', 'Smoked?_Yes', 'Age', 'GDF9', 'RTL3', 'LOC105375172', 'NDFIP2', 'IS_MALE', "Adjuvant Chemo"]
+    #selected_features = ['Smoked?_Unknown', 'Smoked?_Yes', 'Age', 'GDF9', 'RTL3', 'LOC105375172', 'NDFIP2', 'IS_MALE', "Adjuvant Chemo"]
     
     #Validation C-index: 0.774 | Train C-index: 0.762
     #create_rsf_custom(train, valid, selected_features, 'GPL570-GREEDY FEATURES', trees=500)
