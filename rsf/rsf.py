@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 import joblib
 from mpl_toolkits.mplot3d import Axes3D    # new import for 3D plotting
+from lifelines import KaplanMeierFitter
+from lifelines.statistics import logrank_test
+from lifelines.plotting import add_at_risk_counts
 
 def rsf_concordance_score(estimator, X, y):
     preds = estimator.predict(X)
@@ -364,7 +367,7 @@ def search_optimal_feature_permutation(train_df, valid_df, selected_features, na
         from sksurv.metrics import concordance_index_censored
         valid_c = concordance_index_censored(y_valid['OS_STATUS'], y_valid['OS_MONTHS'], rsf.predict(X_valid))[0]
         train_c = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], rsf.predict(X_train))[0]
-        return valid_c, train_c
+        return valid_c, train_c, rsf
 
     print("Starting greedy forward selection of features:")
     for i in range(max_features):
@@ -378,17 +381,19 @@ def search_optimal_feature_permutation(train_df, valid_df, selected_features, na
         best_candidate = None
         best_candidate_valid = best_valid_cindex
         best_candidate_train = 0.0
+        best_rsf = None
         
         print(f"Step {i+1}/{max_features}: Evaluating {len(candidate_pool)} candidate features...")
         for feature in candidate_pool:
             candidate_features = best_subset + [feature]
-            valid_c, train_c = evaluate_features(candidate_features)
+            valid_c, train_c, rsf = evaluate_features(candidate_features)
             print(f"Evaluated feature '{feature}': Validation C-index = {valid_c:.3f}, Train C-index = {train_c:.3f}")
             if valid_c > best_candidate_valid:
                 best_candidate_valid = valid_c
                 best_candidate_train = train_c
                 best_candidate = feature
                 improvement = True
+                best_rsf = rsf
         if improvement and best_candidate is not None:
             best_subset.append(best_candidate)
             best_valid_cindex = best_candidate_valid
@@ -399,6 +404,7 @@ def search_optimal_feature_permutation(train_df, valid_df, selected_features, na
             break
 
     print("Final selected features:", best_subset)
+    print(f"Final validation C-index: {best_valid_cindex:.3f} | Train C-index: {best_candidate_train:.3f}")
     
     # Final permutation importance on the selected features
     final_features = best_subset
@@ -419,6 +425,16 @@ def search_optimal_feature_permutation(train_df, valid_df, selected_features, na
                                      min_samples_leaf=30, random_state=42, 
                                      n_jobs=-1, max_features="sqrt")
     final_rsf.fit(X_train, y_train)
+    
+    # Print C-index
+    final_valid_cindex = concordance_index_censored(y_valid['OS_STATUS'], y_valid['OS_MONTHS'], final_rsf.predict(X_valid))[0]
+    final_train_cindex = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], final_rsf.predict(X_train))[0]
+    print(f"Final RSF C-indices: Validation = {final_valid_cindex:.3f}, Train = {final_train_cindex:.3f}")
+    
+    # Save the final RSF model
+    joblib.dump(final_rsf, f'rsf/rsf_{name}_{final_valid_cindex:.3f}.pkl')
+    print("Final RSF model saved.")
+    
     from sklearn.inspection import permutation_importance
     perm_result = permutation_importance(final_rsf, X_valid, y_valid, n_repeats=5, random_state=42)
     imp_df = pd.DataFrame({
@@ -437,6 +453,85 @@ def search_optimal_feature_permutation(train_df, valid_df, selected_features, na
     print(f"Final permutation importances plot saved to {perm_plot_filename}")
     
     return best_subset, best_valid_cindex, history
+
+def compare_treatment_recommendation_km(rsf_path, df, time_col='OS_MONTHS', event_col='OS_STATUS'):
+    """
+    Compare survival outcomes based on alignment with the RSF model's treatment recommendation.
+    
+    For each patient, two risk predictions are generated:
+      - risk_treated: using covariates with "Adjuvant Chemo" set to 1.
+      - risk_untreated: using covariates with "Adjuvant Chemo" set to 0.
+      
+    The model's recommendation is defined as:
+      - Recommend treatment (1) if risk_treated < risk_untreated (i.e. lower predicted risk),
+      - Else recommend no treatment (0).
+      
+    Patients are then categorized as:
+      - "Aligned" if their actual "Adjuvant Chemo" value matches the model's recommendation,
+      - "Not aligned" otherwise.
+      
+    Kaplan-Meier survival curves are plotted for the two groups and a log-rank test is performed.
+    """
+    # Import rsf 
+    rsf = joblib.load(rsf_path)
+    
+    # Ensure a copy of df so original is not modified
+    df = df.copy()
+    df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
+    
+    # Prepare two copies of the feature set (exclude survival columns)
+    features = df.columns.difference([time_col, event_col])
+    df_treated = df[features].copy()
+    df_untreated = df[features].copy()
+    df_treated["Adjuvant Chemo"] = 1
+    df_untreated["Adjuvant Chemo"] = 0
+    
+    # Generate risk predictions using the loaded RSF model
+    risk_treated = rsf.predict(df_treated)
+    risk_untreated = rsf.predict(df_untreated)
+    
+    # Determine model recommendation: 1 if treatment gives lower risk, else 0
+    model_rec = np.where(risk_treated < risk_untreated, 1, 0)
+    actual = df["Adjuvant Chemo"].values
+    alignment = (actual == model_rec)
+    
+    # Add recommendation and alignment info to dataframe
+    df['model_rec'] = model_rec
+    df['alignment'] = alignment
+
+    # Plot Kaplan-Meier survival curves for aligned vs. not aligned groups using lifelines
+    mask_aligned = df['alignment'] == True
+    mask_not_aligned = df['alignment'] == False
+
+    kmf_aligned = KaplanMeierFitter()
+    kmf_not_aligned = KaplanMeierFitter()
+
+    plt.figure(figsize=(10, 6))
+    kmf_aligned.fit(durations=df.loc[mask_aligned, time_col],
+                    event_observed=df.loc[mask_aligned, event_col],
+                    label='Aligned with RSF recommendation')
+    ax = kmf_aligned.plot(ci_show=True)
+
+    kmf_not_aligned.fit(durations=df.loc[mask_not_aligned, time_col],
+                        event_observed=df.loc[mask_not_aligned, event_col],
+                        label='Not aligned with RSF recommendation')
+    kmf_not_aligned.plot(ax=ax, ci_show=True)
+
+    plt.title("Kaplan-Meier Survival Curves by Treatment Alignment")
+    plt.xlabel("Time")
+    plt.ylabel("Survival Probability")
+    add_at_risk_counts(kmf_aligned, kmf_not_aligned)
+    plt.tight_layout()
+    plt.show()
+
+    # Perform log-rank test to compare the survival curves
+    results = logrank_test(
+        df.loc[mask_aligned, time_col],
+        df.loc[mask_not_aligned, time_col],
+        event_observed_A=df.loc[mask_aligned, event_col],
+        event_observed_B=df.loc[mask_not_aligned, event_col]
+    )
+    print("Log-rank test p-value:", results.p_value)
 
 if __name__ == "__main__":
     # Data Loading and Preprocessing for train data
@@ -495,45 +590,11 @@ if __name__ == "__main__":
     
     #create_rsf_custom(train, valid, selected_covariates, 'GPL570-CLINICAL + GREEDY SELECTION', trees=500)
     
+    #search_optimal_feature_permutation(train, valid, selected_features, 'GPL570-SEARCH', max_features=50)
+    
     #Final selected features: ['Adjuvant Chemo', 'Smoked?_Unknown', 'LOC105375172', 'Age', 'RTL3', 'GDF9', 'NDFIP2', 'IS_MALE'] 
+    selected_features = ['Adjuvant Chemo', 'Stage_IA', 'LOC105375172', 'MROH2A', 'LOC105378231', 'MAN2B2', 'RESF1', 'GDF9', 'PCDH19', 'INPP1', 'NEPRO', 'IQCF6']
+    valid = valid[['OS_STATUS', 'OS_MONTHS'] + selected_features]
+    train = train[['OS_STATUS', 'OS_MONTHS'] + selected_features]
     
-    
-    search_optimal_feature_permutation(train, valid, selected_features, 'GPL570-SEARCH', max_features=50)
-
-
-    """Loading train data from: GPL570train.csv
-Number of events in training set: 122 | Censored cases: 224
-Train data shape: (346, 21379)
-Loading validation data from: GPL570validation.csv
-Number of events in validation set: 41 | Censored cases: 75
-Validation data shape: (116, 21379)
-Loaded RSF Model from rsf/rsf_results_GPL570 3-13-25 RS_final_rsf_model_1se.pkl
-Train C-index: 0.914
-Validation C-index: 0.620
-    """
-    
-"""                                   importances_mean  importances_std
-Stage_IA                                   0.067403         0.016835
-Smoked?_Unknown                            0.040974         0.008458
-RTL3                                       0.029286         0.011824
-Age                                        0.027857         0.012742
-GDF9                                       0.015065         0.003403
-LOC105375172                               0.011948         0.006165
-LINC01352                                  0.005519         0.003753
-NDFIP2                                     0.004091         0.003427
-Smoked?_Yes                                0.002078         0.001650
-MAN2B2                                     0.001753         0.002610
-Smoked?_No                                 0.000390         0.001747
-Race_Caucasian                             0.000000         0.000000
-Histology_Adenosquamous Carcinoma          0.000000         0.000000
-Adjuvant Chemo                             0.000000         0.000000
-Race_African American                      0.000000         0.000000
-Histology_Large Cell Carcinoma             0.000000         0.000000
-Race_Asian                                 0.000000         0.000000
-Race_Unknown                               0.000000         0.000000
-IS_MALE                                   -0.002662         0.005036
-CASP1                                     -0.003312         0.003947
-IQCF6                                     -0.003961         0.001711
-Histology_Adenocarcinoma                  -0.004156         0.013431
-Histology_Squamous Cell Carcinoma         -0.008831         0.004505
-SKI                                       -0.010844         0.011668"""
+    open_rsf(train, valid, 'rsf/rsf_GPL570-SEARCH_0.750.pkl', feature_selected=False)
