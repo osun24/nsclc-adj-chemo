@@ -70,12 +70,12 @@ def create_rsf(train_df, test_df, name):
     # Define parameter distributions
     param_distributions = {
         "n_estimators": [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
-        "min_samples_split": [5, 10, 15, 20, 25, 30, 35, 40],
-        "min_samples_leaf": [5, 10, 15, 20, 25, 30],
+        "min_samples_split": [15, 20, 25, 30, 35, 40, 45, 50],
+        "min_samples_leaf": [15, 20, 25, 30, 35, 40, 45, 50],
         "max_features": ["sqrt", "log2"]
     }
 
-    # Set up outer and inner KFold CV
+    # Set up outer and inner KFold CV for nested CV
     outer_cv = KFold(n_splits=5, shuffle=True, random_state=42)
     inner_cv = KFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -119,68 +119,52 @@ def create_rsf(train_df, test_df, name):
     nested_cv_mean_c_index = np.mean(outer_scores)
     print(f"Nested CV Mean Test C-index: {nested_cv_mean_c_index:.3f}")
  
-    # ---------------- Final Hyperparameter Tuning on Full Training Set ---------------- #
-    print("Starting final hyperparameter tuning on full training set...")
-    final_tuning_start = time.time()
-    final_random_search = RandomizedSearchCV(
-        estimator=RandomSurvivalForest(random_state=42, n_jobs=-1),
-        param_distributions=param_distributions,
-        n_iter=50,
-        cv=inner_cv,
-        scoring=rsf_score,
-        random_state=42,
-        n_jobs=-1,
-        verbose=1
-    )
-    final_random_search.fit(X_train, y_train)
-    final_tuning_end = time.time()
+    # ---------------- Final Model Training using Nested CV Results ---------------- #
+    # Select best hyperparameters from nested CV outer folds (fold with highest C-index)
+    best_fold_idx = np.argmax(outer_scores)
+    best_params_nested = outer_best_params[best_fold_idx]
+    print(f"Selected hyperparameters from nested CV: {best_params_nested}")
     
-    best_model = final_random_search.best_estimator_
-    best_params = final_random_search.best_params_
-    best_c_index = final_random_search.best_score_
-    print(f"Final RSF hyperparameters on full training set: {best_params} with CV mean C-index: {best_c_index:.3f}")
-    print(f"Final hyperparameter tuning completed in {final_tuning_end - final_tuning_start:.2f} seconds.")
+    # Train final model on full training set using nested CV best hyperparameters
+    best_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **best_params_nested)
+    best_model.fit(X_train, y_train)
+    
+    # Save nested CV results to CSV
+    cv_results_df = pd.DataFrame({
+        "fold": list(range(1, len(outer_scores)+1)),
+        "Test_C_index": outer_scores,
+        "Hyperparameters": outer_best_params
+    })
+    results_csv = os.path.join(output_dir, f"{name}_rsf_nested_cv_results.csv")
+    cv_results_df.to_csv(results_csv, index=False)
+    print(f"Nested CV results saved to {results_csv}")
 
-    # Save all CV results to CSV
-    results_df = pd.DataFrame(final_random_search.cv_results_)
-    results_csv = os.path.join(output_dir, f"{name}_rsf_hyperparameter_results.csv")
-    results_df.to_csv(results_csv, index=False)
-    print(f"RSF hyperparameter results saved to {results_csv}")
-
-    # ---------------- Select simplest model using the 1 SE rule ---------------- #
-    best_index = final_random_search.best_index_
-    best_std = final_random_search.cv_results_['std_test_score'][best_index]
-    one_se_threshold = best_c_index - best_std
+    # ---------------- Select simplest model using the 1 SE rule from Nested CV ---------------- #
+    max_score = max(outer_scores)
+    std_score = np.std(outer_scores)
+    one_se_threshold = max_score - std_score
 
     candidates = []
-    for i, mean_score in enumerate(final_random_search.cv_results_['mean_test_score']):
-        if mean_score >= one_se_threshold:
-            params = final_random_search.cv_results_['params'][i]
-            params['mean_test_score'] = mean_score
-            params['std_test_score'] = final_random_search.cv_results_['std_test_score'][i]
-            candidates.append(params)
+    for score, params in zip(outer_scores, outer_best_params):
+        if score >= one_se_threshold:
+            candidate = params.copy()
+            candidate["score"] = score
+            candidates.append(candidate)
 
     if candidates:
         one_se_candidates_sorted = sorted(
             candidates,
-            key=lambda r: (r.get("max_depth", float('inf')), r["n_estimators"],
-                           r["min_samples_split"], r["min_samples_leaf"])
+            key=lambda r: (r["n_estimators"], r["min_samples_split"], r["min_samples_leaf"], r["max_features"])
         )
         one_se_candidate = one_se_candidates_sorted[0]
     else:
-        print("No candidate model met the 1 SE threshold. Defaulting to the best model.")
-        one_se_candidate = final_random_search.best_params_
-    
-    one_se_params = {"n_estimators": one_se_candidate["n_estimators"],
-                     "min_samples_split": one_se_candidate["min_samples_split"],
-                     "min_samples_leaf": one_se_candidate["min_samples_leaf"],
-                     "max_features": one_se_candidate["max_features"]}
-    print(f"1 SE RSF hyperparameters: {one_se_params} with CV mean C-index: {one_se_candidate.get('mean_test_score', best_c_index):.3f} (threshold: {one_se_threshold:.3f})")
+        print("No candidate model met the 1 SE threshold. Defaulting to the best nested CV model.")
+        one_se_candidate = best_params_nested
 
-    # Re-fit the 1 SE model on the full training set
-    one_se_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **one_se_params)
+    print(f"1 SE RSF hyperparameters from nested CV: {one_se_candidate} (threshold: {one_se_threshold:.3f})")
+    one_se_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **one_se_candidate)
     one_se_model.fit(X_train, y_train)
-    
+
     # Save best model 
     best_model_file = os.path.join(output_dir, f"{name}_final_rsf_model.pkl")
     joblib.dump(best_model, best_model_file)
@@ -239,7 +223,6 @@ def create_rsf(train_df, test_df, name):
     selected_features_best = importance_df_best.iloc[:top_n_best]["Feature"].tolist()
     print(f"Best model: selected top {len(selected_features_best)} features.")
 
-    # ---------------- Step 1: RSF Pre-Selection with Permutation Importance ---------------- #
     step1_start = time.time()
     # Use 1SE model for permutation importance instead of best_model
     one_se_model.fit(X_train, y_train)
@@ -302,4 +285,4 @@ if __name__ == "__main__":
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
     
-    create_rsf(train, valid, 'GPL570 3-15-25 RS')
+    create_rsf(train, valid, 'GPL570 3-16-25 RS')

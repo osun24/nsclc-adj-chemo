@@ -22,9 +22,6 @@ def create_rsf(train_df, valid_df, name, trees=1000):
     # Subset using preselected covariates
     selected_csv = pd.read_csv('rsf/rsf_results_GPL570 3-13-25 RS_rsf_preselection_importances.csv', index_col=0)
     """[:10]
-    Validation C-index: 0.728
-    Train C-index: 0.821"""
-    """[:10]
     n_estimators=500, min_samples_split=35, min_samples_leaf=30,
                                random_state=42, n_jobs=-1, max_features="sqrt"
     Validation C-index: 0.732
@@ -597,4 +594,5 @@ if __name__ == "__main__":
     valid = valid[['OS_STATUS', 'OS_MONTHS'] + selected_features]
     train = train[['OS_STATUS', 'OS_MONTHS'] + selected_features]
     
-    open_rsf(train, valid, 'rsf/rsf_GPL570-SEARCH_0.750.pkl', feature_selected=False)
+    #open_rsf(train, valid, 'rsf/rsf_GPL570-SEARCH_0.750.pkl', feature_selected=False)
+    compare_treatment_recommendation_km('rsf/rsf_GPL570-SEARCH_0.750.pkl', valid)
