@@ -29,7 +29,7 @@ class Tee:
         for f in self.files:
             f.flush()
 import sys
-log_file = open(os.path.join(output_dir, "rsf_run_log.txt"), "w")
+log_file = open(os.path.join(output_dir, "rsf_run_log-ALL.txt"), "w")
 sys.stdout = Tee(sys.stdout, log_file)
 
 def rsf_concordance_metric(y, y_pred):
@@ -274,15 +274,15 @@ def create_rsf(train_df, test_df, name):
 
 if __name__ == "__main__":
     print("Loading train data from: GPL570train.csv")
-    train = pd.read_csv("GPL570train.csv")
+    train = pd.read_csv("allTrain.csv")
     
     print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
     print("Train data shape:", train.shape)
     
     print("Loading validation data from: GPL570validation.csv")
-    valid = pd.read_csv("GPL570validation.csv")
+    valid = pd.read_csv("allValidation.csv")
     
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
     
-    create_rsf(train, valid, 'GPL570 3-16-25 RS')
+    create_rsf(train, valid, 'ALL 3-17-25 RS')
