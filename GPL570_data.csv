@@ -1,3 +1,579 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:339398f45fc838ef537dc06789119a0e4acd7579bf40daa469fb549cd20a6728
-size 37955
+"Adjuvant Chemo","Age","OS_STATUS","OS_MONTHS","Stage","Histology","Race","Smoked?","PFS_MONTHS","RFS_MONTHS","IS_MALE"
+1,67,0,28.616016432,"II","Squamous Cell Carcinoma","Caucasian","Yes",28.616016432,NA,1
+1,67,0,27.170431212,"IB","Adenocarcinoma","Caucasian","Yes",27.170431212,NA,1
+1,65,1,16.854209448,"III","Squamous Cell Carcinoma","Caucasian","Yes",4.533880908,NA,1
+1,51,0,33.839835732,"II","Adenocarcinoma","Caucasian","Yes",33.839835732,NA,0
+1,72,0,34.759753596,"II","Adenocarcinoma","Caucasian","Yes",34.759753596,NA,1
+1,65,0,25.560574944,"IB","Adenocarcinoma","Caucasian","Yes",25.560574944,NA,1
+1,58,0,32.657084184,"IB","Adenocarcinoma","Caucasian","Yes",32.657084184,NA,1
+1,53,0,34.792607808,"II","Squamous Cell Carcinoma","Caucasian","Yes",34.792607808,NA,1
+1,70,1,12.12320328,"III","Adenocarcinoma","Caucasian","Yes",9.429158112,NA,0
+1,76,0,38.373716628,"IB","Squamous Cell Carcinoma","Caucasian","Yes",38.373716628,NA,1
+1,73,1,36.238193016,"IB","Squamous Cell Carcinoma","Caucasian","Yes",12.550308012,NA,1
+1,63,0,31.08008214,"II","Adenocarcinoma","Caucasian","Yes",9.002053392,NA,0
+1,32,1,42.38193018,"II","Adenocarcinoma","Caucasian","No",31.605749484,NA,0
+1,54,1,15.572895276,"IB","Squamous Cell Carcinoma","African American","Yes",9.79055442,NA,0
+1,74,0,39.096509244,"IB","Adenocarcinoma","Caucasian","No",39.096509244,NA,0
+1,59,0,35.383983576,"IB","Adenocarcinoma","Caucasian","Yes",35.383983576,NA,0
+1,76,1,40.213552356,"IB","Adenocarcinoma","Caucasian","Yes",40.213552356,NA,0
+1,63,0,35.646817248,"IB","Squamous Cell Carcinoma","Caucasian","Yes",35.646817248,NA,0
+1,60,0,31.901437368,"III","Squamous Cell Carcinoma","Caucasian","Yes",31.901437368,NA,1
+1,60,0,26.349075972,"IB","Adenocarcinoma","Caucasian","Yes",26.349075972,NA,0
+1,75,0,49.741273104,"IB","Adenocarcinoma","Caucasian","Yes",44.68172484,NA,1
+1,49,0,40.7063655,"III","Adenocarcinoma","Caucasian","Yes",40.7063655,NA,1
+1,65,0,40.607802876,"III","Adenocarcinoma","Caucasian","Yes",40.607802876,NA,1
+1,49,1,6.275154,"III","Squamous Cell Carcinoma","Caucasian","Yes",4.99383984,NA,1
+1,62,1,32.952772068,"II","Adenocarcinoma","Caucasian","Yes",7.162217664,NA,0
+1,60,0,49.905544152,"IB","Squamous Cell Carcinoma","Caucasian","Yes",45.07597536,NA,1
+1,55,1,20.829568788,"III","Squamous Cell Carcinoma","Caucasian","Yes",13.010266944,NA,0
+1,65,1,16.591375776,"II","Squamous Cell Carcinoma","Caucasian","Yes",7.885010268,NA,1
+1,72,0,50.1026694,"III","Adenocarcinoma","Caucasian","Yes",50.1026694,NA,1
+1,75,1,15.86858316,"III","Squamous Cell Carcinoma","Caucasian","Yes",8.77207392,NA,1
+1,67,0,21.420944556,"IA","Squamous Cell Carcinoma","Caucasian","Yes",21.420944556,NA,0
+1,61,0,24.246406572,"III","Adenocarcinoma","Caucasian","Yes",24.246406572,NA,1
+1,75,0,32.427104724,"IB","Adenocarcinoma","Caucasian","Yes",31.408624224,NA,1
+1,50,1,16.88706366,"III","Squamous Cell Carcinoma","Caucasian","Yes",22.34086242,NA,1
+0,70,0,5.585215608,"III","Adenocarcinoma","Caucasian","Yes",5.585215608,NA,1
+0,69,0,7.786447644,"IB","Adenocarcinoma","Caucasian","Yes",7.425051336,NA,1
+0,70,0,11.367556464,"IB","Adenocarcinoma","Caucasian","Yes",10.283367552,NA,1
+0,65,0,29.63449692,"II","Squamous Cell Carcinoma","Caucasian","Yes",29.63449692,NA,1
+0,67,0,26.447638608,"III","Squamous Cell Carcinoma","Caucasian","Yes",26.447638608,NA,0
+0,71,0,35.67967146,"IB","Adenocarcinoma","Caucasian","Yes",35.67967146,NA,0
+0,64,0,46.422997944,"IA","Adenocarcinoma","Caucasian","Yes",46.422997944,NA,1
+0,50,1,26.0862423,"III","Adenocarcinoma","Caucasian","Yes",15.704312112,NA,1
+0,63,0,42.97330596,"II","Squamous Cell Carcinoma","Caucasian","Yes",36.172484604,NA,0
+0,57,1,25.954825464,"IB","Adenocarcinoma","Caucasian","Yes",12.386036964,NA,1
+0,54,0,58.02053388,"III","Adenocarcinoma","Caucasian","Yes",50.562628332,NA,1
+0,72,0,56.607802872,"IB","Squamous Cell Carcinoma","Caucasian","Yes",56.607802872,NA,1
+0,69,0,57.330595488,"IB","Squamous Cell Carcinoma","Caucasian","Yes",57.330595488,NA,1
+0,53,0,63.342915816,"II","Squamous Cell Carcinoma","Caucasian","Yes",63.342915816,NA,1
+0,68,1,28.878850104,"II","Adenocarcinoma","Caucasian","Yes",18.069815196,NA,1
+0,67,0,64.229979468,"II","Squamous Cell Carcinoma","Caucasian","Yes",64.229979468,NA,1
+0,65,1,33.347022588,"III","Squamous Cell Carcinoma","Caucasian","Yes",7.227926076,NA,1
+0,59,0,82.4312115,"II","Squamous Cell Carcinoma","Caucasian","Yes",82.4312115,NA,0
+0,68,1,2.891170428,"III","Squamous Cell Carcinoma","African American","Yes",2.891170428,NA,1
+0,69,1,43.071868584,"IB","Adenocarcinoma","Caucasian","Yes",43.071868584,NA,1
+0,69,0,69.71663244,"IA","Adenocarcinoma","Caucasian","Yes",37.683778236,NA,1
+0,73,0,25.2,"IA","Adenocarcinoma","Caucasian","Yes",NA,NA,0
+0,69,0,69.2,"IA","Adenocarcinoma","Unknown","No",NA,NA,0
+0,67,0,83,"IA","Adenocarcinoma","Caucasian","Yes",42.5,NA,0
+0,67,0,69.2,"IA","Adenocarcinoma","Caucasian","Yes",30,NA,0
+0,67,0,27.1,"IA","Adenocarcinoma","Caucasian","Yes",3,NA,0
+1,59,0,66.6,"IB","Adenocarcinoma","Asian","No",9,NA,0
+0,74,1,128.8,"IA","Adenocarcinoma","Caucasian","Yes",NA,NA,0
+0,65,0,62,"IB","Adenocarcinoma","Caucasian","Yes",NA,NA,1
+0,73,0,52.1,"IA","Adenocarcinoma","Caucasian","Yes",NA,NA,0
+0,73,0,86.8,"IA","Adenocarcinoma","Caucasian","Yes",NA,NA,0
+0,65,0,103.4,"IB","Adenocarcinoma","Unknown","Yes",102,NA,1
+0,73,0,162.6,"IA","Adenocarcinoma","Caucasian","Yes",NA,NA,0
+0,65,0,101.2,"IB","Adenocarcinoma","Caucasian","Yes",NA,NA,1
+1,69,0,32.9,"II","Adenocarcinoma","Unknown","No",NA,NA,0
+1,62,1,54.2,"IA","Adenocarcinoma","Unknown","No",27,NA,0
+0,67,0,53.2,"IA","Adenocarcinoma","Caucasian","Yes",10,NA,0
+0,55,1,14.36,"II","Adenocarcinoma","Unknown","No",NA,8.43,0
+0,38,0,24.41,"II","Adenocarcinoma","Unknown","Yes",NA,1.9,0
+0,30,0,85.45,"II","Adenocarcinoma","Unknown","Yes",NA,86.7,1
+0,64,0,38.53,"II","Adenocarcinoma","Unknown","No",NA,39.1,0
+0,63,0,77.83,"II","Adenocarcinoma","Unknown","No",NA,78.97,0
+0,60,0,61.73,"II","Adenocarcinoma","Unknown","No",NA,62.63,0
+0,68,0,19.91,"II","Adenocarcinoma","Unknown","No",NA,20.2,0
+0,58,1,9.86,"II","Adenocarcinoma","Unknown","Yes",NA,4.77,1
+0,63,0,63.04,"IA","Adenocarcinoma","Unknown","No",NA,63.97,0
+0,56,0,60.28,"IA","Adenocarcinoma","Unknown","No",NA,61.17,0
+0,34,0,60.05,"IA","Adenocarcinoma","Unknown","Yes",NA,60.93,0
+0,75,1,60.48,"II","Adenocarcinoma","Unknown","No",NA,45.3,0
+0,60,1,20.99,"II","Adenocarcinoma","Unknown","Yes",NA,19.67,1
+0,46,1,43.07,"IB","Adenocarcinoma","Unknown","No",NA,14.6,0
+0,60,0,36.07,"IB","Adenocarcinoma","Unknown","No",NA,28.7,0
+0,61,0,39.06,"IA","Adenocarcinoma","Unknown","Yes",NA,17.93,1
+0,63,0,126.91,"IA","Adenocarcinoma","Unknown","Yes",NA,48.73,1
+0,47,0,48.46,"II","Adenocarcinoma","Unknown","Yes",NA,49.17,1
+0,59,0,60.97,"II","Adenocarcinoma","Unknown","Yes",NA,61.87,1
+0,64,0,100.76,"II","Adenocarcinoma","Unknown","Yes",NA,102.23,1
+0,60,0,37.52,"II","Adenocarcinoma","Unknown","Yes",NA,38.07,1
+0,61,0,59.95,"IB","Adenocarcinoma","Unknown","No",NA,60.83,1
+0,53,0,52.89,"IB","Adenocarcinoma","Unknown","No",NA,53.67,0
+0,53,0,66.16,"IB","Adenocarcinoma","Unknown","Yes",NA,67.13,1
+0,53,0,59.99,"IB","Adenocarcinoma","Unknown","Yes",NA,60.87,1
+0,67,0,71.98,"IB","Adenocarcinoma","Unknown","No",NA,73.03,1
+0,69,0,109.79,"IB","Adenocarcinoma","Unknown","No",NA,111.4,0
+0,64,0,43.63,"IA","Adenocarcinoma","Unknown","Yes",NA,44.27,1
+0,69,0,96.09,"IA","Adenocarcinoma","Unknown","No",NA,97.5,0
+0,50,0,94.61,"IA","Adenocarcinoma","Unknown","No",NA,96,0
+0,70,0,56.64,"IA","Adenocarcinoma","Unknown","No",NA,57.47,0
+0,57,0,90.83,"II","Adenocarcinoma","Unknown","No",NA,54.6,1
+0,58,0,50.23,"II","Adenocarcinoma","Unknown","Yes",NA,10.5,1
+0,69,1,7.26,"II","Adenocarcinoma","Unknown","Yes",NA,3.3,1
+0,61,1,17.94,"II","Adenocarcinoma","Unknown","Yes",NA,3.33,1
+0,68,1,11.37,"II","Adenocarcinoma","Unknown","Yes",NA,5.43,1
+0,64,1,28.02,"II","Adenocarcinoma","Unknown","No",NA,6.53,0
+0,69,1,87.42,"II","Adenocarcinoma","Unknown","No",NA,24.1,0
+0,66,0,26.84,"II","Adenocarcinoma","Unknown","No",NA,22.53,0
+0,68,1,13.96,"II","Adenocarcinoma","Unknown","Yes",NA,8.33,1
+0,69,0,42.08,"II","Adenocarcinoma","Unknown","Yes",NA,42.7,1
+0,64,0,34.3,"IB","Adenocarcinoma","Unknown","Yes",NA,9.9,1
+0,64,0,18.56,"IB","Adenocarcinoma","Unknown","Yes",NA,17.07,1
+0,66,1,34.79,"IB","Adenocarcinoma","Unknown","Yes",NA,21.17,1
+0,64,1,53.38,"IB","Adenocarcinoma","Unknown","Yes",NA,27.1,1
+0,68,1,55.68,"IB","Adenocarcinoma","Unknown","No",NA,46.23,0
+0,68,0,97.77,"IB","Adenocarcinoma","Unknown","Yes",NA,38.13,1
+0,63,1,37.55,"IB","Adenocarcinoma","Unknown","Yes",NA,8.6,1
+0,58,0,55.26,"IB","Adenocarcinoma","Unknown","No",NA,9.07,0
+0,71,1,40.8,"IB","Adenocarcinoma","Unknown","Yes",NA,35.07,1
+0,52,0,73.98,"IB","Adenocarcinoma","Unknown","No",NA,26,0
+0,66,1,30.98,"IA","Adenocarcinoma","Unknown","Yes",NA,20.73,1
+0,66,1,44.22,"IA","Adenocarcinoma","Unknown","No",NA,9.57,0
+0,47,1,48.69,"IA","Adenocarcinoma","Unknown","No",NA,45.43,0
+0,64,0,78.38,"IA","Adenocarcinoma","Unknown","No",NA,6.6,1
+0,54,0,51.25,"IA","Adenocarcinoma","Unknown","No",NA,33.23,1
+0,67,1,32.88,"IA","Adenocarcinoma","Unknown","No",NA,21.87,0
+0,54,1,8.51,"II","Adenocarcinoma","Unknown","No",NA,8.63,0
+0,65,0,75.2,"II","Adenocarcinoma","Unknown","Yes",NA,76.3,1
+0,49,0,62.94,"II","Adenocarcinoma","Unknown","Yes",NA,63.87,0
+0,62,0,67.28,"II","Adenocarcinoma","Unknown","Yes",NA,68.27,1
+0,61,0,48.46,"II","Adenocarcinoma","Unknown","Yes",NA,49.17,1
+0,57,0,50.56,"II","Adenocarcinoma","Unknown","Yes",NA,51.3,1
+0,60,0,20.89,"II","Adenocarcinoma","Unknown","Yes",NA,21.2,1
+0,46,0,41.89,"II","Adenocarcinoma","Unknown","Yes",NA,10.6,1
+0,52,0,65.87,"II","Adenocarcinoma","Unknown","Yes",NA,66.83,1
+0,54,0,64.55,"II","Adenocarcinoma","Unknown","No",NA,65.5,0
+0,58,0,79.66,"IB","Adenocarcinoma","Unknown","No",NA,80.83,0
+0,64,0,51.45,"IB","Adenocarcinoma","Unknown","No",NA,52.2,0
+0,65,0,32.52,"IB","Adenocarcinoma","Unknown","No",NA,33,0
+0,52,0,23.95,"IB","Adenocarcinoma","Unknown","Yes",NA,24.3,1
+0,61,0,77.33,"IB","Adenocarcinoma","Unknown","No",NA,78.47,1
+0,61,0,26.87,"IB","Adenocarcinoma","Unknown","Yes",NA,27.27,1
+0,62,0,66,"IB","Adenocarcinoma","Unknown","Yes",NA,66.97,0
+0,47,0,83.74,"IB","Adenocarcinoma","Unknown","Yes",NA,84.97,0
+0,64,0,112.06,"IB","Adenocarcinoma","Unknown","Yes",NA,113.7,1
+0,50,0,59.33,"IB","Adenocarcinoma","Unknown","Yes",NA,60.2,1
+0,66,0,63.63,"IA","Adenocarcinoma","Unknown","No",NA,64.57,0
+0,56,0,49.93,"IA","Adenocarcinoma","Unknown","No",NA,50.67,1
+0,76,0,45.17,"IA","Adenocarcinoma","Unknown","Yes",NA,45.83,1
+0,56,0,57.69,"IA","Adenocarcinoma","Unknown","No",NA,58.53,0
+0,53,0,52.46,"IA","Adenocarcinoma","Unknown","Yes",NA,53.23,1
+0,57,0,56.31,"IA","Adenocarcinoma","Unknown","No",NA,57.13,1
+0,61,0,53.78,"IA","Adenocarcinoma","Unknown","No",NA,54.57,0
+0,66,0,54.3,"IA","Adenocarcinoma","Unknown","No",NA,55.1,0
+0,66,0,39.29,"IA","Adenocarcinoma","Unknown","Yes",NA,39.87,1
+0,57,0,55.91,"IA","Adenocarcinoma","Unknown","No",NA,56.73,1
+0,61,0,67.35,"IA","Adenocarcinoma","Unknown","No",NA,68.33,0
+0,63,0,41.26,"IA","Adenocarcinoma","Unknown","Yes",NA,41.87,1
+0,60,0,26.87,"IA","Adenocarcinoma","Unknown","Yes",NA,27.27,1
+0,59,0,37.91,"IA","Adenocarcinoma","Unknown","Yes",NA,38.47,1
+0,55,0,100.46,"IA","Adenocarcinoma","Unknown","No",NA,101.93,0
+0,52,0,63.76,"IA","Adenocarcinoma","Unknown","Yes",NA,64.7,1
+0,68,0,52.43,"IA","Adenocarcinoma","Unknown","No",NA,53.2,0
+0,55,0,80.49,"IA","Adenocarcinoma","Unknown","Yes",NA,81.67,1
+0,64,0,61.79,"IA","Adenocarcinoma","Unknown","No",NA,62.7,0
+0,51,0,53.78,"IA","Adenocarcinoma","Unknown","Yes",NA,54.57,1
+0,55,0,66.82,"IA","Adenocarcinoma","Unknown","No",NA,67.8,0
+0,65,0,70.11,"IA","Adenocarcinoma","Unknown","No",NA,71.13,0
+0,60,1,25.59,"II","Adenocarcinoma","Unknown","No",NA,15.37,0
+0,58,1,17.74,"II","Adenocarcinoma","Unknown","Yes",NA,10.43,1
+0,68,0,43.27,"II","Adenocarcinoma","Unknown","Yes",NA,18,1
+0,65,0,65.05,"II","Adenocarcinoma","Unknown","No",NA,11.37,0
+0,66,1,23.06,"II","Adenocarcinoma","Unknown","Yes",NA,21.03,1
+0,66,1,18.53,"II","Adenocarcinoma","Unknown","Yes",NA,8.43,1
+0,62,1,25.89,"II","Adenocarcinoma","Unknown","Yes",NA,13.07,1
+0,58,0,48.06,"II","Adenocarcinoma","Unknown","Yes",NA,16,0
+0,49,1,44.19,"II","Adenocarcinoma","Unknown","Yes",NA,20.43,1
+0,61,0,27.33,"II","Adenocarcinoma","Unknown","Yes",NA,26.33,1
+0,59,0,88.27,"II","Adenocarcinoma","Unknown","No",NA,27.5,0
+0,53,1,36.86,"II","Adenocarcinoma","Unknown","No",NA,17.93,0
+0,64,0,87.65,"II","Adenocarcinoma","Unknown","Yes",NA,57.5,1
+0,67,0,63.6,"IB","Adenocarcinoma","Unknown","No",NA,12.8,0
+0,69,0,28.61,"IB","Adenocarcinoma","Unknown","Yes",NA,19.57,1
+0,61,0,87.75,"IB","Adenocarcinoma","Unknown","No",NA,76.07,0
+0,64,0,48.69,"IB","Adenocarcinoma","Unknown","Yes",NA,27.73,0
+0,53,0,37.06,"IB","Adenocarcinoma","Unknown","No",NA,37.53,0
+0,71,1,34.23,"IB","Adenocarcinoma","Unknown","No",NA,25.73,0
+0,52,1,40.37,"IB","Adenocarcinoma","Unknown","No",NA,16.5,1
+0,52,1,74.34,"IB","Adenocarcinoma","Unknown","No",NA,41.4,0
+0,54,0,58.15,"IA","Adenocarcinoma","Unknown","No",NA,32.9,0
+0,49,1,47.08,"IA","Adenocarcinoma","Unknown","Yes",NA,27.57,1
+0,68,0,59.89,"IA","Adenocarcinoma","Unknown","No",NA,34.9,0
+0,62,0,65.31,"IA","Adenocarcinoma","Unknown","No",NA,56.87,0
+0,63,0,47.11,"IA","Adenocarcinoma","Unknown","Yes",NA,11.87,0
+0,63,1,20.7,"IA","Adenocarcinoma","Unknown","Yes",NA,15.43,1
+0,62,0,50.49,"IA","Adenocarcinoma","Unknown","No",NA,18.23,0
+0,57,1,46.94,"IA","Adenocarcinoma","Unknown","Yes",NA,41.73,0
+0,39,1,34.1,"IA","Adenocarcinoma","Unknown","Yes",NA,18.9,0
+0,55,0,81.67,"II","Adenocarcinoma","Unknown","No",NA,82.87,0
+0,47,0,24.31,"II","Adenocarcinoma","Unknown","Yes",NA,24.67,1
+0,64,0,34.23,"II","Adenocarcinoma","Unknown","No",NA,34.73,0
+0,60,0,41.62,"II","Adenocarcinoma","Unknown","Yes",NA,42.23,0
+0,48,0,33.41,"II","Adenocarcinoma","Unknown","No",NA,33.9,0
+0,60,0,34.2,"II","Adenocarcinoma","Unknown","Yes",NA,34.7,1
+0,52,0,61.07,"II","Adenocarcinoma","Unknown","Yes",NA,61.97,1
+0,48,0,56.41,"II","Adenocarcinoma","Unknown","No",NA,57.23,0
+0,60,0,49.08,"II","Adenocarcinoma","Unknown","No",NA,49.8,0
+0,49,0,24.77,"II","Adenocarcinoma","Unknown","Yes",NA,25.13,1
+0,63,0,77.66,"II","Adenocarcinoma","Unknown","Yes",NA,13.43,1
+0,68,0,56.93,"IB","Adenocarcinoma","Unknown","Yes",NA,57.77,1
+0,58,0,63.76,"IB","Adenocarcinoma","Unknown","No",NA,64.7,0
+0,68,0,25.43,"IB","Adenocarcinoma","Unknown","Yes",NA,25.8,1
+0,64,0,95.7,"IB","Adenocarcinoma","Unknown","No",NA,97.1,0
+0,58,0,59.23,"IB","Adenocarcinoma","Unknown","Yes",NA,60.1,1
+0,62,0,62.81,"IB","Adenocarcinoma","Unknown","Yes",NA,63.73,1
+0,66,0,48.65,"IB","Adenocarcinoma","Unknown","No",NA,49.37,0
+0,68,0,40.44,"IB","Adenocarcinoma","Unknown","Yes",NA,41.03,0
+0,68,0,64.52,"IB","Adenocarcinoma","Unknown","No",NA,65.47,1
+0,72,0,110.12,"IB","Adenocarcinoma","Unknown","Yes",NA,111.73,1
+0,62,0,70.89,"IB","Adenocarcinoma","Unknown","Yes",NA,71.93,1
+0,67,0,113.86,"IB","Adenocarcinoma","Unknown","No",NA,115.53,0
+0,52,0,107.19,"IB","Adenocarcinoma","Unknown","No",NA,108.77,1
+0,67,0,59.89,"IB","Adenocarcinoma","Unknown","No",NA,60.77,0
+0,59,0,60.97,"IB","Adenocarcinoma","Unknown","No",NA,61.87,0
+0,70,0,80.45,"IB","Adenocarcinoma","Unknown","No",NA,81.63,0
+0,59,0,61.07,"IB","Adenocarcinoma","Unknown","Yes",NA,61.97,1
+0,56,0,65.64,"IB","Adenocarcinoma","Unknown","Yes",NA,66.6,1
+0,69,0,60.84,"IA","Adenocarcinoma","Unknown","Yes",NA,61.73,0
+0,61,0,62.22,"IA","Adenocarcinoma","Unknown","Yes",NA,63.13,0
+0,54,0,61.14,"IA","Adenocarcinoma","Unknown","No",NA,62.03,0
+0,64,0,54.83,"IA","Adenocarcinoma","Unknown","No",NA,55.63,0
+0,45,0,104.76,"IA","Adenocarcinoma","Unknown","No",NA,106.3,0
+0,55,0,59.86,"IA","Adenocarcinoma","Unknown","No",NA,60.73,0
+0,61,0,59.43,"IA","Adenocarcinoma","Unknown","No",NA,60.3,0
+0,65,0,83.84,"IA","Adenocarcinoma","Unknown","No",NA,85.07,0
+0,65,0,97.5,"IA","Adenocarcinoma","Unknown","No",NA,98.93,1
+0,47,0,100.72,"IA","Adenocarcinoma","Unknown","Yes",NA,102.2,1
+0,60,0,46.39,"IA","Adenocarcinoma","Unknown","No",NA,47.07,0
+0,55,0,43.27,"IA","Adenocarcinoma","Unknown","Yes",NA,43.9,1
+0,61,0,38.76,"IA","Adenocarcinoma","Unknown","No",NA,39.33,0
+0,67,0,55.45,"IA","Adenocarcinoma","Unknown","Yes",NA,56.27,1
+0,69,0,46.55,"IA","Adenocarcinoma","Unknown","Yes",NA,47.23,1
+0,65,0,46.85,"IA","Adenocarcinoma","Unknown","No",NA,47.53,0
+0,65,0,54.99,"IA","Adenocarcinoma","Unknown","Yes",NA,49.63,1
+0,56,0,60.71,"IA","Adenocarcinoma","Unknown","No",NA,61.6,0
+0,65,0,60.97,"IA","Adenocarcinoma","Unknown","Yes",NA,61.87,0
+0,56,0,58.48,"IA","Adenocarcinoma","Unknown","No",NA,59.33,0
+0,59,0,68.46,"IA","Adenocarcinoma","Unknown","No",NA,69.47,1
+0,56,0,61.73,"IA","Adenocarcinoma","Unknown","Yes",NA,62.63,1
+0,63,0,36.6,"IA","Adenocarcinoma","Unknown","Yes",NA,37.13,0
+0,49,0,92.18,"IA","Adenocarcinoma","Unknown","Yes",NA,93.53,1
+0,58,0,54.63,"IA","Adenocarcinoma","Unknown","No",NA,55.43,0
+0,62,0,56.7,"IA","Adenocarcinoma","Unknown","Yes",NA,57.53,1
+0,68,0,53.52,"IA","Adenocarcinoma","Unknown","No",NA,54.3,0
+0,66,0,71.58,"IA","Adenocarcinoma","Unknown","No",NA,72.63,0
+0,57,0,62.98,"IA","Adenocarcinoma","Unknown","Yes",NA,63.9,0
+0,57,0,47.5,"IA","Adenocarcinoma","Unknown","No",NA,48.2,0
+0,52,0,38.17,"IA","Adenocarcinoma","Unknown","Yes",NA,38.73,0
+0,65,0,40.44,"IA","Adenocarcinoma","Unknown","No",NA,41.03,0
+0,65,0,30.91,"IA","Adenocarcinoma","Unknown","Yes",NA,31.37,1
+0,50,0,53.32,"IA","Adenocarcinoma","Unknown","No",NA,54.1,0
+0,53,0,60.94,"IA","Adenocarcinoma","Unknown","No",NA,61.83,0
+0,53,0,46.12,"IA","Adenocarcinoma","Unknown","No",NA,46.8,0
+0,66,0,72.96,"IA","Adenocarcinoma","Unknown","Yes",NA,74.03,0
+0,62,0,27.89,"IA","Adenocarcinoma","Unknown","No",NA,28.3,0
+0,66,0,27.3,"IA","Adenocarcinoma","Unknown","No",NA,27.7,0
+0,35,0,105.75,"IA","Adenocarcinoma","Unknown","Yes",NA,107.3,1
+0,59,0,84.92,"IA","Adenocarcinoma","Unknown","No",NA,86.17,0
+0,67,0,80.22,"IA","Adenocarcinoma","Unknown","No",NA,81.4,0
+0,56,0,62.75,"IA","Adenocarcinoma","Unknown","Yes",NA,63.67,0
+0,62,0,60.25,"IA","Adenocarcinoma","Unknown","No",NA,61.13,0
+0,46,0,95.86,"IA","Adenocarcinoma","Unknown","No",NA,97.27,0
+0,67,0,75.07,"IA","Adenocarcinoma","Unknown","No",NA,76.17,0
+0,62,0,70.6,"IA","Adenocarcinoma","Unknown","Yes",NA,71.63,1
+0,63,0,84.13,"IA","Adenocarcinoma","Unknown","Yes",NA,85.37,1
+0,52,0,63.96,"IA","Adenocarcinoma","Unknown","Yes",NA,64.9,0
+0,60,0,60.48,"IA","Adenocarcinoma","Unknown","No",NA,61.37,0
+0,47,0,64.75,"IA","Adenocarcinoma","Unknown","No",NA,65.7,0
+0,56,0,79.14,"IA","Adenocarcinoma","Unknown","Yes",NA,80.3,1
+0,56,0,53.35,"IA","Adenocarcinoma","Unknown","No",NA,54.13,0
+0,63,0,79.83,"IA","Adenocarcinoma","Unknown","Yes",NA,81,0
+0,59,0,60.97,"IA","Adenocarcinoma","Unknown","Yes",NA,61.87,1
+0,62,0,49.8,"IA","Adenocarcinoma","Unknown","No",NA,50.53,0
+0,50,0,59.76,"IA","Adenocarcinoma","Unknown","Yes",NA,60.63,1
+0,55,0,79.27,"IA","Adenocarcinoma","Unknown","No",NA,80.43,1
+0,54,0,60.74,"IA","Adenocarcinoma","Unknown","Yes",NA,61.63,0
+0,65,0,71.65,"IA","Adenocarcinoma","Unknown","No",NA,72.7,1
+0,66,0,71.22,"IA","Adenocarcinoma","Unknown","Yes",NA,72.27,1
+0,62,0,70.76,"IA","Adenocarcinoma","Unknown","No",NA,71.8,0
+0,64,0,68.1,"IA","Adenocarcinoma","Unknown","No",NA,69.1,0
+0,64,0,65.51,"IA","Adenocarcinoma","Unknown","No",NA,66.47,0
+0,61,0,70.2,"IA","Adenocarcinoma","Unknown","No",NA,71.23,1
+0,58,0,65.64,"IA","Adenocarcinoma","Unknown","No",NA,66.6,0
+0,49,0,62.68,"IA","Adenocarcinoma","Unknown","Yes",NA,63.6,1
+0,58,0,54.53,"IA","Adenocarcinoma","Unknown","Yes",NA,55.33,1
+0,66,0,112.29,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,86.63,1
+0,66,0,104.66,"IA","Adenocarcinoma","Unknown","Unknown",NA,105.88,0
+0,77,1,5.32,"IA","Adenocarcinoma","Unknown","Unknown",NA,5.06,1
+1,40,1,18.27,"IB","Adenocarcinoma","Unknown","Unknown",NA,15.44,0
+0,68,1,9.99,"III","Adenocarcinoma","Unknown","Unknown",NA,2.99,1
+0,65,1,19.38,"IB","Adenocarcinoma","Unknown","Unknown",NA,7.29,0
+0,76,1,16.39,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,9.17,0
+0,78,1,2,"IB","Adenocarcinoma","Unknown","Unknown",NA,NA,1
+0,65,1,8.31,"IB","Large Cell Carcinoma","Unknown","Unknown",NA,8.05,1
+0,74,1,19.55,"IB","Adenocarcinoma","Unknown","Unknown",NA,NA,0
+1,64,1,5.09,"IB","Large Cell Carcinoma","Unknown","Unknown",NA,3.12,0
+0,70,1,19.51,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,16.26,1
+1,70,1,16.1,"IB","Adenocarcinoma","Unknown","Unknown",NA,14.36,1
+0,55,1,3.58,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,2.76,0
+0,72,1,2.76,"IB","Adenocarcinoma","Unknown","Unknown",NA,2.73,0
+1,64,1,9.86,"IB","Large Cell Carcinoma","Unknown","Unknown",NA,8.74,1
+1,70,1,11.66,"IB","Adenocarcinoma","Unknown","Unknown",NA,11.79,1
+0,54,1,9.4,"III","Adenocarcinoma","Unknown","Unknown",NA,7.85,0
+0,71,1,4.96,"II","Adenocarcinoma","Unknown","Unknown",NA,1.77,1
+0,70,1,69.25,"IB","Adenocarcinoma","Unknown","Unknown",NA,36.76,0
+0,61,1,9.23,"IB","Large Cell Carcinoma","Unknown","Unknown",NA,8.05,1
+0,75,1,113.99,"III","Adenocarcinoma","Unknown","Unknown",NA,111.14,0
+0,69,1,132.39,"IB","Adenocarcinoma","Unknown","Unknown",NA,132.75,1
+0,62,1,107.1,"IA","Adenocarcinoma","Unknown","Unknown",NA,83.15,0
+1,60,1,15.18,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,13.17,1
+1,44,0,145.83,"III","Large Cell Carcinoma","Unknown","Unknown",NA,63.8,1
+1,66,1,16.89,"II","Adenocarcinoma","Unknown","Unknown",NA,16.52,1
+0,56,0,187.65,"IA","Adenocarcinoma","Unknown","Unknown",NA,97.04,1
+0,76,1,9.23,"IB","Adenocarcinoma","Unknown","Unknown",NA,8.11,0
+0,70,1,63.67,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,1
+0,56,0,140.6,"IB","Large Cell Carcinoma","Unknown","Unknown",NA,145.3,1
+1,66,1,9.13,"IB","Large Cell Carcinoma","Unknown","Unknown",NA,4.57,1
+0,66,1,11.27,"IB","Adenocarcinoma","Unknown","Unknown",NA,3.81,1
+0,52,1,105.81,"IA","Adenocarcinoma","Unknown","Unknown",NA,84.72,0
+0,61,0,130.52,"IB","Large Cell Carcinoma","Unknown","Unknown",NA,138.21,1
+0,51,1,19.42,"IB","Adenocarcinoma","Unknown","Unknown",NA,6.24,0
+0,71,1,14.09,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,7.95,0
+1,62,1,122.17,"II","Adenocarcinoma","Unknown","Unknown",NA,95.43,1
+1,64,0,126.28,"II","Adenocarcinoma","Unknown","Unknown",NA,68.53,0
+0,82,1,109.43,"IB","Adenocarcinoma","Unknown","Unknown",NA,56.08,0
+1,55,0,122.31,"IB","Adenocarcinoma","Unknown","Unknown",NA,31.73,0
+0,68,1,98.55,"IB","Large Cell Carcinoma","Unknown","Unknown",NA,100,1
+0,71,0,118.96,"IB","Adenocarcinoma","Unknown","Unknown",NA,56.77,0
+0,80,1,3.22,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,1.22,1
+0,75,0,110.68,"IA","Adenocarcinoma","Unknown","Unknown",NA,56.7,0
+0,69,1,75.56,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,42.87,1
+0,74,1,93.43,"III","Adenocarcinoma","Unknown","Unknown",NA,94.71,0
+0,58,1,14.59,"III","Squamous Cell Carcinoma","Unknown","Unknown",NA,11.04,0
+0,59,1,0.2,"III","Adenocarcinoma","Unknown","Unknown",NA,0.2,1
+0,59,1,6.44,"IB","Adenocarcinoma","Unknown","Unknown",NA,4.37,1
+0,75,1,4.04,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,3.38,1
+0,75,1,89.98,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,89.88,0
+0,62,0,162.45,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,139.82,1
+1,60,1,10.97,"III","Squamous Cell Carcinoma","Unknown","Unknown",NA,10.68,1
+1,70,1,129.73,"II","Adenocarcinoma","Unknown","Unknown",NA,78.19,1
+1,59,0,154.5,"IA","Adenocarcinoma","Unknown","Unknown",NA,163.53,1
+0,41,1,9.23,"III","Squamous Cell Carcinoma","Unknown","Unknown",NA,2.33,0
+0,69,0,151.84,"II","Large Cell Carcinoma","Unknown","Unknown",NA,161.43,0
+1,62,1,57.85,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,55.52,0
+0,66,1,90.28,"IA","Adenocarcinoma","Unknown","Unknown",NA,90.34,1
+1,60,1,10.61,"III","Adenocarcinoma","Unknown","Unknown",NA,10.05,0
+0,61,0,148.16,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,141.72,0
+0,61,0,147.47,"IB","Adenocarcinoma","Unknown","Unknown",NA,123.52,1
+0,55,0,147.37,"IA","Adenocarcinoma","Unknown","Unknown",NA,68.46,0
+1,65,1,105.19,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,102.83,1
+1,59,1,13.01,"III","Adenocarcinoma","Unknown","Unknown",NA,6.08,0
+1,70,1,12.16,"IV","Adenocarcinoma","Unknown","Unknown",NA,6.96,0
+0,67,1,8.61,"IB","Adenocarcinoma","Unknown","Unknown",NA,5.88,1
+0,69,1,2.5,"IB","Large Cell Carcinoma","Unknown","Unknown",NA,1.77,1
+0,64,1,17.51,"II","Adenocarcinoma","Unknown","Unknown",NA,4.53,0
+0,65,1,2.92,"III","Squamous Cell Carcinoma","Unknown","Unknown",NA,2.1,1
+1,73,1,96.58,"IA","Large Cell Carcinoma","Unknown","Unknown",NA,93.66,1
+1,49,1,61.56,"II","Adenocarcinoma","Unknown","Unknown",NA,8.38,0
+0,51,1,5.81,"II","Adenocarcinoma","Unknown","Unknown",NA,0.23,0
+1,74,1,18.27,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,18.53,1
+0,61,1,15.34,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,12.88,0
+1,58,1,108.48,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,109.99,1
+1,68,1,78.75,"III","Adenocarcinoma","Unknown","Unknown",NA,74.47,0
+0,70,1,174.47,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,176.91,1
+0,66,1,74.08,"III","Squamous Cell Carcinoma","Unknown","Unknown",NA,74.74,1
+0,51,1,67.94,"IB","Adenocarcinoma","Unknown","Unknown",NA,20.43,0
+1,47,1,116.46,"II","Adenocarcinoma","Unknown","Unknown",NA,104.11,0
+1,48,0,167.48,"IA","Large Cell Carcinoma","Unknown","Unknown",NA,72.54,0
+0,66,0,106.01,"IB","Adenocarcinoma","Unknown","Unknown",NA,68.53,0
+0,56,1,4.7,"III","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,1
+0,67,0,102.69,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,78.98,1
+0,76,1,20.53,"IA","Squamous Cell Carcinoma","Unknown","Unknown",NA,13.37,1
+0,75,1,10.48,"IB","Adenocarcinoma","Unknown","Unknown",NA,5.32,0
+1,70,1,21.71,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,12.29,0
+0,67,0,156.37,"IB","Adenocarcinoma","Unknown","Unknown",NA,165.97,0
+0,62,0,133.64,"IA","Adenocarcinoma","Unknown","Unknown",NA,77.83,0
+0,67,0,126.35,"IA","Adenocarcinoma","Unknown","Unknown",NA,133.77,0
+0,49,0,166.33,"IA","Adenocarcinoma","Unknown","Unknown",NA,165.74,0
+0,66,0,160.87,"II","Adenocarcinoma","Unknown","Unknown",NA,28.55,1
+0,70,1,5.95,"IA","Squamous Cell Carcinoma","Unknown","Unknown",NA,3.88,1
+0,54,0,171.06,"IB","Adenocarcinoma","Unknown","Unknown",NA,178.15,1
+0,67,1,92.31,"IB","Adenocarcinoma","Unknown","Unknown",NA,17.44,1
+0,77,1,23.59,"IA","Squamous Cell Carcinoma","Unknown","Unknown",NA,19.78,1
+1,70,0,179.66,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,149.38,1
+0,71,1,21.02,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,7.85,1
+0,63.57,1,49.32,"IA","Adenosquamous Carcinoma","Unknown","Yes",NA,NA,1
+0,68.15,0,90.24,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,69.15,0,87.84,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,82.36,0,82.08,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,68,1,22.92,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,57.31,0,84.36,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,63.63,0,82.2,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,71.43,1,51.96,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,44.21,0,74.64,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,74.16,1,48.96,"II","Adenocarcinoma","Unknown","No",NA,NA,0
+0,66.46,0,75.72,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,59.01,0,71.88,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,70.56,0,63.84,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,72.96,0,66.72,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,79.28,0,60.24,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,73.26,0,41.64,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,52.14,0,81.12,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,85.78,1,34.08,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,76.93,0,77.52,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,73.23,0,69.12,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,77.18,0,59.4,"IA","Adenocarcinoma","Unknown","No",NA,NA,0
+0,78.96,0,61.44,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,78.99,0,76.68,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,55.39,1,68.88,"IA","Adenocarcinoma","Unknown","No",NA,NA,0
+0,61.53,1,13.2,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,68.66,0,80.28,"II","Adenocarcinoma","Unknown","No",NA,NA,0
+0,62.9,0,70.08,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,67.04,0,62.16,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,79.71,0,76.44,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,69.59,1,67.56,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,61.13,1,22.56,"IA","Adenocarcinoma","Unknown","No",NA,NA,1
+0,73.93,1,48.36,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,73.66,1,62.64,"IA","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,55.75,1,35.16,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,75.68,1,71.52,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,61.59,0,66.48,"II","Adenocarcinoma","Unknown","No",NA,NA,1
+0,59.11,1,5.76,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,49.53,0,90,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,41.95,0,64.92,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,63.1,0,73.32,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,77.27,0,62.4,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,67.56,0,3.96,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,70.85,0,55.44,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,69.07,0,78.96,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,70.52,0,59.28,"IB","Large Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,62.91,0,73.8,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,72.97,0,88.32,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,73.57,1,52.44,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,63.41,1,58.92,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,81.17,0,59.4,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,72.55,1,11.16,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,67.6,0,76.44,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,57.41,0,73.32,"IB","Large Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,68.87,1,15,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,79.65,1,31.32,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,76.91,0,75.36,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,71.92,0,77.16,"IB","Large Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,83.65,0,78.72,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,49.24,1,69.48,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,75.89,0,64.68,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,69.7,1,29.04,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,65.26,1,38.52,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,69.17,0,69.72,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,74.13,0,90.72,"IA","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,78.13,1,41.76,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,71.23,0,61.92,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,68.14,0,72.72,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,54.09,1,10.92,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,64.19,0,35.4,"IA","Adenocarcinoma","Unknown","No",NA,NA,0
+0,63.5,1,46.2,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,74.91,0,1.44,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,85.91,0,70.08,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,80.61,1,76.2,"IB","Adenocarcinoma","Unknown","No",NA,NA,1
+0,80.76,1,63.12,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,40.16,0,60.36,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,71.47,0,60.48,"IA","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,63.21,1,57.12,"II","Adenosquamous Carcinoma","Unknown","Yes",NA,NA,1
+0,60.79,0,62.04,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,57.09,0,49.56,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,60.7,0,60.96,"IA","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,78.26,1,38.4,"IB","Adenocarcinoma","Unknown","No",NA,NA,1
+0,50.12,1,12.36,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,49.86,0,58.92,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,64.73,1,11.64,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,80.78,1,37.08,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,72.96,1,24.24,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,71.5,0,63.84,"IA","Large Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,60.85,0,63.24,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,69.77,0,69,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,61.98,0,66.12,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,49.41,0,65.88,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,78.11,0,54.84,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,63.1,0,59.16,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,57.68,1,10.32,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,62.23,1,23.4,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,63.54,0,93,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,73.23,1,32.4,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,1
+0,87.11,1,41.76,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,73.25,1,43.68,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,1
+0,60.6,0,52.08,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,57.75,0,63.48,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,68.59,1,25.32,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,83.87,0,88.56,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,87.93,0,89.28,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,69.43,1,57.48,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,68.25,1,36.12,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,70.52,1,37.68,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,70.73,1,14.52,"II","Adenocarcinoma","Unknown","Unknown",NA,NA,0
+0,66.69,0,65.4,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,67.64,0,68.04,"IA","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,73.02,0,37.32,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,84.19,1,7.8,"IA","Adenocarcinoma","Unknown","Unknown",NA,NA,1
+0,70.96,1,21.6,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,74.74,0,38.52,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,83.58,1,7.2,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,66.38,0,62.4,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,73.63,1,46.68,"IA","Adenocarcinoma","Unknown","Unknown",NA,NA,1
+0,73.79,0,71.52,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,71.22,0,41.16,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,80.54,1,17.88,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,80.34,1,21.96,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,67.29,0,62.16,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,69.07,1,62.16,"IA","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,79.62,1,35.04,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,72.67,0,32.28,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,56.71,0,59.88,"IA","Adenocarcinoma","Unknown","No",NA,NA,0
+0,60.29,0,80.04,"IA","Adenocarcinoma","Unknown","Unknown",NA,NA,0
+0,61.86,1,67.2,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,70.91,0,70.08,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,75.03,0,130.56,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,54.73,1,2.28,"IA","Large Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,84.48,0,6.12,"IA","Adenocarcinoma","Unknown","No",NA,NA,0
+0,76.94,1,48.48,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,63.8,0,56.76,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,0
+0,73.69,0,18.48,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,80.83,0,93.96,"IB","Adenocarcinoma","Unknown","Unknown",NA,NA,0
+0,47.09,0,72.24,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,69.03,0,20.52,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,69.92,0,8.52,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,48.8,0,60,"IA","Adenocarcinoma","Unknown","No",NA,NA,0
+0,78.58,0,15.24,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,70.38,0,1.8,"IB","Adenocarcinoma","Unknown","No",NA,NA,0
+0,62.68,0,16.44,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,62.17,1,9.6,"II","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,71.35,1,11.4,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,1
+0,70.82,0,61.2,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,73.4,0,57.12,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,0
+0,70.56,0,1.08,"II","Adenocarcinoma","Unknown","Unknown",NA,NA,1
+0,69.62,1,41.52,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,84.95,0,40.56,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,75.7,1,18.24,"IB","Adenocarcinoma","Unknown","Unknown",NA,NA,1
+0,67.62,1,22.92,"IB","Adenocarcinoma","Unknown","Unknown",NA,NA,0
+0,64.6,0,136.68,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,55.68,0,144.48,"IB","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,0
+0,73.55,1,48.48,"IA","Large Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,70.73,1,19.08,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,64.13,0,88.56,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,71.7,1,6.84,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,61.13,0,50.04,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,72.76,1,29.88,"IA","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,1
+0,63,0,16.44,"II","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,0
+0,54.83,0,100.08,"IA","Squamous Cell Carcinoma","Unknown","Unknown",NA,NA,0
+0,76.71,0,61.56,"II","Adenocarcinoma","Unknown","Unknown",NA,NA,1
+0,68.7,1,20.04,"II","Large Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,68.95,1,6.72,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,68.32,0,32.52,"IB","Adenocarcinoma","Unknown","Unknown",NA,NA,0
+0,85.48,1,23.64,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,55.53,0,15.12,"II","Adenocarcinoma","Unknown","Unknown",NA,NA,0
+0,74.09,1,91.32,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,82.71,0,46.2,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,52.4,1,16.2,"II","Squamous Cell Carcinoma","Unknown","No",NA,NA,1
+0,65.69,1,14.76,"IA","Adenocarcinoma","Unknown","Unknown",NA,NA,0
+0,73.45,1,77.64,"II","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,67,1,12.6,"IB","Large Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,61.07,1,92.88,"IB","Squamous Cell Carcinoma","Unknown","Yes",NA,NA,1
+0,70.62,0,54.48,"IA","Adenocarcinoma","Unknown","Unknown",NA,NA,1
+0,71.84,1,14.4,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,75.58,1,3.72,"IB","Adenocarcinoma","Unknown","Yes",NA,NA,1
+0,76.07,0,99.12,"IA","Adenocarcinoma","Unknown","No",NA,NA,1
+0,76.25,1,1.2,"II","Adenocarcinoma","Unknown","Yes",NA,NA,0
+0,60.08,0,49.92,"IA","Adenocarcinoma","Unknown","Yes",NA,NA,0

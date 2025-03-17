@@ -1,3 +1,115 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:4126dddbae888e6329226563da1a4857052cf5a6763ec6b83dd2a574f14a4c00
-size 3926
+Link,n ≈ 1792,Notes
+GSE68465,430,"GPT said no because all had no ACT.
+Affymetrix Human Genome U133A Array
+
+OS, RFS/PFS, adj chemo
+
+Clinical: Sex, Age, Race, Stage, Smoking History, Surgical Margins (binary), Histologic Grade, Histology
+Histology ALL adenocarcinoma"
+GSE90623,101,"Stage I with BINARY recurrence data.
+
+Affymetrix Human Gene 2.0 ST Array
+
+Check followup time
+
+Clinical: Histology
+Histology ALL adenocarcinoma
+211 lung adenocarcinoma patients (stages I–IIIA; 81% stage I)
+Median Age: 63.4 for non-recurrent; 68.0 with recurrence
+
+“None of the 101 non-recurrent patients received adjuvant treatment, while 29/110 recurrent patients did.”"
+GSE39279,198,"Illumina HumanMethylation450 BeadChip, time to recurrence, adj chemo parameter
+
+Many missing for adjuvant chemo, either ""no"" or missing.
+
+n = 198 with ""no"" for adj. chemo. - all others missing
+
+Clinical: Histology, Stage, Smoking History (binary), Age, Sex, Stage, Tumor Size"
+GSE50081,181,"Affymetrix, OS, binary recurrence, DFS
+
+n=181
+All did not have adjuvant chemotherapy, only surgical resection
+
+Clinical: Sex, Histology, Stage, Age, Smoking History, "
+GSE42127,176,"Illumina, adj chemo, OS, no recurrence information
+
+Clinical: Age, Sex, Stage, Histology"
+GSE31210,168,"Affymetrix Human Genome U133 Plus 2.0 Array
+
+168/246 Stage I with Relapse (binary + longitudinal), OS
+
+Clinical: Age, Sex, Smoking History (binary), Bi?, Stage, Driver Mutations, Myc, Myc_copy, Histology
+Histology: All adenocarcinoma"
+GSE42425,67,"Exiqon miRCURY LNA microRNA array
+
+Stage I, OS, RFS (some missing longitudinal), multiple samples per patient
+
+Clinical: Histology, Age, Sex, Race, Smoking History, Stage, Tumor Component"
+GSE14814,133,"Affymetrix, adj chemo for at least 71 - need to check paper, OS, DSS (disease specific survival)
+
+Clinical: Stage, Age, Sex, Histology, Subtype
+"
+GSE37745,100,"Affymetrix
+
+96/196 missing adj chemo data
+
+OS, RFS
+
+Clinical: Histology, Stage, Performance Status, Age, Sex
+Smoking not present in GEO:
+Current smoker 163 (46.0)
+ Ex smoker 156 (44.1)
+ Never smoker 34 (9.6)
+ Missing 2 (0.3)"
+GSE29013,55,"Affymetrix Human Genome U133 Plus 2.0 Array, PFS, OS, adj chemo
+
+Clinical: Spor.n, Stage, Age, Histology, Sex, Race, Smoking History (binary)"
+GSE47115,46,"Illumina, OS, adj chemo, 
+
+Clinical: Stage, Age, Sex, Intraoperative Brachtherapy, Smoking History, Packyears, Years Quit"
+GSE56264,40,"Agilent-031181 Unrestricted_Human_miRNA_V16.0_Microarray
+
+Chemotherapy regimen, Responder (binary), Recist Status (SD, PR, DP, CR)
+
+Clinical: Age, Sex, Smoking History (binary), Bi, Stage, Driver Mutations, Histology, Race
+Histology: all adenocarcinoma
+Race: Japanese"
+GSE63384,35,"Death due to cancer, OS, Stage I 
+
+35 patients, tumor + nontumor adjacent --> 70 samples
+
+Can link death due to cancer with recurrence?
+
+Illumina Methylation
+
+Clinical: Sex, Race, Age, Histology, Smoking History, Tumor Size, Driver Mutations, Stage
+Histology variable is normal and adenocarcinoma*
+All Stage I, adenocarcinoma
+Driver Mutations: KRAS, TP53"
+GSE7880,23,"Affymetrix
+Same authors as GSE6044
+
+23 received chemo and progressed
+20 either received chemo and didn't progress or didn't receive chemo at all
+
+Clinical: Age, Sex, Histology
+Disease/chemo variables are a bit confused*"
+GSE31908,16,"Affymetrix Human Genome U133 Plus 2.0 Array
+16/17 with adj. chemo. data, OS, progression/relapse, 
+
+Clinical: Driver Mutations, Sex, Race, Smoking History, Surgical Margins, Stage, Histologic Grade
+Driver Mutations: EGFR"
+GSE6044,13,"Affymetrix **
+
+13 with advanced NSCLC (treated with adj chemo and progressed)
+5 normal lung tissues
+29 newly diagnosed
+
+""Yes"" - progression despite chemotherapy 
+""No"" - may refer to no progression or no adjuvant at all
+
+Clinical: Histology, Age, Sex"
+GSE59245,10,"Agilent-045997 Arraystar human lncRNA microarray V3 (Probe Name Version)
+Recist
+Clinical: Histology
+Stage: all unresectable, Chinese hospitals"
