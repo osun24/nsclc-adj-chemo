@@ -76,7 +76,7 @@ def create_rsf(train_df, test_df, name):
     }
 
     # Set up outer and inner KFold CV for nested CV
-    outer_cv = KFold(n_splits=5, shuffle=True, random_state=42)
+    outer_cv = KFold(n_splits=10, shuffle=True, random_state=42)
     inner_cv = KFold(n_splits=5, shuffle=True, random_state=42)
 
     outer_scores = []
@@ -273,13 +273,13 @@ def create_rsf(train_df, test_df, name):
     return best_model, one_se_model, selected_features_rsf
 
 if __name__ == "__main__":
-    print("Loading train data from: GPL570train.csv")
+    print("Loading train data from: allTrain.csv")
     train = pd.read_csv("allTrain.csv")
     
     print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
     print("Train data shape:", train.shape)
     
-    print("Loading validation data from: GPL570validation.csv")
+    print("Loading validation data from: allValidation.csv")
     valid = pd.read_csv("allValidation.csv")
     
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
