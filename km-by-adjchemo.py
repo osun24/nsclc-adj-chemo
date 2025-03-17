@@ -4,9 +4,12 @@ from lifelines.plotting import add_at_risk_counts
 from lifelines.statistics import logrank_test
 import matplotlib.pyplot as plt
 
-data = pd.read_csv('GPL570merged.csv')
-data = pd.get_dummies(data, columns=["Stage", "Histology", "Race"])
-data = data.drop(columns=['PFS_MONTHS','RFS_MONTHS'])
+data = pd.read_csv('allTest.csv')
+data1 = pd.read_csv("allTrain.csv")
+data2 = pd.read_csv("allValidation.csv")
+data = pd.concat([data, data1, data2])
+#data = pd.get_dummies(data, columns=["Stage", "Histology", "Race"])
+#data = data.drop(columns=['PFS_MONTHS','RFS_MONTHS'])
 
 # Filter to stage IA and IB based on the dummy columns created by get_dummies
 stage_IA = data[data['Stage_IA'] == 1]
@@ -44,7 +47,7 @@ for ax, (stage_label, stage_df) in zip(axes, [("Stage IA", stage_IA), ("Stage IB
     print(f"{stage_label} logrank test p-value: {results.p_value}")
 
 plt.tight_layout()
-plt.savefig('GPL570-Kaplan-Meier-by-Adjuvant.png')
+plt.savefig('ALL-Kaplan-Meier-by-Adjuvant.png')
 plt.show()
 
 # New combined survival analysis for Stage IA and IB together
@@ -77,7 +80,7 @@ ax_combined.text(0.1, 0.1, f"p = {results_combined.p_value:.3f}", transform=ax_c
 print(f"Combined logrank test p-value: {results_combined.p_value}")
 
 plt.tight_layout()
-plt.savefig('GPL570-Kaplan-Meier-by-Adjuvant-2.png')
+plt.savefig('ALL-Kaplan-Meier-by-Adjuvant-2.png')
 plt.show()
 
 # New analysis: Kaplan-Meier survival for the entire dataset
@@ -109,5 +112,5 @@ ax_all.text(0.1, 0.1, f"p = {results_all.p_value:.3f}", transform=ax_all.transAx
 print(f"Entire dataset logrank test p-value: {results_all.p_value}")
 
 plt.tight_layout()
-plt.savefig('GPL570-Kaplan-Meier-Entire-Dataset.png')
+plt.savefig('ALL-Kaplan-Meier-Entire-Dataset.png')
 plt.show()
