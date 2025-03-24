@@ -54,10 +54,10 @@ def create_rsf(train_df, test_df, name):
     iteration = 0              # Counter for iterations
     save_interval = 50         # Save partial results every 50 iterations
     kf = KFold(n_splits=5, shuffle=True, random_state=42)
-    for n_est in [100, 200, 300, 400, 500]:
-        for min_split in [5, 10, 15, 20, 25, 30, 35, 40]:
-            for min_leaf in [5, 10, 15, 20, 25, 30]:
-                for max_feat in ["sqrt", "log2"]:
+    for n_est in [100, 400, 800]:
+        for min_split in [50]:
+            for min_leaf in [50]:
+                for max_feat in ["sqrt"]:
                     model = RandomSurvivalForest(
                         n_estimators=n_est,
                         min_samples_split=min_split,
@@ -69,6 +69,8 @@ def create_rsf(train_df, test_df, name):
                     model.fit(X_train, y_train)
                     test_pred = model.predict(X_test)
                     c_index_test = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], test_pred)[0]
+                    
+                    print(f"Iteration {iteration}: n_estimators={n_est}, min_samples_split={min_split}, min_samples_leaf={min_leaf}, max_features={max_feat}, Test C-index: {c_index_test:.3f}")
                     
                     cv_scores = []
                     for train_idx, val_idx in kf.split(X_train):
@@ -195,18 +197,18 @@ def create_rsf(train_df, test_df, name):
 
 if __name__ == "__main__":
     # Data Loading and Preprocessing for train data
-    print("Loading train data from: GPL570train.csv")
-    train = pd.read_csv("GPL570train.csv")
+    print("Loading train data from: alltrain.csv")
+    train = pd.read_csv("allTrain.csv")
     
     print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
     print("Train data shape:", train.shape)
     
     # Data Loading and Preprocessing for validation data
-    print("Loading validation data from: GPL570validation.csv")
-    valid = pd.read_csv("GPL570validation.csv")
+    print("Loading validation data from: allvalidation.csv")
+    valid = pd.read_csv("allValidation.csv")
     
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
     
     # Run the RSF pipeline with provided train and validation data
-    create_rsf(train, valid, 'GPL570 3-13-25')
+    create_rsf(train, valid, 'all 3-18-25')

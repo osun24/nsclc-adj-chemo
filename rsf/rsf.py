@@ -18,71 +18,126 @@ def rsf_concordance_score(estimator, X, y):
     preds = estimator.predict(X)
     return concordance_index_censored(y['OS_STATUS'], y['OS_MONTHS'], preds)[0]
 
-def create_rsf(train_df, valid_df, name, trees=1000):
-    # Subset using preselected covariates
-    selected_csv = pd.read_csv('rsf/rsf_results_GPL570 3-13-25 RS_rsf_preselection_importances.csv', index_col=0)
-    """[:10]
-    n_estimators=500, min_samples_split=35, min_samples_leaf=30,
-                               random_state=42, n_jobs=-1, max_features="sqrt"
-    Validation C-index: 0.732
-Train C-index: 0.816"""
-    top_100 = selected_csv.index[:4]
-    
-    """[:0] - no genetic
-    Validation C-index: 0.697
-    Train C-index: 0.686"""
-    clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"] + \
-                    [col for col in train_df.columns if col.startswith('Race')] + \
-                    [col for col in train_df.columns if col.startswith('Histology')] + \
-                    [col for col in train_df.columns if col.startswith('Smoked?')]
-    selected_covariates = list(set(top_100).union(set(clinical_vars)))
-    selected_covariates = [col for col in selected_covariates if col in train_df.columns]
-    
-    # Keep only the selected columns in both train and validation datasets
-    train_df = train_df[['OS_STATUS', 'OS_MONTHS'] + selected_covariates]
-    valid_df = valid_df[['OS_STATUS', 'OS_MONTHS'] + selected_covariates]
-    
-    # Create structured arrays for survival analysis
-    y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train_df)
-    y_valid = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid_df)
-    
-    # Process binary columns (convert and assert binary values)
+def create_rsf(train_df, valid_df, name, trees,
+               covariates=None,
+               evaluate_range=False,
+               min_samples_split=6,
+               min_samples_leaf=3,
+               max_features="sqrt",
+               max_depth=None):
+    # If no covariates are provided, use preselected features and clinical variables.
+    selected_covariates = covariates
+    if covariates is None:
+        selected_csv = pd.read_csv('rsf/rsf_results_ALL 3-23-25 RSINTERNAL_rsf_preselection_importances_best.csv', index_col=0)
+        top_100 = selected_csv.index
+        clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"] + \
+                        [col for col in train_df.columns if col.startswith('Race')] + \
+                        [col for col in train_df.columns if col.startswith('Histology')] + \
+                        [col for col in train_df.columns if col.startswith('Smoked?')]
+        selected_covariates = list(set(top_100).union(set(clinical_vars)))
+        selected_covariates = [col for col in selected_covariates if col in train_df.columns]
+
+    # Option to evaluate performance over a range of feature counts.
+    if evaluate_range:
+        candidate_counts = sorted(set(list(range(0, 26)) + list(np.linspace(25, 1000, num=10, dtype=int))))
+        feature_counts, train_c_indices, valid_c_indices = [], [], []
+        # Ensure clinical variables are included.
+        clinical_vars = [var for var in ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"]
+                         if var in train_df.columns]
+        binary_columns = ['Adjuvant Chemo', 'IS_MALE']
+        print("Evaluating RSF model performance over different number of features:")
+        for count in candidate_counts:
+            features_subset = list(set(selected_covariates[:count]).union(set(clinical_vars)))
+            train_temp = train_df[['OS_STATUS', 'OS_MONTHS'] + features_subset].copy()
+            valid_temp = valid_df[['OS_STATUS', 'OS_MONTHS'] + features_subset].copy()
+            for df_ in [train_temp, valid_temp]:
+                common_bins = [col for col in binary_columns if col in df_.columns]
+                if common_bins:
+                    df_[common_bins] = df_[common_bins].astype(int)
+            y_train_temp = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train_temp)
+            y_valid_temp = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid_temp)
+            feats = train_temp.columns.difference(['OS_STATUS', 'OS_MONTHS'])
+            X_train_temp = train_temp[feats]
+            X_valid_temp = valid_temp[feats]
+            
+            mf = max_features
+            # if max_features is exceeded, set to None
+            if max_features > len(X_train_temp.columns):
+                mf = None
+            
+            # Use fixed RSF parameters for evaluation.
+            rsf_temp = RandomSurvivalForest(n_estimators=trees, min_samples_split=min_samples_split,
+                                            min_samples_leaf=min_samples_leaf, random_state=42,
+                                            n_jobs=-1, max_features=mf, max_depth=max_depth)
+            rsf_temp.fit(X_train_temp, y_train_temp)
+            train_score = concordance_index_censored(y_train_temp['OS_STATUS'],
+                                                     y_train_temp['OS_MONTHS'],
+                                                     rsf_temp.predict(X_train_temp))[0]
+            valid_score = concordance_index_censored(y_valid_temp['OS_STATUS'],
+                                                     y_valid_temp['OS_MONTHS'],
+                                                     rsf_temp.predict(X_valid_temp))[0]
+            print(f"Features: {count}, Train C-index: {train_score:.3f}, Validation C-index: {valid_score:.3f}")
+            feature_counts.append(count)
+            train_c_indices.append(train_score)
+            valid_c_indices.append(valid_score)
+        plt.figure(figsize=(10, 6))
+        plt.plot(feature_counts, train_c_indices, marker='o', label='Train C-index')
+        plt.plot(feature_counts, valid_c_indices, marker='s', label='Validation C-index')
+        plt.xlabel("Number of Features")
+        plt.ylabel("C-index")
+        plt.title("RSF Performance vs. Number of Features")
+        plt.legend()
+        plt.tight_layout()
+        plot_filename = f"rsf/feature_range_{name}.png"
+        plt.savefig(plot_filename)
+        plt.show()
+        print(f"Plot saved to {plot_filename}")
+        return
+
+    # Otherwise, train RSF using the full selected feature set.
     binary_columns = ['Adjuvant Chemo', 'IS_MALE']
-    for df_ in [train_df, valid_df]:
-        df_[binary_columns] = df_[binary_columns].astype(int)
-        for col in binary_columns:
-            assert df_[col].max() <= 1 and df_[col].min() >= 0, f"{col} should only contain binary values (0/1)."
-    
-    features = train_df.columns.difference(['OS_STATUS', 'OS_MONTHS'])
-    X_train = train_df[features]
-    X_valid = valid_df[features]
-    
-    # Fit the Random Survival Forest model
-    rsf = RandomSurvivalForest(n_estimators=500, min_samples_split=35, min_samples_leaf=30,
-                               random_state=42, n_jobs=-1, max_features="sqrt")
+    train_subset = train_df[['OS_STATUS', 'OS_MONTHS'] + selected_covariates].copy()
+    valid_subset = valid_df[['OS_STATUS', 'OS_MONTHS'] + selected_covariates].copy()
+    for df_ in [train_subset, valid_subset]:
+        common_bins = [col for col in binary_columns if col in df_.columns]
+        if common_bins:
+            df_[common_bins] = df_[common_bins].astype(int)
+            for col in common_bins:
+                assert df_[col].max() <= 1 and df_[col].min() >= 0, f"{col} should only contain binary values (0/1)."
+    y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train_subset)
+    y_valid = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid_subset)
+    features = train_subset.columns.difference(['OS_STATUS', 'OS_MONTHS'])
+    X_train = train_subset[features]
+    X_valid = valid_subset[features]
+
+    rsf = RandomSurvivalForest(n_estimators=trees,
+                               min_samples_split=min_samples_split,
+                               min_samples_leaf=min_samples_leaf,
+                               random_state=42,
+                               n_jobs=-1,
+                               max_features=max_features,
+                               max_depth=max_depth)
     rsf.fit(X_train, y_train)
-    
-    # Evaluate model performance on validation and training sets
+
     c_index_valid = concordance_index_censored(y_valid['OS_STATUS'], y_valid['OS_MONTHS'], rsf.predict(X_valid))
     print(f"Validation C-index: {c_index_valid[0]:.3f}")
     train_c_index = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], rsf.predict(X_train))
     print(f"Train C-index: {train_c_index[0]:.3f}")
-    
-    # Save the RSF model to a file
-    #joblib.dump(rsf, f'rsf_model-{trees}-c{c_index_valid[0]:.3f}.pkl')
-    
-    # Permutation importance on the validation set
+
+    model_filename = f'rsf/{name}-{c_index_valid[0]:.3f}.pkl'
+    joblib.dump(rsf, model_filename)
+    print(f"RSF model saved to {model_filename}")
+
     result = permutation_importance(rsf, X_valid, y_valid, n_repeats=5, random_state=42)
     importances_df = pd.DataFrame({
         "importances_mean": result.importances_mean,
         "importances_std": result.importances_std
     }, index=X_valid.columns).sort_values(by="importances_mean", ascending=False)
     print(importances_df)
-    
-    # Save full importances to CSV
-    importances_df.to_csv(f'rsf/rsf_results_{name}_rsf_importances.csv')
-    
-    # Plot top 30 feature importances
+    importance_csv = f'rsf/rsf_results_{name}_rsf_importances.csv'
+    importances_df.to_csv(importance_csv)
+    print(f"Feature importances saved to {importance_csv}")
+
     top_importances = importances_df.head(30).sort_values(by="importances_mean", ascending=True)
     plt.figure(figsize=(12, 8))
     plt.rcParams.update({'font.size': 14})
@@ -96,142 +151,7 @@ Train C-index: 0.816"""
     plt.savefig(f'rsf-importances-{name_clean}-{trees}trees-validation.png')
     plt.show()
 
-def create_rsf_custom(train_df, valid_df, covariates, name, trees=1000):
-    # Select only the survival columns and the passed covariates
-    train_df = train_df[['OS_STATUS', 'OS_MONTHS'] + covariates]
-    valid_df = valid_df[['OS_STATUS', 'OS_MONTHS'] + covariates]
-    
-    # Process binary columns if they exist
-    binary_columns = ['Adjuvant Chemo', 'IS_MALE']
-    for df_ in [train_df, valid_df]:
-        common_bins = [col for col in binary_columns if col in df_.columns]
-        if common_bins:
-            df_[common_bins] = df_[common_bins].astype(int)
-            for col in common_bins:
-                assert df_[col].max() <= 1 and df_[col].min() >= 0, f"{col} should only contain binary values (0/1)."
-                
-    # Create structured arrays for survival analysis
-    from sksurv.util import Surv  # in case not imported at module top
-    y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train_df)
-    y_valid = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid_df)
-    
-    features = train_df.columns.difference(['OS_STATUS', 'OS_MONTHS'])
-    X_train = train_df[features]
-    X_valid = valid_df[features]
-    
-    # Fit the Random Survival Forest model with passed trees argument
-    from sksurv.ensemble import RandomSurvivalForest
-    rsf = RandomSurvivalForest(n_estimators=trees, min_samples_split=35, min_samples_leaf=30,
-                               random_state=42, n_jobs=-1, max_features="sqrt")
-    rsf.fit(X_train, y_train)
-    
-    # Evaluate model performance on validation and training sets
-    from sksurv.metrics import concordance_index_censored
-    c_index_valid = concordance_index_censored(y_valid['OS_STATUS'], y_valid['OS_MONTHS'], rsf.predict(X_valid))
-    print(f"Validation C-index: {c_index_valid[0]:.3f}")
-    train_c_index = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], rsf.predict(X_train))
-    print(f"Train C-index: {train_c_index[0]:.3f}")
-    
-    # Permutation importance on the validation set
-    from sklearn.inspection import permutation_importance
-    result = permutation_importance(rsf, X_valid, y_valid, n_repeats=5, random_state=42)
-    importances_df = pd.DataFrame({
-        "importances_mean": result.importances_mean,
-        "importances_std": result.importances_std
-    }, index=X_valid.columns).sort_values(by="importances_mean", ascending=False)
-    print(importances_df)
-    
-    # Save full importances to CSV
-    importances_df.to_csv(f'rsf/rsf_results_{name}_rsf_custom_importances.csv')
-    
-    # Plot top 30 feature importances
-    top_importances = importances_df.head(30).sort_values(by="importances_mean", ascending=True)
-    import matplotlib.pyplot as plt
-    plt.figure(figsize=(12, 8))
-    plt.rcParams.update({'font.size': 14})
-    plt.barh(top_importances.index, top_importances["importances_mean"],
-             xerr=top_importances["importances_std"])
-    plt.xlabel("Permutation Feature Importance")
-    plt.ylabel("Feature")
-    plt.title(f"RSF Custom: Feature Importances (Validation C-index: {c_index_valid[0]:.3f}, Train: {train_c_index[0]:.3f})")
-    plt.tight_layout()
-    name_clean = name.replace(' ', '-')
-    plt.savefig(f'rsf-importances-{name_clean}-{trees}trees-validation.png')
-    plt.show()
-
-def evaluate_features_range(train_df, valid_df, selected_features, name):
-    # Filter out features not present in the DataFrame columns to avoid KeyError
-    selected_features = [f for f in selected_features if f in train_df.columns]
-    
-    # Define clinical variables to be included by default
-    clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"] + \
-                    [col for col in train_df.columns if col.startswith('Race')] + \
-                    [col for col in train_df.columns if col.startswith('Histology')] + \
-                    [col for col in train_df.columns if col.startswith('Smoked?')]
-    clinical_vars = [var for var in clinical_vars if var in train_df.columns]
-    
-    # Define feature counts: 0-25 (each integer) then 25-250 in 10 equally spaced steps
-    range1 = list(range(0, 26))  # start at 1 to avoid empty feature set
-    range2 = list(np.linspace(25, 1000, num=10, dtype=int))
-    candidate_counts = sorted(set(range1 + range2))
-    
-    feature_counts = []
-    train_c_indices = []
-    valid_c_indices = []
-    
-    print("Evaluating RSF model performance over different number of features:")
-    for count in candidate_counts:
-        # Use first 'count' features from ranking and include clinical variables
-        features_subset = selected_features[:count]
-        features_subset = list(set(features_subset).union(set(clinical_vars)))
-        
-        # Subset data (include survival columns) and ensure binary processing as needed
-        train_subset = train_df[['OS_STATUS', 'OS_MONTHS'] + features_subset].copy()
-        valid_subset = valid_df[['OS_STATUS', 'OS_MONTHS'] + features_subset].copy()
-        binary_columns = ['Adjuvant Chemo', 'IS_MALE']
-        for df_ in [train_subset, valid_subset]:
-            common_bins = [col for col in binary_columns if col in df_.columns]
-            if common_bins:
-                df_[common_bins] = df_[common_bins].astype(int)
-        
-        # Create structured arrays for survival analysis
-        from sksurv.util import Surv
-        y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train_subset)
-        y_valid = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid_subset)
-        features = train_subset.columns.difference(['OS_STATUS', 'OS_MONTHS'])
-        X_train = train_subset[features]
-        X_valid = valid_subset[features]
-        
-        # Use fixed RSF parameters (as in create_rsf)
-        from sksurv.ensemble import RandomSurvivalForest
-        rsf = RandomSurvivalForest(n_estimators=500, min_samples_split=35,
-                                   min_samples_leaf=30, random_state=42,
-                                   n_jobs=-1, max_features="sqrt")
-        rsf.fit(X_train, y_train)
-        from sksurv.metrics import concordance_index_censored
-        train_score = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], rsf.predict(X_train))[0]
-        valid_score = concordance_index_censored(y_valid['OS_STATUS'], y_valid['OS_MONTHS'], rsf.predict(X_valid))[0]
-        
-        print(f"Features: {count}, Train C-index: {train_score:.3f}, Validation C-index: {valid_score:.3f}")
-        feature_counts.append(count)
-        train_c_indices.append(train_score)
-        valid_c_indices.append(valid_score)
-    
-    # Plot the performance
-    plt.figure(figsize=(10,6))
-    plt.plot(feature_counts, train_c_indices, marker='o', label='Train C-index')
-    plt.plot(feature_counts, valid_c_indices, marker='s', label='Validation C-index')
-    plt.xlabel("Number of Features")
-    plt.ylabel("C-index")
-    plt.title("RSF Performance vs. Number of Features")
-    plt.legend()
-    plt.tight_layout()
-    plot_filename = f"rsf/feature_range_{name}.png"
-    plt.savefig(plot_filename)
-    plt.show()
-    print(f"Plot saved to {plot_filename}")
-
-def open_rsf(train_df, valid_df, filepath, feature_selected=False):
+def open_rsf(train_df, valid_df, filepath, name, feature_selected=False):
     # Load the saved RSF model
     rsf = joblib.load(filepath)
     
@@ -285,6 +205,9 @@ def open_rsf(train_df, valid_df, filepath, feature_selected=False):
     print(f"Train C-index: {train_c_index[0]:.3f}")
     print(f"Validation C-index: {valid_c_index[0]:.3f}")
     
+    # start time
+    start = time.time()
+    
     # Run permutation feature importance
     perm_result = permutation_importance(rsf, X_train, y_train,
                                            scoring=rsf_concordance_score,
@@ -300,9 +223,13 @@ def open_rsf(train_df, valid_df, filepath, feature_selected=False):
     output_dir = os.path.join(script_dir, "rsf_results")
     os.makedirs(output_dir, exist_ok=True)
     
-    preselect_csv = os.path.join(output_dir, f"1SE_rsf_preselection_importances.csv")
+    preselect_csv = os.path.join(output_dir, f"{name}_rsf_preselection_importances.csv")
     importance_df.to_csv(preselect_csv, index=False)
     print(f"RSF pre-selection importances saved to {preselect_csv}")
+    
+    # finish time
+    end = time.time()
+    print(f"Permutation importance computation took {end - start:.2f} seconds.")
     
     top_preselect = importance_df.head(50)
     plt.figure(figsize=(12, 8))
@@ -311,7 +238,7 @@ def open_rsf(train_df, valid_df, filepath, feature_selected=False):
     plt.xlabel("Permutation Importance")
     plt.title("RSF Pre-Selection (Top 50 Features)")
     plt.tight_layout()
-    preselect_plot = os.path.join(output_dir, f"1SE_rsf_preselection_importances.png")
+    preselect_plot = os.path.join(output_dir, f"{name}rsf_preselection_importances.png")
     plt.savefig(preselect_plot)
     plt.close()
     print(f"RSF pre-selection plot saved to {preselect_plot}")
@@ -532,14 +459,14 @@ def compare_treatment_recommendation_km(rsf_path, df, time_col='OS_MONTHS', even
 
 if __name__ == "__main__":
     # Data Loading and Preprocessing for train data
-    print("Loading train data from: GPL570train.csv")
-    train = pd.read_csv("GPL570train.csv")
+    print("Loading train data from: allTrain.csv")
+    train = pd.read_csv("allTrain.csv")
     print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
     print("Train data shape:", train.shape)
     
     # Data Loading and Preprocessing for validation data
-    print("Loading validation data from: GPL570validation.csv")
-    valid = pd.read_csv("GPL570validation.csv")
+    print("Loading validation data from: allValidation.csv")
+    valid = pd.read_csv("allValidation.csv")
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
     
@@ -548,17 +475,17 @@ if __name__ == "__main__":
     
     # Example usage of open_rsf:
     # Update the filepath below to the actual saved model filename if different.
-    model_filepath = "/Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_GPL570 3-15-25 RS_final_rsf_model_1se.pkl"
+    #model_filepath = "/Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_GPL570 3-15-25 RS_final_rsf_model_1se.pkl"
     # Set feature_selected=True to use preselected features, or False to use all features.
     #open_rsf(train, valid, model_filepath, feature_selected=False)
     
     #create_rsf(train, valid, 'GPL570-315', trees=500)
-    selected_csv = pd.read_csv('rsf/rsf_results_GPL570 3-13-25 RS_rsf_preselection_importances.csv', index_col=0)
-    selected_features = list(selected_csv.index)
+    #selected_csv = pd.read_csv('rsf/rsf_results_GPL570 3-13-25 RS_rsf_preselection_importances.csv', index_col=0)
+    #selected_features = list(selected_csv.index)
     #evaluate_features_range(train, valid,selected_features, 'GPL570-315')
     
     # Create RSF model with custom covariates
-    selected_covariates = ['Stage_IA', 'Smoked?_Unknown', 'RTL3', 'Age', 'GDF9', 'LOC105375172', 'LINC01352', 'NDFIP2', 'Smoked?_Yes', 'MAN2B2', "Adjuvant Chemo"]
+    #selected_covariates = ['Stage_IA', 'Smoked?_Unknown', 'RTL3', 'Age', 'GDF9', 'LOC105375172', 'LINC01352', 'NDFIP2', 'Smoked?_Yes', 'MAN2B2', "Adjuvant Chemo"]
     #Validation C-index: 0.776 | Train C-index: 0.785
     
     # Final selected genomic features: ['Stage_IA', 'GDF9', 'LOC105375172', 'RTL3', 'NDFIP2', 'LOC105378231']
@@ -590,9 +517,29 @@ if __name__ == "__main__":
     #search_optimal_feature_permutation(train, valid, selected_features, 'GPL570-SEARCH', max_features=50)
     
     #Final selected features: ['Adjuvant Chemo', 'Smoked?_Unknown', 'LOC105375172', 'Age', 'RTL3', 'GDF9', 'NDFIP2', 'IS_MALE'] 
-    selected_features = ['Adjuvant Chemo', 'Stage_IA', 'LOC105375172', 'MROH2A', 'LOC105378231', 'MAN2B2', 'RESF1', 'GDF9', 'PCDH19', 'INPP1', 'NEPRO', 'IQCF6']
-    valid = valid[['OS_STATUS', 'OS_MONTHS'] + selected_features]
-    train = train[['OS_STATUS', 'OS_MONTHS'] + selected_features]
+    #selected_features = ['Adjuvant Chemo', 'Stage_IA', 'LOC105375172', 'MROH2A', 'LOC105378231', 'MAN2B2', 'RESF1', 'GDF9', 'PCDH19', 'INPP1', 'NEPRO', 'IQCF6']
+    #valid = valid[['OS_STATUS', 'OS_MONTHS'] + selected_features]
+    #train = train[['OS_STATUS', 'OS_MONTHS'] + selected_features]
     
     #open_rsf(train, valid, 'rsf/rsf_GPL570-SEARCH_0.750.pkl', feature_selected=False)
-    compare_treatment_recommendation_km('rsf/rsf_GPL570-SEARCH_0.750.pkl', valid)
+    #compare_treatment_recommendation_km('rsf/rsf_GPL570-SEARCH_0.750.pkl', valid)
+    
+    # ALL
+    #1 SE RSF hyperparameters from nested CV: {'n_estimators': 100, 'min_samples_split': 15, 'min_samples_leaf': 30, 'max_features': 'sqrt', 'score': 0.5944158706833211} (threshold: 0.587)
+    #create_rsf(train, valid, 'ALL-100-25-15', trees=100, min_samples_split=25, min_samples_leaf=15)
+    # 
+    
+    #create_rsf(train, valid, 'ALL-600-50-40', trees=600, min_samples_split=50, min_samples_leaf=40)
+    #Validation C-index: 0.527 | Train C-index: 0.853
+    
+    #create_rsf(train, valid, 'ALL-100-25-15', trees=100, min_samples_split=25, min_samples_leaf=15)
+    # Validation C-index: 0.555 | Train C-index: 0.910
+    
+    #create_rsf(train, valid, 'ALL-100-25-40', trees=100, min_samples_split=25, min_samples_leaf=40)
+    # Validation C-index: 0.517 | Train C-index: 0.837
+    
+    #create_rsf(train, valid, 'ALL-1000-15-55', trees=1000, min_samples_split=15, min_samples_leaf=55)
+    #Validation C-index: 0.585 | Train C-index: 0.782
+    
+    create_rsf(train, valid, 'ALL-500-70-500-20', trees = 500, min_samples_leaf = 70, max_features = 500, max_depth = 20, evaluate_range=True)
+    

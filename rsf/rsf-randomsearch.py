@@ -11,6 +11,8 @@ import joblib
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import KFold
+from sklearn.experimental import enable_halving_search_cv  # noqa
+from sklearn.model_selection import HalvingRandomSearchCV
 #StratifiedKFold?
 
 # Determine script directory for consistent path handling in a VM
@@ -69,15 +71,15 @@ def create_rsf(train_df, test_df, name):
 
     # Define parameter distributions
     param_distributions = {
-        "n_estimators": [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
-        "min_samples_split": [15, 20, 25, 30, 35, 40, 45, 50],
-        "min_samples_leaf": [15, 20, 25, 30, 35, 40, 45, 50],
-        "max_features": ["sqrt", "log2"]
+        "n_estimators": [500, 750, 1000],
+        "min_samples_leaf": list(range(80, 101, 5)),    
+        "max_features": ["sqrt", "log2", 500], 
+        "max_depth": [10, 20, None],
     }
 
     # Set up outer and inner KFold CV for nested CV
     outer_cv = KFold(n_splits=10, shuffle=True, random_state=42)
-    inner_cv = KFold(n_splits=5, shuffle=True, random_state=42)
+    inner_cv = KFold(n_splits=10, shuffle=True, random_state=42)
 
     outer_scores = []
     outer_best_params = []
@@ -93,23 +95,25 @@ def create_rsf(train_df, test_df, name):
         y_test_outer = y_train[outer_test_idx]
         
         # Inner CV for hyperparameter tuning
-        random_search_inner = RandomizedSearchCV(
+        halving_search_inner = HalvingRandomSearchCV(
             estimator=RandomSurvivalForest(random_state=42, n_jobs=-1),
             param_distributions=param_distributions,
-            n_iter=50,
+            factor=2,
             cv=inner_cv,
             scoring=rsf_score,
             random_state=42,
             n_jobs=-1,
-            verbose=1
+            verbose=1,
+            min_resources=500
+            #min_resources=max(150, int(0.8 * len(X_train_outer))) 
         )
-        random_search_inner.fit(X_train_outer, y_train_outer)
+        halving_search_inner.fit(X_train_outer, y_train_outer)
  
-        best_model_inner = random_search_inner.best_estimator_
+        best_model_inner = halving_search_inner.best_estimator_
         y_pred_outer = best_model_inner.predict(X_test_outer)
         outer_c_index = concordance_index_censored(y_test_outer['OS_STATUS'], y_test_outer['OS_MONTHS'], y_pred_outer)[0]
         outer_scores.append(outer_c_index)
-        outer_best_params.append(random_search_inner.best_params_)
+        outer_best_params.append(halving_search_inner.best_params_)
         
         print(f"[Fold {fold_idx+1}] Completed outer fold with Test C-index: {outer_c_index:.3f}")
     
@@ -160,7 +164,9 @@ def create_rsf(train_df, test_df, name):
     else:
         print("No candidate model met the 1 SE threshold. Defaulting to the best nested CV model.")
         one_se_candidate = best_params_nested
-
+        
+    # Remove "score" key from candidate dictionary
+    one_se_candidate = {k: v for k, v in one_se_candidate.items() if k != "score"}
     print(f"1 SE RSF hyperparameters from nested CV: {one_se_candidate} (threshold: {one_se_threshold:.3f})")
     one_se_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **one_se_candidate)
     one_se_model.fit(X_train, y_train)
@@ -285,4 +291,16 @@ if __name__ == "__main__":
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
     
+    create_rsf(train, valid, 'ALL 3-23-25 RS')
+    
+"""Nested CV completed in 18965.92 seconds.
+Nested CV Mean Test C-index: 0.572
+Selected hyperparameters from nested CV: {'n_estimators': 100, 'min_samples_split': 25, 'min_samples_leaf': 15, 'max_features': 'log2'}
+Nested CV results saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results/ALL 3-17-25 RS_rsf_nested_cv_results.csv
+1 SE RSF hyperparameters from nested CV: {'n_estimators': 100, 'min_samples_split': 25, 'min_samples_leaf': 15, 'max_features': 'log2', 'score': 0.6768963520555877} (threshold: 0.611)
+Traceback (most recent call last):
+  File "/Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf-randomsearch.py", line 291, in <module>
     create_rsf(train, valid, 'ALL 3-17-25 RS')
+  File "/Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf-randomsearch.py", line 168, in create_rsf
+    one_se_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **one_se_candidate)
+TypeError: RandomSurvivalForest.__init__() got an unexpected keyword argument 'score'"""
