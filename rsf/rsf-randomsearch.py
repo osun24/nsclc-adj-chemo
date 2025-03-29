@@ -8,19 +8,17 @@ from sksurv.metrics import concordance_index_censored
 import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 import joblib
-from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import KFold
 from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingRandomSearchCV
-#StratifiedKFold?
+from sklearn.model_selection import HalvingGridSearchCV
 
 # Determine script directory for consistent path handling in a VM
 script_dir = os.path.dirname(os.path.abspath(__file__))
 output_dir = os.path.join(script_dir, "rsf_results")
 os.makedirs(output_dir, exist_ok=True)
 
-# --- New: Redirect print output to both console and log file ---
+# --- Redirect print output to both console and log file ---
 class Tee:
     def __init__(self, *files):
         self.files = files
@@ -38,7 +36,6 @@ def rsf_concordance_metric(y, y_pred):
     return concordance_index_censored(y['OS_STATUS'], y['OS_MONTHS'], y_pred)[0]
 
 def create_rsf(train_df, test_df, name):
-    overall_start = time.time()
     # Create structured arrays for survival analysis
     y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train_df)
     y_test  = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', test_df)
@@ -95,9 +92,9 @@ def create_rsf(train_df, test_df, name):
         y_test_outer = y_train[outer_test_idx]
         
         # Inner CV for hyperparameter tuning
-        halving_search_inner = HalvingRandomSearchCV(
+        halving_search_inner = HalvingGridSearchCV(
             estimator=RandomSurvivalForest(random_state=42, n_jobs=-1),
-            param_distributions=param_distributions,
+            param_grid=param_distributions,
             factor=2,
             cv=inner_cv,
             scoring=rsf_score,
@@ -105,7 +102,6 @@ def create_rsf(train_df, test_df, name):
             n_jobs=-1,
             verbose=1,
             min_resources=500
-            #min_resources=max(150, int(0.8 * len(X_train_outer))) 
         )
         halving_search_inner.fit(X_train_outer, y_train_outer)
  
@@ -158,7 +154,7 @@ def create_rsf(train_df, test_df, name):
     if candidates:
         one_se_candidates_sorted = sorted(
             candidates,
-            key=lambda r: (r["n_estimators"], r["min_samples_split"], r["min_samples_leaf"], r["max_features"])
+            key=lambda r: (r["n_estimators"], r["min_samples_leaf"], r["max_features"])
         )
         one_se_candidate = one_se_candidates_sorted[0]
     else:
@@ -194,9 +190,8 @@ def create_rsf(train_df, test_df, name):
     one_se_test_c_index = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], one_se_pred_test)[0]
     print(f"1 SE RSF: Train C-index: {one_se_train_c_index:.3f}, Test C-index: {one_se_test_c_index:.3f}")
 
-    # ---------------- New: Feature Selection on Best Model ---------------- #
+    # ---------------- Feature Selection on Best Model ---------------- #
     step_best_start = time.time()
-    # (Using best_model for permutation importance)
     perm_result_best = permutation_importance(
         best_model, X_train, y_train,
         scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
@@ -230,7 +225,6 @@ def create_rsf(train_df, test_df, name):
     print(f"Best model: selected top {len(selected_features_best)} features.")
 
     step1_start = time.time()
-    # Use 1SE model for permutation importance instead of best_model
     one_se_model.fit(X_train, y_train)
 
     test_pred = one_se_model.predict(X_test)
@@ -278,6 +272,7 @@ def create_rsf(train_df, test_df, name):
     # Return the best model, 1 SE model, and the selected features for further evaluation
     return best_model, one_se_model, selected_features_rsf
 
+
 if __name__ == "__main__":
     print("Loading train data from: allTrain.csv")
     train = pd.read_csv("allTrain.csv")
@@ -291,16 +286,4 @@ if __name__ == "__main__":
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
     
-    create_rsf(train, valid, 'ALL 3-23-25 RS')
-    
-"""Nested CV completed in 18965.92 seconds.
-Nested CV Mean Test C-index: 0.572
-Selected hyperparameters from nested CV: {'n_estimators': 100, 'min_samples_split': 25, 'min_samples_leaf': 15, 'max_features': 'log2'}
-Nested CV results saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results/ALL 3-17-25 RS_rsf_nested_cv_results.csv
-1 SE RSF hyperparameters from nested CV: {'n_estimators': 100, 'min_samples_split': 25, 'min_samples_leaf': 15, 'max_features': 'log2', 'score': 0.6768963520555877} (threshold: 0.611)
-Traceback (most recent call last):
-  File "/Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf-randomsearch.py", line 291, in <module>
-    create_rsf(train, valid, 'ALL 3-17-25 RS')
-  File "/Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf-randomsearch.py", line 168, in create_rsf
-    one_se_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **one_se_candidate)
-TypeError: RandomSurvivalForest.__init__() got an unexpected keyword argument 'score'"""
+    create_rsf(train, valid, 'ALL 3-28-25 RS')
