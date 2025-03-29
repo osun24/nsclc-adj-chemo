@@ -69,7 +69,7 @@ def create_rsf(train_df, test_df, name):
     # Define parameter distributions
     param_distributions = {
         "n_estimators": [500, 750, 1000],
-        "min_samples_leaf": list(range(80, 101, 5)),    
+        "min_samples_leaf": list(range(50, 101, 5)),    
         "max_features": ["sqrt", "log2", 500], 
         "max_depth": [10, 20, None],
     }
@@ -189,41 +189,8 @@ def create_rsf(train_df, test_df, name):
     one_se_pred_test = one_se_model.predict(X_test)
     one_se_test_c_index = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], one_se_pred_test)[0]
     print(f"1 SE RSF: Train C-index: {one_se_train_c_index:.3f}, Test C-index: {one_se_test_c_index:.3f}")
-
-    # ---------------- Feature Selection on Best Model ---------------- #
-    step_best_start = time.time()
-    perm_result_best = permutation_importance(
-        best_model, X_train, y_train,
-        scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
-        n_repeats=5, random_state=42, n_jobs=-1
-    )
-    importances_best = perm_result_best.importances_mean
-    importance_df_best = pd.DataFrame({
-        "Feature": X_train.columns,
-        "Importance": importances_best,
-        "Std": perm_result_best.importances_std
-    }).sort_values(by="Importance", ascending=False)
-    preselect_csv_best = os.path.join(output_dir, f"{name}_rsf_preselection_importances_best.csv")
-    importance_df_best.to_csv(preselect_csv_best, index=False)
-    print(f"Best model pre-selection importances saved to {preselect_csv_best}")
     
-    top_preselect_best = importance_df_best.head(50)
-    plt.figure(figsize=(12, 8))
-    plt.barh(top_preselect_best["Feature"][::-1], top_preselect_best["Importance"][::-1],
-             xerr=top_preselect_best["Std"][::-1], color=(9/255, 117/255, 181/255))
-    plt.xlabel("Permutation Importance")
-    plt.title("RSF Pre-Selection (Top 50 Features) - Best Model")
-    plt.tight_layout()
-    preselect_plot_best = os.path.join(output_dir, f"{name}_rsf_preselection_importances_best.png")
-    plt.savefig(preselect_plot_best)
-    plt.close()
-    step_best_end = time.time()
-    print(f"Feature selection on best model completed in {step_best_end - step_best_start:.2f} seconds.")
-    
-    top_n_best = min(1000, len(importance_df_best))
-    selected_features_best = importance_df_best.iloc[:top_n_best]["Feature"].tolist()
-    print(f"Best model: selected top {len(selected_features_best)} features.")
-
+    print(f"Starting permutation importance for 1 SE model...")
     step1_start = time.time()
     one_se_model.fit(X_train, y_train)
 
@@ -267,11 +234,45 @@ def create_rsf(train_df, test_df, name):
     X_train_rsf = X_train[selected_features_rsf]
     X_test_rsf = X_test[selected_features_rsf]
     step1_end = time.time()
-    print(f"Step 1 completed in {step1_end - step1_start:.2f} seconds.")
+    print(f"Step 1 (1SE) completed in {step1_end - step1_start:.2f} seconds.")
+
+    # ---------------- Feature Selection on Best Model ---------------- #
+    print("Starting feature selection on best model...")
+    step_best_start = time.time()
+    perm_result_best = permutation_importance(
+        best_model, X_train, y_train,
+        scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
+        n_repeats=5, random_state=42, n_jobs=-1
+    )
+    importances_best = perm_result_best.importances_mean
+    importance_df_best = pd.DataFrame({
+        "Feature": X_train.columns,
+        "Importance": importances_best,
+        "Std": perm_result_best.importances_std
+    }).sort_values(by="Importance", ascending=False)
+    preselect_csv_best = os.path.join(output_dir, f"{name}_rsf_preselection_importances_best.csv")
+    importance_df_best.to_csv(preselect_csv_best, index=False)
+    print(f"Best model pre-selection importances saved to {preselect_csv_best}")
+    
+    top_preselect_best = importance_df_best.head(50)
+    plt.figure(figsize=(12, 8))
+    plt.barh(top_preselect_best["Feature"][::-1], top_preselect_best["Importance"][::-1],
+             xerr=top_preselect_best["Std"][::-1], color=(9/255, 117/255, 181/255))
+    plt.xlabel("Permutation Importance")
+    plt.title("RSF Pre-Selection (Top 50 Features) - Best Model")
+    plt.tight_layout()
+    preselect_plot_best = os.path.join(output_dir, f"{name}_rsf_preselection_importances_best.png")
+    plt.savefig(preselect_plot_best)
+    plt.close()
+    step_best_end = time.time()
+    print(f"Feature selection on best model completed in {step_best_end - step_best_start:.2f} seconds.")
+    
+    top_n_best = min(1000, len(importance_df_best))
+    selected_features_best = importance_df_best.iloc[:top_n_best]["Feature"].tolist()
+    print(f"Best model: selected top {len(selected_features_best)} features.")
     
     # Return the best model, 1 SE model, and the selected features for further evaluation
     return best_model, one_se_model, selected_features_rsf
-
 
 if __name__ == "__main__":
     print("Loading train data from: allTrain.csv")
@@ -286,4 +287,4 @@ if __name__ == "__main__":
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
     
-    create_rsf(train, valid, 'ALL 3-28-25 RS')
+    create_rsf(train, valid, 'ALL 3-29-25 RS')
