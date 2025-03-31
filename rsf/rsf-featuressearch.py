@@ -5,12 +5,13 @@ import numpy as np
 from sksurv.ensemble import RandomSurvivalForest
 from sksurv.util import Surv
 from sksurv.metrics import concordance_index_censored
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, RepeatedKFold
 from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.metrics import make_scorer
 import joblib
 import sys
+import datetime
 
 # Redirect console output to both the terminal and a log file
 class Tee:
@@ -29,17 +30,18 @@ def rsf_concordance_metric(y, y_pred):
 
 # Function to perform nested cross-validation using HalvingGridSearchCV
 def nested_cv_rsf(X, y, param_distributions):
-    outer_cv = KFold(n_splits=5, shuffle=True, random_state=42)
+    outer_cv = RepeatedKFold(n_splits=5, n_repeats=3, random_state=42)  # Repeated CV for robustness
     inner_cv = KFold(n_splits=5, shuffle=True, random_state=42)
     outer_scores = []
     outer_best_params = []
+    fold_metrics = []  # New list to store fold-level metrics
+    inner_cv_results_list = []  # New list to store detailed inner CV results per outer fold
     for fold_idx, (train_idx, test_idx) in enumerate(outer_cv.split(X)):
         X_train_fold = X.iloc[train_idx]
         y_train_fold = y[train_idx]
         X_test_fold = X.iloc[test_idx]
         y_test_fold = y[test_idx]
 
-        # Set up inner CV hyperparameter search
         rsf_score = make_scorer(rsf_concordance_metric, greater_is_better=True)
         halving_search = HalvingGridSearchCV(
             estimator=RandomSurvivalForest(random_state=42, n_jobs=-1),
@@ -50,10 +52,17 @@ def nested_cv_rsf(X, y, param_distributions):
             random_state=42,
             n_jobs=-1,
             verbose=1, 
-            min_resources = 150,
+            min_resources=250,
             error_score=np.nan
         )
         halving_search.fit(X_train_fold, y_train_fold)
+
+        # Save detailed inner CV results for the current fold
+        inner_cv_results_list.append({
+            'fold': fold_idx + 1,
+            'cv_results': halving_search.cv_results_
+        })
+
         best_estimator = halving_search.best_estimator_
         y_pred_test = best_estimator.predict(X_test_fold)
         c_index = concordance_index_censored(y_test_fold['OS_STATUS'], y_test_fold['OS_MONTHS'], y_pred_test)[0]
@@ -64,10 +73,17 @@ def nested_cv_rsf(X, y, param_distributions):
         print(f"Fold {fold_idx+1}: Test C-index = {c_index:.3f}")
         print(f"Fold {fold_idx+1}: Train C-index = {c_index_train:.3f}")
         print(f"Fold {fold_idx+1}: Best params = {halving_search.best_params_}")
+        # Save fold-level metrics for later analysis
+        fold_metrics.append({
+            'fold': fold_idx + 1,
+            'test_c_index': c_index,
+            'train_c_index': c_index_train,
+            'best_params': halving_search.best_params_
+        })
     mean_score = np.mean(outer_scores)
     se_score = np.std(outer_scores) / np.sqrt(len(outer_scores))
     best_fold = np.argmax(outer_scores)
-    return mean_score, se_score, outer_best_params[best_fold]
+    return mean_score, se_score, outer_best_params[best_fold], fold_metrics, inner_cv_results_list
 
 if __name__ == "__main__":
     # Set directories and load data
@@ -75,7 +91,9 @@ if __name__ == "__main__":
     output_dir = os.path.join(script_dir, "rsf_results_optimal")
     os.makedirs(output_dir, exist_ok=True)
     
-    log_file = open(os.path.join(output_dir, "LOG-rsf-feature-search.txt"), "w")
+    current_date = datetime.datetime.now().strftime("%Y%m%d")  # Added current date for file naming
+    
+    log_file = open(os.path.join(output_dir, f"{current_date}_LOG-rsf-feature-search.txt"), "w")
     sys.stdout = Tee(sys.stdout, log_file)
     
     train = pd.read_csv("allTrain.csv")
@@ -97,8 +115,11 @@ if __name__ == "__main__":
         "max_depth": [10],
     }
     
+    all_fold_metrics = []  # Initialize list to collect all fold-level metrics
+    all_inner_cv_results = []  # Initialize list to collect all inner CV results
+    
     # Evaluate different percentages of the >0 importance features (from 10% to 100%)
-    percentages = [0.1 * i for i in range(1, 11)]
+    percentages = [0.01, 0.05, 0.1, 0.5, 1.0]
     results = []
     for p in percentages:
         num_features = max(1, int(len(selected_features_all) * p))
@@ -113,8 +134,26 @@ if __name__ == "__main__":
         y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train_subset)
         X_train = train_subset.drop(columns=['OS_STATUS', 'OS_MONTHS'])
         
-        mean_cv_score, se_cv_score, best_params = nested_cv_rsf(X_train, y_train, param_distributions)
+        # Restraining to 60-80 & max_depth of 10 aligning with previous results
+        local_param_distributions = {
+            "n_estimators": [500, 750, 1000],
+            "min_samples_leaf": list(range(60, 81, 5)),
+            "max_features": ["sqrt", "log2", min(num_features, 500)],
+            "max_depth": [10], #20, None
+        }
+        
+        mean_cv_score, se_cv_score, best_params, fold_metrics, inner_cv_results = nested_cv_rsf(X_train, y_train, local_param_distributions)
         results.append((p, num_features, mean_cv_score, se_cv_score, best_params))
+        # Annotate each fold's metrics with the current percentage and feature count
+        for metric in fold_metrics:
+            metric['percentage'] = p
+            metric['num_features'] = num_features
+        all_fold_metrics.extend(fold_metrics)
+        # Also annotate and collect inner CV detailed results
+        for item in inner_cv_results:
+            item['percentage'] = p
+            item['num_features'] = num_features
+        all_inner_cv_results.extend(inner_cv_results)
         print(f"Percentage {p*100:.0f}% ({num_features} features): Mean CV C-index = {mean_cv_score:.3f} (SE: {se_cv_score:.3f})")
     
     # Find best model based on mean CV score
@@ -140,9 +179,46 @@ if __name__ == "__main__":
     results_df = pd.DataFrame(results, columns=["Percentage", "Num_Features", "Mean_CV_C_index", "SE_CV_C_index", "Best_Params"])
     
     # Save
-    results_csv_path = os.path.join(output_dir, "rsf_feature_selection_results.csv")
+    results_csv_path = os.path.join(output_dir, f"{current_date}_rsf_feature_selection_results.csv")
     results_df.to_csv(results_csv_path, index=False)
     print(f"Results saved to {results_csv_path}") 
+    
+    # Combine outer and inner fold metrics into a single CSV file
+    combined_rows = []
+    
+    # Process outer fold metrics (fold_metrics from all_fold_metrics)
+    for row in all_fold_metrics:
+        row_copy = row.copy()
+        row_copy['fold_type'] = 'outer'
+        # Rename 'fold' to 'outer_fold' for clarity
+        row_copy['outer_fold'] = row_copy.pop('fold')
+        combined_rows.append(row_copy)
+    
+    # Process inner CV results (from all_inner_cv_results)
+    for item in all_inner_cv_results:
+        outer_fold = item.get('fold')
+        percentage = item.get('percentage')
+        num_features = item.get('num_features')
+        cv_results = item.get('cv_results', {})
+        n_candidates = len(cv_results.get('mean_test_score', []))
+        for i in range(n_candidates):
+            inner_row = {
+                'fold_type': 'inner',
+                'outer_fold': outer_fold,
+                'candidate_index': i,
+                'percentage': percentage,
+                'num_features': num_features,
+                'mean_test_score': cv_results.get('mean_test_score', [None]*n_candidates)[i],
+                'std_test_score': cv_results.get('std_test_score', [None]*n_candidates)[i],
+                'rank_test_score': cv_results.get('rank_test_score', [None]*n_candidates)[i],
+                'params': cv_results.get('params', [None]*n_candidates)[i]
+            }
+            combined_rows.append(inner_row)
+    
+    combined_df = pd.DataFrame(combined_rows)
+    combined_csv_path = os.path.join(output_dir, f"{current_date}_rsf_all_fold_results.csv")
+    combined_df.to_csv(combined_csv_path, index=False)
+    print(f"Combined fold-level metrics (inner and outer) saved to {combined_csv_path}")
     
     print(f"Total time taken: {time.time() - start:.2f} seconds")
     
@@ -191,10 +267,10 @@ if __name__ == "__main__":
     print(f"Validation C-index for 1SE model: {valid_c_index_1se:.3f}")
     
     # Save final models
-    model_filename_best = os.path.join(output_dir, f"final_rsf_model_best_{int(best_percentage*100)}perc.pkl")
+    model_filename_best = os.path.join(output_dir, f"{current_date}_final_rsf_model_best_{int(best_percentage*100)}perc.pkl")
     joblib.dump(final_model_best, model_filename_best)
     print(f"Final Best model saved to {model_filename_best}")
     
-    model_filename_1se = os.path.join(output_dir, f"final_rsf_model_1SE_{int(one_se_percentage*100)}perc.pkl")
+    model_filename_1se = os.path.join(output_dir, f"{current_date}_final_rsf_model_1SE_{int(one_se_percentage*100)}perc.pkl")
     joblib.dump(final_model_1se, model_filename_1se)
     print(f"Final 1SE model saved to {model_filename_1se}")
