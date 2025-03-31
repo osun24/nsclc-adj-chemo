@@ -6,10 +6,20 @@ Number of events in validation set: 113 | Censored cases: 163
 Validation data shape: (276, 12363)
 Number of events in training set: 338
 Number of events in test set: 113
+Outer Fold 1: Train Events: 295, Test Events: 43
+Outer Fold 2: Train Events: 300, Test Events: 38
+Outer Fold 3: Train Events: 307, Test Events: 31
+Outer Fold 4: Train Events: 310, Test Events: 28
+Outer Fold 5: Train Events: 316, Test Events: 22
+Outer Fold 6: Train Events: 304, Test Events: 34
+Outer Fold 7: Train Events: 302, Test Events: 36
+Outer Fold 8: Train Events: 311, Test Events: 27
+Outer Fold 9: Train Events: 301, Test Events: 37
+Outer Fold 10: Train Events: 296, Test Events: 42
 Starting Nested Cross-Validation...
 [Fold 1/10] Starting outer fold...
 n_iterations: 1
-n_required_iterations: 1
+n_required_iterations: 9
 n_possible_iterations: 1
 min_resources_: 500
 max_resources_: 741
@@ -17,6 +27,6 @@ aggressive_elimination: False
 factor: 2
 ----------
 iter: 0
-n_candidates: 1
+n_candidates: 297
 n_resources: 500
-Fitting 10 folds for each of 1 candidates, totalling 10 fits
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits

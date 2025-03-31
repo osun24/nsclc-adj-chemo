@@ -1,0 +1,169 @@
+Loading train data from: allTrain.csv
+Number of events in training set: 338 | Censored cases: 486
+Train data shape: (824, 12363)
+Loading validation data from: allValidation.csv
+Number of events in validation set: 113 | Censored cases: 163
+Validation data shape: (276, 12363)
+Number of events in training set: 338
+Number of events in test set: 113
+Starting Nested Cross-Validation...
+[Fold 1/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 741
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 1] Completed outer fold with Test C-index: 0.620
+[Fold 2/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 741
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 2] Completed outer fold with Test C-index: 0.502
+[Fold 3/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 741
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 3] Completed outer fold with Test C-index: 0.635
+[Fold 4/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 741
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 4] Completed outer fold with Test C-index: 0.620
+[Fold 5/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 742
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 5] Completed outer fold with Test C-index: 0.516
+[Fold 6/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 742
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 6] Completed outer fold with Test C-index: 0.552
+[Fold 7/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 742
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 7] Completed outer fold with Test C-index: 0.671
+[Fold 8/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 742
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 8] Completed outer fold with Test C-index: 0.498
+[Fold 9/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 742
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 9] Completed outer fold with Test C-index: 0.509
+[Fold 10/10] Starting outer fold...
+n_iterations: 1
+n_required_iterations: 9
+n_possible_iterations: 1
+min_resources_: 500
+max_resources_: 742
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 297
+n_resources: 500
+Fitting 10 folds for each of 297 candidates, totalling 2970 fits
+[Fold 10] Completed outer fold with Test C-index: 0.584
+Nested CV completed in 76629.06 seconds.
+Nested CV Mean Test C-index: 0.571
+Selected hyperparameters from nested CV: {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 80, 'n_estimators': 500}
+Nested CV results saved to /home/owenzsun/gcs-bucket/rsf_results/ALL 3-29-25 RS_rsf_nested_cv_results.csv
+1 SE RSF hyperparameters from nested CV: {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 500} (threshold: 0.610)
+Best RSF model saved to /home/owenzsun/gcs-bucket/rsf_results/ALL 3-29-25 RS_final_rsf_model.pkl
+1 SE RSF model saved to /home/owenzsun/gcs-bucket/rsf_results/ALL 3-29-25 RS_final_rsf_model_1se.pkl
+Best RSF: Train C-index: 0.804, Test C-index: 0.542
+1 SE RSF: Train C-index: 0.837, Test C-index: 0.555
+Starting permutation importance for 1 SE model...
+Initial RSF Test C-index (1SE Model): 0.555
+Initial RSF Train C-index (1SE Model): 0.837
+RSF pre-selection importances saved to /home/owenzsun/gcs-bucket/rsf_results/ALL 3-29-25 RS_rsf_preselection_importances_1SE.csv
+RSF pre-selection plot saved to /home/owenzsun/gcs-bucket/rsf_results/ALL 3-29-25 RS_rsf_preselection_importances_1SE.png
+RSF pre-selection: selected top 1000 features.
+Step 1 (1SE) completed in 8344.33 seconds.
+Starting feature selection on best model...
+Best model pre-selection importances saved to /home/owenzsun/gcs-bucket/rsf_results/ALL 3-29-25 RS_rsf_preselection_importances_best.csv
+Feature selection on best model completed in 8381.49 seconds.
+Best model: selected top 1000 features.

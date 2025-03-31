@@ -28,7 +28,7 @@ def create_rsf(train_df, valid_df, name, trees,
     # If no covariates are provided, use preselected features and clinical variables.
     selected_covariates = covariates
     if covariates is None:
-        selected_csv = pd.read_csv('rsf/rsf_results_ALL 3-23-25 RSINTERNAL_rsf_preselection_importances_best.csv', index_col=0)
+        selected_csv = pd.read_csv('rsf/rsf_results/ALL 3-29-25 RS_rsf_preselection_importances_1SE.csv', index_col=0)
         top_100 = selected_csv.index
         clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"] + \
                         [col for col in train_df.columns if col.startswith('Race')] + \
@@ -39,7 +39,7 @@ def create_rsf(train_df, valid_df, name, trees,
 
     # Option to evaluate performance over a range of feature counts.
     if evaluate_range:
-        candidate_counts = sorted(set(list(range(0, 26)) + list(np.linspace(25, 1000, num=10, dtype=int))))
+        candidate_counts = sorted(set(list(np.linspace(1, 25, num = 5, dtype = int)) + list(np.linspace(25, 1300, num=10, dtype=int))))
         feature_counts, train_c_indices, valid_c_indices = [], [], []
         # Ensure clinical variables are included.
         clinical_vars = [var for var in ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"]
@@ -47,7 +47,7 @@ def create_rsf(train_df, valid_df, name, trees,
         binary_columns = ['Adjuvant Chemo', 'IS_MALE']
         print("Evaluating RSF model performance over different number of features:")
         for count in candidate_counts:
-            features_subset = list(set(selected_covariates[:count]).union(set(clinical_vars)))
+            features_subset = list(set(selected_covariates[:count])) # .union(set(clinical_vars)))
             train_temp = train_df[['OS_STATUS', 'OS_MONTHS'] + features_subset].copy()
             valid_temp = valid_df[['OS_STATUS', 'OS_MONTHS'] + features_subset].copy()
             for df_ in [train_temp, valid_temp]:
@@ -541,5 +541,11 @@ if __name__ == "__main__":
     #create_rsf(train, valid, 'ALL-1000-15-55', trees=1000, min_samples_split=15, min_samples_leaf=55)
     #Validation C-index: 0.585 | Train C-index: 0.782
     
-    create_rsf(train, valid, 'ALL-500-70-500-20', trees = 500, min_samples_leaf = 70, max_features = 500, max_depth = 20, evaluate_range=True)
+    #create_rsf(train, valid, 'ALL-500-70-500-20', trees = 500, min_samples_leaf = 70, max_features = 500, max_depth = 20, evaluate_range=True)
     
+    # open rsfs from rsf_results
+    #open_rsf(train, valid, 'rsf/rsf_results/rsf_results_ALL 3-28-25 RS_final_rsf_model_1se.pkl', name = "3-28 1SE", feature_selected=False) - 0.542 
+    
+    #open_rsf(train, valid, 'rsf/rsf_results/rsf_results_ALL 3-28-25 RS_final_rsf_model.pkl', name = "3-28 BEST" , feature_selected=False)
+    
+    create_rsf(train, valid, '3-29-1SE', trees=500, max_depth=10, max_features=500, min_samples_leaf=60, evaluate_range=True, covariates=None)
