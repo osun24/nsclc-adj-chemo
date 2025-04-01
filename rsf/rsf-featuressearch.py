@@ -96,8 +96,17 @@ if __name__ == "__main__":
     log_file = open(os.path.join(output_dir, f"{current_date}_LOG-rsf-feature-search.txt"), "w")
     sys.stdout = Tee(sys.stdout, log_file)
     
+    print("Loading train data from: allTrain.csv")
     train = pd.read_csv("allTrain.csv")
+    
+    print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
+    print("Train data shape:", train.shape)
+    
+    print("Loading validation data from: allValidation.csv")
     valid = pd.read_csv("allValidation.csv")
+    
+    print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
+    print("Validation data shape:", valid.shape)
     
     start = time.time()
     
