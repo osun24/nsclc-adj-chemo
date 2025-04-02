@@ -1,0 +1,105 @@
+---
+title: "Train/test/validation"
+output: pdf_document
+date: "2025-03-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(caret)
+
+all.merged1 = all.merged
+
+# Print unique values for non-numeric columns before any processing
+non_numeric_cols <- all.merged1 %>% select(where(~!is.numeric(.))) %>% colnames()
+for (col in non_numeric_cols) {
+  print(paste("Unique values in", col, "before processing:"))
+  print(unique(all.merged1[[col]]))
+}
+
+# Print the unique items in column 7
+column_7_name <- colnames(all.merged1)[7]  # Column index is 1-based in R
+unique_items <- unique(all.merged1[[column_7_name]])
+print(paste("Unique items in column", column_7_name, ":"))
+print(unique_items)
+
+# One-hot encode categorical variables
+dummy_vars <- dummyVars(~ Stage + Histology + Race + `Smoked?`, data = all.merged1)
+dummy_data <- predict(dummy_vars, newdata = all.merged1)
+all.merged1 <- bind_cols(select(all.merged1, -Stage, -Histology, -Race, -`Smoked?`), as_tibble(dummy_data))
+
+# Drop PFS/RFS
+# No RFS for GPL96, so only drop PFS
+all.merged1 <- all.merged1 %>% select(-c(PFS_MONTHS, RFS_MONTHS))
+
+# Print number of NA in OS_MONTHS
+print(paste("Number of NA values in OS_MONTHS:", sum(is.na(all.merged1$OS_MONTHS))))
+
+# Print columns with NA values
+na_columns <- colnames(all.merged1)[colSums(is.na(all.merged1)) > 0]
+print(paste("Columns with NA values:", toString(na_columns)))
+
+# Shape before dropping NA
+print(paste("Shape before dropping NA:", paste(dim(all.merged1), collapse = " x ")))
+all.merged1 <- na.omit(all.merged1)
+print(paste("Data shape:", paste(dim(all.merged1), collapse = " x ")))
+
+# Separate events and censored cases
+events <- all.merged1 %>% filter(OS_STATUS == 1)
+censored <- all.merged1 %>% filter(OS_STATUS == 0)
+
+# Split events: 60% train, 40% temp (split later into 20/20)
+set.seed(42)
+train_events_index <- sample(seq_len(nrow(events)), size = floor(0.6 * nrow(events)))
+train_events <- events[train_events_index, ]
+temp_events <- events[-train_events_index, ]
+
+set.seed(42)
+temp_events_index <- sample(seq_len(nrow(temp_events)), size = floor(0.5 * nrow(temp_events)))
+test_events <- temp_events[temp_events_index, ]
+valid_events <- temp_events[-temp_events_index, ]
+
+# Split censored cases similarly
+set.seed(42)
+train_censored_index <- sample(seq_len(nrow(censored)), size = floor(0.6 * nrow(censored)))
+train_censored <- censored[train_censored_index, ]
+temp_censored <- censored[-train_censored_index, ]
+
+set.seed(42)
+temp_censored_index <- sample(seq_len(nrow(temp_censored)), size = floor(0.5 * nrow(temp_censored)))
+test_censored <- temp_censored[temp_censored_index, ]
+valid_censored <- temp_censored[-temp_censored_index, ]
+
+# Combine events and censored splits
+train <- bind_rows(train_events, train_censored) %>% sample_frac(1)
+test <- bind_rows(test_events, test_censored) %>% sample_frac(1)
+validation <- bind_rows(valid_events, valid_censored) %>% sample_frac(1)
+
+# Print number of columns that have "Smoked" in the name
+smoked_columns <- grep("Smoked", colnames(all.merged1), value = TRUE)
+print(paste("Columns with 'Smoked' in the name:", length(smoked_columns)))
+
+# Save outputs to CSV files
+write_csv(train, "allTrain.csv")
+write_csv(test, "allTest.csv")
+write_csv(validation, "allValidation.csv")
+
+# Print dataset statistics
+print(paste("Training set:", nrow(train), "samples"))
+print(paste("Testing set:", nrow(test), "samples"))
+print(paste("Validation set:", nrow(validation), "samples"))
+
+# Print number of events/censored in each set
+print(paste("Training set:", sum(train$OS_STATUS == 1), "events,", sum(train$OS_STATUS == 0), "censored"))
+print(paste("Testing set:", sum(test$OS_STATUS == 1), "events,", sum(test$OS_STATUS == 0), "censored"))
+print(paste("Validation set:", sum(validation$OS_STATUS == 1), "events,", sum(validation$OS_STATUS == 0), "censored"))
+
+# Check for non-numeric columns
+non_numeric_columns <- colnames(all.merged1)[sapply(all.merged1, function(x) any(is.na(suppressWarnings(as.numeric(x))))) & !sapply(all.merged1, is.numeric)]
+print(paste("Non-numeric columns at the end of preprocessing:", toString(non_numeric_columns)))
+```
+

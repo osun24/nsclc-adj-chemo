@@ -1,0 +1,165 @@
+---
+title: "GSE42425"
+output: html_document
+date: "2025-02-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+
+```{r}
+# get supplementary files
+# Download the file manually from GEO
+download.file("https://ftp.ncbi.nlm.nih.gov/geo/series/GSE47nnn/GSE42425/matrix/GSE42425_series_matrix.txt.gz",
+              destfile = "GSE42425_series_matrix.txt.gz")
+
+# Load the file
+#GSE42425 <- getGEO(filename = "GSE42425_series_matrix.txt.gz")
+
+
+GSE42425 = getGEO("GSE42425", GSEMatrix = T)
+
+#expression data
+GSE42425.expr = exprs(GSE42425[[1]])
+
+#background correction
+GSE42425_corrected = backgroundCorrect.matrix(GSE42425.expr, method = "normexp")
+
+#normalization
+GSE42425.normalized = normalizeBetweenArrays(GSE42425_corrected, method = "quantile")
+
+
+hist(GSE42425.expr)
+hist(GSE42425.normalized)
+
+#range before and after
+range(GSE42425.expr)
+range(GSE42425.normalized)
+range(GSE42425.expr)
+```
+
+```{r}
+gse = getGEO("GSE42425", GSEMatrix = T)
+
+feature.dat = 
+  gse$GSE42425_series_matrix.txt.gz@featureData@data
+
+feature.df = feature.dat[, c("ID", "ILMN_Gene")]
+
+
+gset = getGEO("GSE42425", GSEMatrix=T, getGPL=F)
+if (length(gset) > 1) 
+  idx <- grep("GPL16294", attr(gset, "names")) else idx <- 1
+gset <- gset[[idx]]
+
+GSE42425.expr = as.data.frame(t(GSE42425.normalized))
+probes42425 = colnames(GSE42425.expr)
+
+GSE42425.data = as_tibble(gset@phenoData@data) %>%
+  select(-(title:data_row_count))
+
+GSE42425.data = GSE42425.data[, c(1, 2, 3, 5, 6, 7, 9, 12)]
+colnames(GSE42425.data) = c("Age", "Sex", "Histology", "OS_MONTHS", "RFS_MONTHS", "Stage", "Race", "Smoked?")
+
+unique(GSE42425.data$Histology)
+GSE42425.data$Age = as.numeric(GSE42425.data$Age)
+GSE42425.data$OS_MONTHS = as.numeric(GSE42425.data$OS_MONTHS)
+GSE42425.data$RFS_MONTHS = as.numeric(GSE42425.data$RFS_MONTHS)
+GSE42425.data$Sex[GSE42425.data$Sex == "M"] <- "Male"
+GSE42425.data$Sex[GSE42425.data$Sex == "F"] <- "Female"
+GSE42425.data$`Smoked?` <- ifelse(GSE42425.data$`Smoked?` %in% c("former", "current"), 1, 0)
+GSE42425.data$Stage[GSE42425.data$Stage == "1a"  ] <- "IA"
+GSE42425.data$Stage[GSE42425.data$Stage == "1b"  ] <- "IB"
+GSE42425.data$Histology[GSE42425.data$Histology == "SCC"] <- "Squamous Cell Carcinoma"
+GSE42425.data$Histology[GSE42425.data$Histology == "AC"] <- "Adenocarcinoma"
+GSE42425.data$Histology[GSE42425.data$Histology == "BAC"] <- "Bronchioloalveolar Carcinoma"
+GSE42425.data$Histology[GSE42425.data$Histology == "AS"] <- "Adenosquamous Carcinoma"
+
+# fetch feature data to get gene symbols
+#feature.dat = gse$GSE42425_series_matrix.txt.gz@featureData@data 
+#GSE42425.symbol = feature.dat[, c("ID", "Gene Symbol", "Gene Title")]
+#write.csv(GSE42425.symbol, "GSE42425_symbol.csv")
+
+
+
+```
+
+
+```{r}
+#Merge clinical data and expression data
+GSE42425merged = cbind(GSE42425.data, GSE42425.expr)
+
+GSE42425data.expr = GSE42425merged[, 1:8]
+```
+
+```{r}
+write.csv(GSE42425.data, 
+          file = "GSE42425_data.csv")
+
+write.csv(GSE42425.expr, 
+          file = "GSE42425_expr.csv")
+
+write.csv(GSE42425merged, 
+          "GSE42425merged.csv")
+```
+
+```{r}
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("multiMiR")
+library(multiMiR)
+
+# Map probe IDs to gene symbols
+annotation42425 <- select(multiMiR, 
+                            keys = probes42425, 
+                            columns = c("MIRBASEID", "SPECIES", "SEQUENCE"), 
+                            keytype = "MIRBASEID")
+
+# View the results
+print(annotation42425)
+
+# Unique Symbols
+unique42425 = unique(annotation42425$SYMBOL)
+print(length(unique42425))
+
+duplicate_genes42425 <- annotation42425[duplicated(annotation42425$PROBEID), ]
+print(duplicate_genes42425)
+
+# Filter duplicates based on SYMBOL
+duplicate_genes42425 <- annotation42425[duplicated(annotation42425$SYMBOL) | duplicated(annotation42425$SYMBOL, fromLast = TRUE), ]
+
+
+# Sort duplicates by SYMBOL
+duplicate_genes42425 <- duplicate_genes42425[order(duplicate_genes42425$SYMBOL), ]
+
+print(duplicate_genes42425)
+```
+
+```{r}
+library(mirbase.db)
+library(AnnotationDbi)
+
+# Check if mirbase.db is loaded correctly
+mirbase_db_check <- AnnotationDbi::dbconn(mirbase.db)
+print(mirbase_db_check)
+keytypes(mirbase.db)
+```
+
+
+

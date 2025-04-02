@@ -1,0 +1,111 @@
+---
+title: "KM"
+output: pdf_document
+date: "2025-03-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(survival)
+library(survminer)
+library(dplyr)
+library(readr)
+library(ggpubr)
+
+```
+
+
+```{r}
+# Load and combine datasets
+data <- bind_rows(test, train, validation)
+
+# Subset Stage IA and IB
+stage_IA <- data %>% filter(StageIA == 1)
+stage_IB <- data %>% filter(StageIB == 1)
+
+# Helper function for KM plot + log-rank test
+
+plot_km <- function(data, stage_label) {
+  data <- data %>%
+    mutate(AdjuvantChemo = factor(`Adjuvant Chemo`, levels = c(0, 1), labels = c("No", "Yes"))) 
+
+  surv_obj <- Surv(data$OS_MONTHS, data$OS_STATUS)
+  fit <- survfit(surv_obj ~ AdjuvantChemo, data = data)
+
+  p <- ggsurvplot(
+    fit,
+    data = data,
+    pval = TRUE,
+    conf.int = TRUE,
+    risk.table = TRUE,
+    title = paste("Kaplan-Meier Curve for", stage_label),
+    xlab = "Overall Survival Time (Months)",
+    ylab = "Overall Survival Probability",
+    legend.title = "Adjuvant Chemo",
+    risk.table.height = 0.25,
+    ggtheme = theme_minimal(base_size = 14)
+  )
+
+  return(p)
+}
+
+stage_IA <- stage_IA %>%
+  mutate(AdjuvantChemo = factor(`Adjuvant Chemo`, levels = c(0, 1), labels = c("No", "Yes")))
+surv_obj <- Surv(time = stage_IA$OS_MONTHS, event = stage_IA$OS_STATUS)
+fit <- survfit(surv_obj ~ AdjuvantChemo, data = stage_IA)
+plot_IA <- plot_km(stage_IA, "Stage IA")
+
+stage_IB <- stage_IB %>%
+  mutate(AdjuvantChemo = factor(`Adjuvant Chemo`, levels = c(0, 1), labels = c("No", "Yes")))
+surv_obj <- Surv(time = stage_IB$OS_MONTHS, event = stage_IB$OS_STATUS)
+fit <- survfit(surv_obj ~ AdjuvantChemo, data = stage_IB)
+plot_IB <- plot_km(stage_IB, "Stage IB")
+
+# Arrange side-by-side
+plot_IA_full <- ggarrange(plot_IA$plot, plot_IA$table, ncol = 1, heights = c(3, 1))
+plot_IB_full <- ggarrange(plot_IB$plot, plot_IB$table, ncol = 1, heights = c(3, 1))
+
+# Combine both full plots side-by-side
+combined_plot <- ggarrange(plot_IA_full, plot_IB_full, ncol = 2)
+
+# Save with more vertical space to accommodate tables
+ggsave("ALL-Kaplan-Meier-by-Adjuvant.png",
+       plot = combined_plot,
+       width = 16, height = 10, units = "in", dpi = 300)
+
+# Combined Stage IA + IB
+combined <- bind_rows(stage_IA, stage_IB)
+surv_obj <- Surv(time = combined$OS_MONTHS, event = combined$OS_STATUS)
+fit <- survfit(surv_obj ~ AdjuvantChemo, data = combined)
+plot_combined <- plot_km(combined, "Combined Stage IA & IB")
+
+combined_figure <- ggarrange(
+  plot_combined$plot,
+  plot_combined$table,
+  ncol = 1,
+  heights = c(3, 1)  # Adjust to give more space to the plot
+)
+
+ggsave("ALL-Kaplan-Meier-by-Adjuvant-2.png",
+       plot = combined_figure,
+       width = 16, height = 10, units = "in", dpi = 300)
+
+
+# Entire dataset
+data <- data %>%
+  mutate(AdjuvantChemo = factor(`Adjuvant Chemo`, levels = c(0, 1), labels = c("No", "Yes")))
+surv_obj <- Surv(time = data$OS_MONTHS, event = data$OS_STATUS)
+fit <- survfit(surv_obj ~ AdjuvantChemo, data = data)
+plot_all <- plot_km(data, "Entire Dataset")
+plot_all_full <- ggarrange(plot_all$plot, plot_all$table, ncol = 1, heights = c(3, 1))
+
+# Save the full plot (KM + risk table)
+ggsave("ALL-Kaplan-Meier-Entire-Dataset.png",
+       plot = plot_all_full,
+       width = 16, height = 10, units = "in", dpi = 300)
+
+```
+

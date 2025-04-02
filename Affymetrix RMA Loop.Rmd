@@ -1,0 +1,85 @@
+---
+title: "Affymetrix RMA Loop"
+output: pdf_document
+date: "2025-01-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+```{r}
+options(timeout = 10000)
+
+# List of GSE numbers
+GSE_numbers <- c("GSE29013", "GSE6044")  
+
+# Loop through each GSE number
+for (GSE in GSE_numbers) {
+  # Get GEO supplementary files
+  getGEOSuppFiles(GSE)
+  
+  # Untar files
+  untar(paste0(GSE, "/", GSE, "_RAW.tar"), exdir = paste0(GSE, "/CEL"))
+  
+  # Read CEL files
+  celfiles <- list.files(paste0(GSE, "/CEL"), pattern = ".CEL.gz", full = TRUE)
+  assign(paste0(GSE, ".raw"), read.celfiles(celfiles))
+  
+  # Get the raw data
+  GSE.raw <- get(paste0(GSE, ".raw"))
+  
+  # Normalize data (RMA)
+  GSE.rma <- rma(GSE.raw)
+  assign(paste0(GSE, ".rma"), GSE.rma)
+  
+  # Write normalized data to CSV
+  write.csv(GSE.rma, paste0(GSE, "_rma.csv"), row.names = FALSE)
+  
+  # Get expression data
+  expr_data <- as.data.frame(t(exprs(GSE.rma)))
+  assign(paste0(GSE, ".expr"), expr_data)
+  
+  # Write expression data to CSV
+  write.csv(expr_data, paste0(GSE, "_expr.csv"), row.names = FALSE)
+}
+ 
+```
+
+```{r}
+for (GSE in GSE_numbers) {
+  # Fetch GEO data for the current GSE number
+  gse <- getGEO(GSE, GSEMatrix = TRUE)
+  
+  # Extract feature data (gene symbols)
+  feature.dat <- gse[[1]]@featureData@data
+  feature.df <- feature.dat[, c("ID", "Gene Symbol")]
+  
+  # Write the feature data to a CSV file 
+  write.csv(feature.df, paste0(GSE, "symbol.csv"), row.names = FALSE)
+  
+  # Fetch the dataset (microarray expression values)
+  gset <- getGEO(GSE, GSEMatrix = TRUE, getGPL = FALSE)
+  if (length(gset) > 1) {
+    idx <- grep("GPL570", attr(gset, "names"))
+  } else {
+    idx <- 1
+  }
+  gset <- gset[[idx]]
+  assign(paste0(GSE, ".gset"), gset)
+}
+```
+
