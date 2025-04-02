@@ -40,6 +40,7 @@ def create_rsf(train_df, valid_df, name, trees,
     # Option to evaluate performance over a range of feature counts.
     if evaluate_range:
         candidate_counts = sorted(set(list(np.linspace(1, 25, num = 5, dtype = int)) + list(np.linspace(25, 1300, num=10, dtype=int))))
+        candidate_counts = [70]
         feature_counts, train_c_indices, valid_c_indices = [], [], []
         # Ensure clinical variables are included.
         clinical_vars = [var for var in ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"]
@@ -548,4 +549,4 @@ if __name__ == "__main__":
     
     #open_rsf(train, valid, 'rsf/rsf_results/rsf_results_ALL 3-28-25 RS_final_rsf_model.pkl', name = "3-28 BEST" , feature_selected=False)
     
-    create_rsf(train, valid, '3-29-1SE', trees=500, max_depth=10, max_features=500, min_samples_leaf=60, evaluate_range=True, covariates=None)
+    create_rsf(train, valid, '3-31', trees=500, max_depth=10, max_features=9, min_samples_leaf=100, evaluate_range=True, covariates=None)

@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 import os
 
 # Load CSV file
-data_file = "all.merged.csv"  # adjust path if needed
+data_file = "affymetrix.merged.csv"  # adjust path if needed
 df = pd.read_csv(data_file)
 
 # Print unique values for non-numeric columns before any processing
@@ -55,9 +55,9 @@ smoked_columns = df.columns[df.columns.str.contains("Smoked")]
 print(f"Columns with 'Smoked' in the name: {len(smoked_columns)}")
 
 # Save outputs to CSV files
-train.to_csv("allTrain.csv", index=False)
-test.to_csv("allTest.csv", index=False)
-validation.to_csv("allValidation.csv", index=False)
+train.to_csv("affyTrain.csv", index=False)
+test.to_csv("affyTest.csv", index=False)
+validation.to_csv("affyValidation.csv", index=False)
 
 print(f"Training set: {len(train)} samples")
 print(f"Testing set: {len(test)} samples")
@@ -165,4 +165,27 @@ Validation set: 276 samples
 Training set: 338 events, 486 censored
 Testing set: 113 events, 162 censored
 Validation set: 113 events, 163 censored
+Non-numeric columns at the end of preprocessing: []
+
+affy:
+Unique values in 'Stage' before processing: ['II' 'IB' 'III' 'IA' 'IV' 'Unknown']
+Unique values in 'Histology' before processing: ['Squamous Cell Carcinoma' 'Adenocarcinoma' 'Large Cell Carcinoma'
+ 'Adenosquamous Carcinoma']
+Unique values in 'Race' before processing: ['Caucasian' 'African American' 'Unknown' 'Asian'
+ 'Native Hawaiian or Other Pacific Islander']
+Unique values in 'Smoked?' before processing: ['Yes' 'No' 'Unknown']
+Unique items in column 'Race':
+['Caucasian' 'African American' 'Unknown' 'Asian'
+ 'Native Hawaiian or Other Pacific Islander']
+Number of NA values in OS_MONTHS: 1
+Columns with NA values: ['OS_MONTHS']
+Shape before dropping NA (1154, 13062)
+Data shape: (1153, 13062)
+Columns with 'Smoked' in the name: 3
+Training set: 691 samples
+Testing set: 231 samples
+Validation set: 231 samples
+Training set: 300 events, 391 censored
+Testing set: 100 events, 131 censored
+Validation set: 100 events, 131 censored
 Non-numeric columns at the end of preprocessing: []"""
