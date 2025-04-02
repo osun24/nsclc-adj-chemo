@@ -3,6 +3,11 @@ from lifelines import CoxPHFitter
 from matplotlib import pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sksurv.linear_model import CoxnetSurvivalAnalysis
+from sksurv.util import Surv
+from sklearn.model_selection import GridSearchCV
+from sksurv.metrics import concordance_index_censored
+from sklearn.metrics import make_scorer
 
 def dataframe_to_latex(df, caption="Table Caption", label="table:label"):
     """
@@ -53,28 +58,20 @@ def dataframe_to_latex(df, caption="Table Caption", label="table:label"):
     # Print the LaTeX table
     print(latex_str)
 
-def run_model(df, name, penalizer=0.1, l1_ratio=1.0, duration_col='OS_MONTHS', event_col='OS_STATUS'):
-    # Train-test split
-    # Split the data into training and testing sets
-    test_size = 0.2
-    # Split the data into training and testing sets
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
-
-    # Fit the Cox proportional hazards model on the training set using elastic net
+# Modified run_model: removed splitting; now expects separate train_df and valid_df.
+def run_model(train_df, valid_df, name, penalizer=0.1, l1_ratio=1.0, duration_col='OS_MONTHS', event_col='OS_STATUS'):
+    # Fit the Cox proportional hazards model on the provided training set using elastic net
     cph = CoxPHFitter(penalizer=penalizer, l1_ratio=l1_ratio)
     cph.fit(train_df, duration_col=duration_col, event_col=event_col)
 
     # Print summary of the fitted model
     cph.print_summary(style="ascii")
 
-    # Optional: Evaluate the model using the test set
-    # For example, you can use the model's concordance index on the test set
-    c_index = cph.concordance_index_
-    print(f"Concordance Index on Training Set: {c_index:.3f}")
-
-    # Evaluate the model on the test set
-    c_index_test = cph.score(test_df, scoring_method="concordance_index")
-    print(f"Concordance Index on Test Set: {c_index_test:.3f}")
+    # Evaluate the model using the training set and the provided validation set
+    train_c_index = cph.concordance_index_
+    print(f"Concordance Index on Training Set: {train_c_index:.3f}")
+    valid_c_index = cph.score(valid_df, scoring_method="concordance_index")
+    print(f"Concordance Index on Validation Set: {valid_c_index:.3f}")
 
     summary_df = cph.summary  # Get the summary as a DataFrame
     model_metrics = [cph.log_likelihood_, cph.concordance_index_]
@@ -103,7 +100,7 @@ def run_model(df, name, penalizer=0.1, l1_ratio=1.0, duration_col='OS_MONTHS', e
     ll_ratio_test_df = cph.log_likelihood_ratio_test().degrees_freedom
     neg_log2_p_ll_ratio_test = -np.log2(cph.log_likelihood_ratio_test().p_value)
 
-    with open(f'cph-{c_index_test:.3f}-{name}-summary.txt', 'w') as f:
+    with open(f'cph-{valid_c_index:.3f}-{name}-summary.txt', 'w') as f:
         f.write(summary_df.to_string())
         formatted_metrics = '\n'.join([f'{metric:.4f}' for metric in model_metrics])
         f.write(f"\n\nModel metrics: {formatted_metrics}")
@@ -111,7 +108,7 @@ def run_model(df, name, penalizer=0.1, l1_ratio=1.0, duration_col='OS_MONTHS', e
         # Write additional metrics in the specified format
         f.write(f"\n\nTrain Concordance = {concordance:.3f}")
         # Test c-index
-        f.write(f"\nConcordance on test set = {c_index_test:.3f}")
+        f.write(f"\nConcordance on validation set = {valid_c_index:.3f}")
         f.write(f"\nPartial AIC = {partial_aic:.3f}")
         f.write(f"\nlog-likelihood ratio test = {log_likelihood_ratio_test:.3f} on {ll_ratio_test_df} df")
         f.write(f"\n-log2(p) of ll-ratio test = {neg_log2_p_ll_ratio_test:.3f}")
@@ -158,7 +155,7 @@ def run_model(df, name, penalizer=0.1, l1_ratio=1.0, duration_col='OS_MONTHS', e
     plt.figure(figsize=(12, 8))
 
     # Include lambda value in the title 
-    plt.title(f'{name} Hazard Ratios (Test Size: {test_size}, C-index: {c_index_test:.3f}, 95% CI)')
+    plt.title(f'{name} Hazard Ratios (Validation C-index: {valid_c_index:.3f}, 95% CI)')
 
     # Generate a forest plot for hazard ratios with 95% confidence intervals
     plt.errorbar(sorted_hazard_ratios, range(len(sorted_hazard_ratios)), 
@@ -184,194 +181,75 @@ def run_model(df, name, penalizer=0.1, l1_ratio=1.0, duration_col='OS_MONTHS', e
     # Display the plot
     plt.tight_layout()
     name = name.replace(' ', '-')
-    plt.savefig(f'cph-{c_index_test:.3f}-{name}-forest-plot.png')
+    plt.savefig(f'cph-{valid_c_index:.3f}-{name}-forest-plot.png')
     plt.show()
 
-def optimize_penalties(df, name, duration_col='OS_MONTHS', event_col='OS_STATUS'):
-    # Split the data for tuning into train and test sets
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+def c_index_score(estimator, X, y):
+    # Predict risk scores (note: lower predicted values imply higher risk)
+    risk_scores = -estimator.predict(X)
+    return concordance_index_censored(y["OS_STATUS"], y["OS_MONTHS"], risk_scores)[0]
+
+def optimize_penalties(train_df, valid_df, name, duration_col='OS_MONTHS', event_col='OS_STATUS'):
+    # Prepare training data: separate features and convert survival labels
+    X_train = train_df.drop(columns=[duration_col, event_col])
+    y_train = Surv.from_dataframe(event_col, duration_col, train_df)
     
-    # Define grid ranges for the combined penalty (lambda) and l1_ratio (L1 vs L2 trade-off)
-    lambdas = np.logspace(-6, 0, 50, base=10)  # combined penalty strength (L1+L2)
-    l1_ratios = [0.0, 0.25, 0.5, 0.75, 1.0]      # 0.0: pure L2, 1.0: pure L1
-    best_score = -np.inf  # Higher test C-index is better
-    best_lambda = None
-    best_l1_ratio = None
-
-    # Store scores for plotting
-    results = {}
-
-    for lr in l1_ratios:
-        scores = []
-        for lam in lambdas:
-            cph = CoxPHFitter(penalizer=lam, l1_ratio=lr)
-            cph.fit(train_df, duration_col=duration_col, event_col=event_col)
-            # Use test set concordance index as the score
-            score = cph.score(test_df, scoring_method="concordance_index")
-            scores.append(score)
-            if score > best_score:
-                best_score = score
-                best_lambda = lam
-                best_l1_ratio = lr
-        results[lr] = scores
-
-    print(f"Optimal parameters: lambda (penalty strength) = {best_lambda} and l1_ratio (L1 weight) = {best_l1_ratio} with Test C-index = {best_score}")
+    # Define parameter grid for l1_ratio; the alpha path is determined internally.
+    param_grid = {
+        "l1_ratio": [0.25, 0.5, 0.75, 1.0]
+    }
     
-    # Plot tuning results: log(lambda) vs test C-index for each l1_ratio
-    plt.figure(figsize=(12, 8))
-    for lr in l1_ratios:
-        plt.plot(np.log10(lambdas), results[lr], marker='o', label=f"l1_ratio={lr}")
-    plt.xlabel('log(lambda)')
-    plt.ylabel('Test Concordance Index')
-    plt.title(f'{name}: Elastic Net Penalties Tuning')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    # Initialize Coxnet model; fit_baseline_model allows baseline survival estimation.
+    coxnet = CoxnetSurvivalAnalysis(fit_baseline_model=True, alphas=np.logspace(-2, 1, 10))
+    
+    # Use a custom scoring function based on concordance index.
+    scorer = c_index_score
+    
+    # Set up GridSearchCV with parallelization (using all available cores)
+    grid_search = GridSearchCV(coxnet, param_grid, scoring=scorer, cv=5, n_jobs=-1)
+    grid_search.fit(X_train, y_train)
+    
+    print(f"Optimal parameters: {grid_search.best_params_} with Best CV Concordance = {grid_search.best_score_:.3f}")
+    
+    # Evaluate on the validation set
+    X_valid = valid_df.drop(columns=[duration_col, event_col])
+    y_valid = Surv.from_dataframe(event_col, duration_col, valid_df)
+    valid_c_index = c_index_score(grid_search.best_estimator_, X_valid, y_valid)
+    print(f"Concordance Index on Validation Set: {valid_c_index:.3f}")
 
-# Without treatment data
-surv = pd.read_csv('GPL570merged.csv') 
-surv = pd.get_dummies(surv, columns=["Stage", "Histology", "Race"])
-surv = surv.drop(columns=['PFS_MONTHS','RFS_MONTHS'])
-print(surv.columns[surv.isna().any()].tolist())
-print(surv['Smoked?'].isna().sum())  # 121
-surv = surv.dropna()  # left with 457 samples
+if __name__ == "__main__":
+    print("Loading train data from: allTrain.csv")
+    train = pd.read_csv("allTrain.csv")
+    print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
+    print("Train data shape:", train.shape)
+    
+    # Data Loading and Preprocessing for validation data
+    print("Loading validation data from: allValidation.csv")
+    valid = pd.read_csv("allValidation.csv")
+    print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
+    print("Validation data shape:", valid.shape)
+    
+    # rsf/rsf-results/ALL 3-29-25 RS_rsf_preselection_importances_1SE.csv
+    selected_columns = pd.read_csv("rsf/rsf_results/ALL 3-29-25 RS_rsf_preselection_importances_1SE.csv")['Feature'].tolist()
+    
+    # LOW VARIANCE FILTER
+    from sklearn.feature_selection import VarianceThreshold
+    # Drop columns with low variance
+    selector = VarianceThreshold(threshold=0.01)
+    selector.fit(train)
+    low_variance = train.columns[~selector.get_support()]
+    print(f"Dropping low variance columns: {low_variance}")
+    train = train.drop(columns=low_variance)
+    valid = valid.drop(columns=low_variance)
+    
+    # Take first 800
+    selected_columns = selected_columns[:300]
+    
+    train = train[selected_columns + ['OS_MONTHS', 'OS_STATUS']] 
+    valid = valid[selected_columns + ['OS_MONTHS', 'OS_STATUS']]
 
-# --- New code to subset to clinical and top 100 genomic features ---
-importances = pd.read_csv('rsf/rsf_results_GPL570_rsf_preselection_importances.csv')
-#selected_genes = importances['Feature'].tolist()[:80]
-selected_genes = [
-    "TP53",
-    "KRAS",
-    "EGFR",
-    "ERCC1",
-    "BRCA1",
-    "RRM1",
-    "BRAF",
-    "MET",
-    "ALK",
-    "STK11",
-    "RB1",
-    "CCNB1",
-    "CCND1",
-    "CDKN2A",
-    "CDK4",
-    "CDK6",
-    "MYC",
-    "BCL2",
-    "BAX",
-    "MLH1",
-    "MSH2",
-    "MSH6",
-    "ATM",
-    "ATR",
-    "CHEK1",
-    "CHEK2",
-    "FANCA",
-    "FANCD2",
-    "XRCC1",
-    "XRCC2",
-    "XRCC3",
-    "RAD51",
-    "TYMS",
-    "TUBB3",
-    "ABCC1",
-    "ABCB1",
-    "KEAP1",
-    "NFE2L2",
-    "PTEN",
-    "PIK3CA",
-    "AKT1",
-    "ERBB2",
-    "FGFR1",
-    "CUL3",
-    "GSTM1",
-    "GSTP1",
-    "SOD2",
-    "CASP3",
-    "CASP9",
-    "MDM2",
-    "CDKN1A",
-    "CDKN1B",
-    "PARP1",
-    "MTHFR",
-    "DUT",
-    "SLFN11",
-    "PDK1",
-    "MCL1",
-    "CCNE1",
-    "PKM",
-    "HIF1A",
-    "VEGFA",
-    "E2F1",
-    "BRCC3",
-    "MRE11",
-    "NBN",
-    "RAD50",
-    "RAD17",     # Alternative to CHEK1 duplication
-    "APAF1",
-    "ATG5",
-    "ATG7",
-    "SIRT1",
-    "MTHFD2",
-    "DNMT1",
-    "DNMT3A",
-    "TLE1",
-    "SOX2",
-    "NKX2-1",
-    "GTF2I",
-    "PRC1",
-    "KDM5B",
-    "SMARCA4",
-    "ARID1A",
-    "BRIP1",
-    "POLD1",
-    "POLE",
-    "MCM2",
-    "MCM4",
-    "CDC20",
-    "CDH1",
-    "VIM",
-    "SPARC",
-    "SNAI1",
-    "TWIST1",
-    "ERBB3",
-    "HERPUD1",
-    "GAPDH",
-    "ACTB",
-    "CD8A",
-    "CD274"
-]
-
-selected_genes = [
-    "TP53", "KRAS", "EGFR", "ALK", "MET", "STK11", "KEAP1", "BRAF",
-    "PTEN", "RB1", "PIK3CA", "NF1", "SMARCA4", "MDM2", "CDKN2A",
-    "MYC", "ATM", "BRCA1", "BRCA2", "PIK3R1"
-]
-
-# importances take top 500
-selected_genes = importances['Feature'].tolist()[:50]
-
-# Adjust clinical features for those that were one-hotencoded:
-selected_clinical = ["Adjuvant Chemo", "Age", "Sex", "Smoked?"]
-dummy_cols = [col for col in surv.columns if col.startswith('Stage_') or col.startswith('Histology_') or col.startswith('Race_')]
-selected_clinical += dummy_cols
-# Ensure survival columns are preserved
-selected_survival = ['OS_MONTHS', 'OS_STATUS']
-# Combine clinical, genomic, and survival features (using union)
-selected_columns = list(set(selected_clinical + selected_genes + selected_survival))
-surv = surv[selected_columns]
-
-# LOW VARIANCE FILTER
-from sklearn.feature_selection import VarianceThreshold
-# Drop columns with low variance
-selector = VarianceThreshold(threshold=0.01)
-selector.fit(surv)
-low_variance = surv.columns[~selector.get_support()]
-print(f"Dropping low variance columns: {low_variance}")
-surv = surv.drop(columns=low_variance)
-
-#optimize_penalties(surv, 'GPL570')
-
-# DROP those with low variance
-# Optimal parameters: lambda (penalty strength) = 0.244205309454865 and l1_ratio (L1 weight) = 0.25 with Test C-index = 0.6658395368072787
-run_model(surv, 'GPL570 - RSF Selected 50', penalizer=0.244205309454865, l1_ratio=0.25)
+    # Call run_model with the separate train and validation datasets
+    #run_model(train, valid, 'All, First 800 3-29 1SE', penalizer=0.0, l1_ratio=0.25)
+    
+    # Optionally, call optimize_penalties using the provided CSVs
+    optimize_penalties(train, valid, 'All - First 800 - 3-29 1SE')

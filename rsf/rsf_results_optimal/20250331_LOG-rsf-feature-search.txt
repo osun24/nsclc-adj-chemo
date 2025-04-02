@@ -1,0 +1,1536 @@
+
+Evaluating with 14 features (1%)
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 1: Test C-index = 0.702
+Fold 1: Train C-index = 0.742
+Fold 1: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 2: Test C-index = 0.722
+Fold 2: Train C-index = 0.723
+Fold 2: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 70, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 3: Test C-index = 0.745
+Fold 3: Train C-index = 0.734
+Fold 3: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 4: Test C-index = 0.646
+Fold 4: Train C-index = 0.749
+Fold 4: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 5: Test C-index = 0.630
+Fold 5: Train C-index = 0.754
+Fold 5: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 6: Test C-index = 0.689
+Fold 6: Train C-index = 0.741
+Fold 6: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 7: Test C-index = 0.688
+Fold 7: Train C-index = 0.745
+Fold 7: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 8: Test C-index = 0.667
+Fold 8: Train C-index = 0.739
+Fold 8: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 65, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 9: Test C-index = 0.733
+Fold 9: Train C-index = 0.736
+Fold 9: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 10: Test C-index = 0.686
+Fold 10: Train C-index = 0.743
+Fold 10: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 11: Test C-index = 0.718
+Fold 11: Train C-index = 0.735
+Fold 11: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 12: Test C-index = 0.729
+Fold 12: Train C-index = 0.736
+Fold 12: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 13: Test C-index = 0.702
+Fold 13: Train C-index = 0.737
+Fold 13: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 14: Test C-index = 0.661
+Fold 14: Train C-index = 0.746
+Fold 14: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 15: Test C-index = 0.656
+Fold 15: Train C-index = 0.750
+Fold 15: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 750}
+Percentage 1% (14 features): Mean CV C-index = 0.692 (SE: 0.009)
+
+Evaluating with 70 features (5%)
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 1: Test C-index = 0.724
+Fold 1: Train C-index = 0.807
+Fold 1: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 2: Test C-index = 0.739
+Fold 2: Train C-index = 0.781
+Fold 2: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 65, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 3: Test C-index = 0.763
+Fold 3: Train C-index = 0.802
+Fold 3: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 4: Test C-index = 0.648
+Fold 4: Train C-index = 0.809
+Fold 4: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 5: Test C-index = 0.633
+Fold 5: Train C-index = 0.817
+Fold 5: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 6: Test C-index = 0.693
+Fold 6: Train C-index = 0.808
+Fold 6: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 7: Test C-index = 0.681
+Fold 7: Train C-index = 0.818
+Fold 7: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 8: Test C-index = 0.696
+Fold 8: Train C-index = 0.797
+Fold 8: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 9: Test C-index = 0.740
+Fold 9: Train C-index = 0.808
+Fold 9: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 10: Test C-index = 0.705
+Fold 10: Train C-index = 0.797
+Fold 10: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 65, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 11: Test C-index = 0.745
+Fold 11: Train C-index = 0.796
+Fold 11: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 12: Test C-index = 0.720
+Fold 12: Train C-index = 0.801
+Fold 12: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 65, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 13: Test C-index = 0.721
+Fold 13: Train C-index = 0.800
+Fold 13: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 65, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 14: Test C-index = 0.646
+Fold 14: Train C-index = 0.804
+Fold 14: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 15: Test C-index = 0.689
+Fold 15: Train C-index = 0.798
+Fold 15: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 65, 'n_estimators': 500}
+Percentage 5% (70 features): Mean CV C-index = 0.703 (SE: 0.010)
+
+Evaluating with 140 features (10%)
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 1: Test C-index = 0.722
+Fold 1: Train C-index = 0.841
+Fold 1: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 2: Test C-index = 0.761
+Fold 2: Train C-index = 0.829
+Fold 2: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 65, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 3: Test C-index = 0.736
+Fold 3: Train C-index = 0.831
+Fold 3: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 4: Test C-index = 0.670
+Fold 4: Train C-index = 0.838
+Fold 4: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 5: Test C-index = 0.660
+Fold 5: Train C-index = 0.845
+Fold 5: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 6: Test C-index = 0.688
+Fold 6: Train C-index = 0.845
+Fold 6: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 7: Test C-index = 0.669
+Fold 7: Train C-index = 0.846
+Fold 7: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 8: Test C-index = 0.729
+Fold 8: Train C-index = 0.835
+Fold 8: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 9: Test C-index = 0.734
+Fold 9: Train C-index = 0.834
+Fold 9: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 10: Test C-index = 0.719
+Fold 10: Train C-index = 0.831
+Fold 10: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 11: Test C-index = 0.752
+Fold 11: Train C-index = 0.829
+Fold 11: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 12: Test C-index = 0.723
+Fold 12: Train C-index = 0.844
+Fold 12: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 13: Test C-index = 0.738
+Fold 13: Train C-index = 0.835
+Fold 13: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 14: Test C-index = 0.658
+Fold 14: Train C-index = 0.835
+Fold 14: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 15: Test C-index = 0.680
+Fold 15: Train C-index = 0.829
+Fold 15: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 750}
+Percentage 10% (140 features): Mean CV C-index = 0.709 (SE: 0.009)
+
+Evaluating with 701 features (50%)
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 1: Test C-index = 0.648
+Fold 1: Train C-index = 0.858
+Fold 1: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 2: Test C-index = 0.729
+Fold 2: Train C-index = 0.859
+Fold 2: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 3: Test C-index = 0.710
+Fold 3: Train C-index = 0.806
+Fold 3: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 4: Test C-index = 0.641
+Fold 4: Train C-index = 0.846
+Fold 4: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 5: Test C-index = 0.628
+Fold 5: Train C-index = 0.801
+Fold 5: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 6: Test C-index = 0.655
+Fold 6: Train C-index = 0.853
+Fold 6: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 7: Test C-index = 0.641
+Fold 7: Train C-index = 0.862
+Fold 7: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 8: Test C-index = 0.703
+Fold 8: Train C-index = 0.848
+Fold 8: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 65, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 9: Test C-index = 0.692
+Fold 9: Train C-index = 0.783
+Fold 9: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 65, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 10: Test C-index = 0.660
+Fold 10: Train C-index = 0.790
+Fold 10: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 65, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 11: Test C-index = 0.692
+Fold 11: Train C-index = 0.788
+Fold 11: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 12: Test C-index = 0.697
+Fold 12: Train C-index = 0.854
+Fold 12: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 13: Test C-index = 0.673
+Fold 13: Train C-index = 0.854
+Fold 13: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 14: Test C-index = 0.603
+Fold 14: Train C-index = 0.861
+Fold 14: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 15: Test C-index = 0.660
+Fold 15: Train C-index = 0.784
+Fold 15: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 65, 'n_estimators': 1000}
+Percentage 50% (701 features): Mean CV C-index = 0.669 (SE: 0.009)
+
+Evaluating with 1402 features (100%)
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 1: Test C-index = 0.636
+Fold 1: Train C-index = 0.844
+Fold 1: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 65, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 2: Test C-index = 0.699
+Fold 2: Train C-index = 0.789
+Fold 2: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 65, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 3: Test C-index = 0.616
+Fold 3: Train C-index = 0.815
+Fold 3: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 4: Test C-index = 0.635
+Fold 4: Train C-index = 0.805
+Fold 4: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 5: Test C-index = 0.621
+Fold 5: Train C-index = 0.826
+Fold 5: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 6: Test C-index = 0.655
+Fold 6: Train C-index = 0.815
+Fold 6: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 7: Test C-index = 0.668
+Fold 7: Train C-index = 0.826
+Fold 7: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 8: Test C-index = 0.657
+Fold 8: Train C-index = 0.798
+Fold 8: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 9: Test C-index = 0.690
+Fold 9: Train C-index = 0.809
+Fold 9: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 65, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 10: Test C-index = 0.648
+Fold 10: Train C-index = 0.822
+Fold 10: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 65, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 11: Test C-index = 0.694
+Fold 11: Train C-index = 0.804
+Fold 11: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 12: Test C-index = 0.623
+Fold 12: Train C-index = 0.836
+Fold 12: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 13: Test C-index = 0.683
+Fold 13: Train C-index = 0.828
+Fold 13: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 1000}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 14: Test C-index = 0.619
+Fold 14: Train C-index = 0.808
+Fold 14: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 65, 'n_estimators': 750}
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 660
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
+----------
+iter: 1
+n_candidates: 23
+n_resources: 500
+Fitting 5 folds for each of 23 candidates, totalling 115 fits
+Fold 15: Test C-index = 0.663
+Fold 15: Train C-index = 0.808
+Fold 15: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 65, 'n_estimators': 1000}
+Percentage 100% (1402 features): Mean CV C-index = 0.654 (SE: 0.007)
+
+==========================
+Best Model - Optimal percentage: 10% (140 features)
+Best Model - Hyperparameters: {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 65, 'n_estimators': 1000}
+Best Model - Mean CV C-index: 0.709 (SE: 0.009)
+==========================
+
+
+==========================
+1SE Model - Optimal percentage: 5% (70 features)
+1SE Model - Hyperparameters: {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 750}
+1SE Model - Mean CV C-index: 0.703 (SE: 0.010)
+==========================
+
+Results saved to /home/owenzsun/gcs-bucket/rsf_results_optimal/20250331_rsf_feature_selection_results.csv
+Combined fold-level metrics (inner and outer) saved to /home/owenzsun/gcs-bucket/rsf_results_optimal/20250331_rsf_all_fold_results.csv
+Total time taken: 5815.20 seconds
+Validation C-index for Best model: 0.587
+Validation C-index for 1SE model: 0.574
+Final Best model saved to /home/owenzsun/gcs-bucket/rsf_results_optimal/20250331_final_rsf_model_best_10perc.pkl
+Final 1SE model saved to /home/owenzsun/gcs-bucket/rsf_results_optimal/20250331_final_rsf_model_1SE_5perc.pkl

@@ -1,0 +1,14 @@
+
+Evaluating with 14 features (1%)
+n_iterations: 2
+n_required_iterations: 6
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 659
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 45
+n_resources: 250
+Fitting 5 folds for each of 45 candidates, totalling 225 fits
