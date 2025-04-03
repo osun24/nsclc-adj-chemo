@@ -24,11 +24,12 @@ def create_rsf(train_df, valid_df, name, trees,
                min_samples_split=6,
                min_samples_leaf=3,
                max_features="sqrt",
-               max_depth=None):
+               max_depth=None, 
+               feature_importance_path = 'rsf/rsf_results/ALL 3-29-25 RS_rsf_preselection_importances_1SE.csv'):
     # If no covariates are provided, use preselected features and clinical variables.
     selected_covariates = covariates
     if covariates is None:
-        selected_csv = pd.read_csv('rsf/rsf_results/ALL 3-29-25 RS_rsf_preselection_importances_1SE.csv', index_col=0)
+        selected_csv = pd.read_csv(feature_importance_path, index_col=0)
         top_100 = selected_csv.index
         clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"] + \
                         [col for col in train_df.columns if col.startswith('Race')] + \
@@ -39,8 +40,7 @@ def create_rsf(train_df, valid_df, name, trees,
 
     # Option to evaluate performance over a range of feature counts.
     if evaluate_range:
-        candidate_counts = sorted(set(list(np.linspace(1, 25, num = 5, dtype = int)) + list(np.linspace(25, 1300, num=10, dtype=int))))
-        candidate_counts = [70]
+        candidate_counts = sorted(set(list(np.linspace(1, 25, num = 6, dtype = int)) + list(np.linspace(25, 1117, num=10, dtype=int)) + list(np.linspace(1117, 13060, num=5, dtype=int))))
         feature_counts, train_c_indices, valid_c_indices = [], [], []
         # Ensure clinical variables are included.
         clinical_vars = [var for var in ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"]
@@ -201,6 +201,10 @@ def open_rsf(train_df, valid_df, filepath, name, feature_selected=False):
     print(f"Min samples split: {rsf.min_samples_split}")
     print(f"Min samples leaf: {rsf.min_samples_leaf}")
     print(f"Max features: {rsf.max_features}")
+    print(f"Max depth: {rsf.max_depth}")
+    print(f"Random state: {rsf.random_state}")
+    print(f"Number of features: {len(X_train.columns)}")
+    print(f"Number of samples: {len(X_train)}")
     
     print(f"Loaded RSF Model from {filepath}")
     print(f"Train C-index: {train_c_index[0]:.3f}")
@@ -459,17 +463,32 @@ def compare_treatment_recommendation_km(rsf_path, df, time_col='OS_MONTHS', even
     print("Log-rank test p-value:", results.p_value)
 
 if __name__ == "__main__":
-    # Data Loading and Preprocessing for train data
-    print("Loading train data from: allTrain.csv")
-    train = pd.read_csv("allTrain.csv")
-    print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
-    print("Train data shape:", train.shape)
+    all = False
     
-    # Data Loading and Preprocessing for validation data
-    print("Loading validation data from: allValidation.csv")
-    valid = pd.read_csv("allValidation.csv")
-    print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
-    print("Validation data shape:", valid.shape)
+    if all: 
+        # Data Loading and Preprocessing for train data
+        print("Loading train data from: allTrain.csv")
+        train = pd.read_csv("allTrain.csv")
+        print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
+        print("Train data shape:", train.shape)
+        
+        # Data Loading and Preprocessing for validation data
+        print("Loading validation data from: allValidation.csv")
+        valid = pd.read_csv("allValidation.csv")
+        print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
+        print("Validation data shape:", valid.shape)
+    else:
+        # Load for Affy
+        print("Loading train data from: affyTrain.csv")
+        train = pd.read_csv("affyTrain.csv")
+        print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
+        print("Train data shape:", train.shape)
+        
+        # Load for Affy
+        print("Loading validation data from: affyValidation.csv")
+        valid = pd.read_csv("affyValidation.csv")
+        print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
+        print("Validation data shape:", valid.shape)
     
     # Run the RSF pipeline with provided train and validation data
     #create_rsf(train, valid, 'GPL570', trees=100)
@@ -549,4 +568,21 @@ if __name__ == "__main__":
     
     #open_rsf(train, valid, 'rsf/rsf_results/rsf_results_ALL 3-28-25 RS_final_rsf_model.pkl', name = "3-28 BEST" , feature_selected=False)
     
-    create_rsf(train, valid, '3-31', trees=500, max_depth=10, max_features=9, min_samples_leaf=100, evaluate_range=True, covariates=None)
+    #create_rsf(train, valid, '3-31', trees=500, max_depth=10, max_features=9, min_samples_leaf=100, evaluate_range=True, covariates=None)
+    
+    #open_rsf(train, valid, 'rsf/rsf_results_affy/Affy RS_final_rsf_model_1se.pkl', name = "Affy RS 1SE" , feature_selected=False)
+    
+    """Estimators: 750
+Min samples split: 6
+Min samples leaf: 60
+Max features: 0.1
+Max depth: 10
+Random state: 42
+Number of features: 13060
+Number of samples: 691
+Loaded RSF Model from rsf/rsf_results_affy/Affy RS_final_rsf_model_1se.pkl
+Train C-index: 0.794
+Validation C-index: 0.670
+    """
+    
+    create_rsf(train, valid, 'Affy RS 1SE', trees=750, min_samples_split=6, min_samples_leaf=60, max_features=0.1, max_depth=10, evaluate_range=True, covariates=None, feature_importance_path='rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv')
