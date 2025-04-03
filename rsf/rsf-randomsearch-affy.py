@@ -1,5 +1,6 @@
 import os
 import time
+import datetime
 import pandas as pd
 import numpy as np
 from sksurv.ensemble import RandomSurvivalForest
@@ -10,8 +11,7 @@ from sklearn.inspection import permutation_importance
 import joblib
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import KFold
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import HalvingGridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 # Determine script directory for consistent path handling in a VM
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -43,7 +43,6 @@ def create_rsf(train_df, test_df, name):
     # Define covariates: affy columns except survival columns
     binary_columns = ['Adjuvant Chemo', 'IS_MALE']
     train_df[binary_columns] = train_df[binary_columns].astype(int)
-    # Ensure test binary columns are also cast to int
     test_df[binary_columns] = test_df[binary_columns].astype(int)
     
     for col in binary_columns:
@@ -66,23 +65,23 @@ def create_rsf(train_df, test_df, name):
     # Define custom scoring function for concordance index
     rsf_score = make_scorer(rsf_concordance_metric, greater_is_better=True)
 
-    # Define parameter distributions
-    param_distributions = {
+    # Define parameter grid for grid search
+    param_grid = {
         "n_estimators": [500, 750, 1000],
-        "min_samples_leaf": list(range(50, 101, 5)),    
-        "max_features": ["sqrt", "log2", 0.01, 0.05, 500, 0.1], 
+        "min_samples_leaf": [50, 60, 70, 80, 90, 100],    
+        "max_features": ["sqrt", "log2", 500, 0.1], # 0.1 * 13062 = 1306
         "max_depth": [10, 20],
     }
 
     # Set up outer and inner KFold CV for nested CV
-    # Switch from 10 fold to 5 fold because of small dataset size
-    # 10 fold: 70 samples & roughly 30 events per fold
-    # 5 fold: 138 samples & roughly 60 events per fold
     outer_cv = KFold(n_splits=5, shuffle=True, random_state=42)
     inner_cv = KFold(n_splits=5, shuffle=True, random_state=42)
 
     outer_scores = []
     outer_best_params = []
+    # Initialize lists to collect fold-level metrics and inner CV results
+    outer_fold_metrics = []
+    inner_cv_results_list = []
 
     print("Starting Nested Cross-Validation...")
     outer_start_time = time.time()
@@ -94,25 +93,45 @@ def create_rsf(train_df, test_df, name):
         X_test_outer = X_train.iloc[outer_test_idx]
         y_test_outer = y_train[outer_test_idx]
         
-        # Inner CV for hyperparameter tuning
-        halving_search_inner = HalvingGridSearchCV(
+        # Inner CV for hyperparameter tuning using GridSearchCV
+        grid_search_inner = GridSearchCV(
             estimator=RandomSurvivalForest(random_state=42, n_jobs=-1),
-            param_grid=param_distributions,
-            factor=2,
+            param_grid=param_grid,
             cv=inner_cv,
             scoring=rsf_score,
-            random_state=42,
             n_jobs=-1,
-            verbose=1,
-            min_resources=250
+            verbose=1
         )
-        halving_search_inner.fit(X_train_outer, y_train_outer)
+        grid_search_inner.fit(X_train_outer, y_train_outer)
  
-        best_model_inner = halving_search_inner.best_estimator_
+        # Save detailed inner CV results for the current outer fold
+        inner_cv_results_list.append({
+            'fold': fold_idx + 1,
+            'cv_results': grid_search_inner.cv_results_
+        })
+    
+        best_model_inner = grid_search_inner.best_estimator_
+        # Evaluate on outer test set
         y_pred_outer = best_model_inner.predict(X_test_outer)
-        outer_c_index = concordance_index_censored(y_test_outer['OS_STATUS'], y_test_outer['OS_MONTHS'], y_pred_outer)[0]
+        outer_c_index = concordance_index_censored(
+            y_test_outer['OS_STATUS'], y_test_outer['OS_MONTHS'], y_pred_outer
+        )[0]
+        # Evaluate on outer training set for fold-level training performance
+        y_pred_train_outer = best_model_inner.predict(X_train_outer)
+        outer_train_c_index = concordance_index_censored(
+            y_train_outer['OS_STATUS'], y_train_outer['OS_MONTHS'], y_pred_train_outer
+        )[0]
+    
         outer_scores.append(outer_c_index)
-        outer_best_params.append(halving_search_inner.best_params_)
+        outer_best_params.append(grid_search_inner.best_params_)
+        
+        # Save fold-level metrics for later post-hoc analysis
+        outer_fold_metrics.append({
+            'fold': fold_idx + 1,
+            'train_c_index': outer_train_c_index,
+            'test_c_index': outer_c_index,
+            'best_params': grid_search_inner.best_params_
+        })
         
         print(f"[Fold {fold_idx+1}] Completed outer fold with Test C-index: {outer_c_index:.3f}")
     
@@ -122,8 +141,41 @@ def create_rsf(train_df, test_df, name):
     nested_cv_mean_c_index = np.mean(outer_scores)
     print(f"Nested CV Mean Test C-index: {nested_cv_mean_c_index:.3f}")
  
+    # ---------------- Save Detailed Fold Metrics for Post-Hoc Analysis ---------------- #
+    current_date = datetime.datetime.now().strftime("%Y%m%d")
+    combined_rows = []
+    
+    # Process outer fold metrics
+    for row in outer_fold_metrics:
+        row_copy = row.copy()
+        row_copy['fold_type'] = 'outer'
+        row_copy['outer_fold'] = row_copy.pop('fold')
+        combined_rows.append(row_copy)
+    
+    # Process inner CV results
+    for item in inner_cv_results_list:
+        outer_fold = item.get('fold')
+        cv_results = item.get('cv_results', {})
+        n_candidates = len(cv_results.get('mean_test_score', []))
+        for i in range(n_candidates):
+            inner_row = {
+                'fold_type': 'inner',
+                'outer_fold': outer_fold,
+                'candidate_index': i,
+                'mean_test_score': cv_results.get('mean_test_score', [None]*n_candidates)[i],
+                'std_test_score': cv_results.get('std_test_score', [None]*n_candidates)[i],
+                'rank_test_score': cv_results.get('rank_test_score', [None]*n_candidates)[i],
+                'params': cv_results.get('params', [None]*n_candidates)[i]
+            }
+            combined_rows.append(inner_row)
+    
+    combined_df = pd.DataFrame(combined_rows)
+    combined_csv_path = os.path.join(output_dir, f"{name}_rsf_all_fold_results_{current_date}.csv")
+    combined_df.to_csv(combined_csv_path, index=False)
+    print(f"Combined fold-level metrics (inner and outer) saved to {combined_csv_path}")
+
     # ---------------- Final Model Training using Nested CV Results ---------------- #
-    # Select best hyperparameters from nested CV outer folds (fold with highest C-index)
+    # Select best hyperparameters from nested CV outer folds (fold with highest Test C-index)
     best_fold_idx = np.argmax(outer_scores)
     best_params_nested = outer_best_params[best_fold_idx]
     print(f"Selected hyperparameters from nested CV: {best_params_nested}")
@@ -132,7 +184,7 @@ def create_rsf(train_df, test_df, name):
     best_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **best_params_nested)
     best_model.fit(X_train, y_train)
     
-    # Save nested CV results to CSV
+    # Save nested CV outer fold summary results to CSV
     cv_results_df = pd.DataFrame({
         "fold": list(range(1, len(outer_scores)+1)),
         "Test_C_index": outer_scores,
@@ -142,7 +194,7 @@ def create_rsf(train_df, test_df, name):
     cv_results_df.to_csv(results_csv, index=False)
     print(f"Nested CV results saved to {results_csv}")
 
-    # ---------------- Select simplest model using the 1 SE rule from Nested CV ---------------- #
+    # ---------------- Select Simplest Model using the 1 SE Rule from Nested CV ---------------- #
     max_score = max(outer_scores)
     std_score = np.std(outer_scores)
     one_se_threshold = max_score - std_score
@@ -180,7 +232,7 @@ def create_rsf(train_df, test_df, name):
     joblib.dump(one_se_model, one_se_model_file)
     print(f"1 SE RSF model saved to {one_se_model_file}")
 
-    # ---------------- Evaluate Best and 1 SE RSF models ---------------- #
+    # ---------------- Evaluate Best and 1 SE RSF Models ---------------- #
     best_pred_train = best_model.predict(X_train)
     best_train_c_index = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], best_pred_train)[0]
     best_pred_test = best_model.predict(X_test)

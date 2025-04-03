@@ -152,7 +152,21 @@ if __name__ == "__main__":
         }
         
         mean_cv_score, se_cv_score, best_params, fold_metrics, inner_cv_results = nested_cv_rsf(X_train, y_train, local_param_distributions)
-        results.append((p, num_features, mean_cv_score, se_cv_score, best_params))
+        
+        # Evaluate candidate model on the validation set
+        final_model_candidate = RandomSurvivalForest(random_state=42, n_jobs=-1, **best_params)
+        final_model_candidate.fit(X_train, y_train)
+        valid_subset_candidate = valid[['OS_STATUS', 'OS_MONTHS'] + features_subset].copy()
+        for col in ['Adjuvant Chemo', 'IS_MALE']:
+            if col in valid_subset_candidate.columns:
+                valid_subset_candidate[col] = valid_subset_candidate[col].astype(int)
+        y_valid_candidate = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid_subset_candidate)
+        X_valid_candidate = valid_subset_candidate.drop(columns=['OS_STATUS', 'OS_MONTHS'])
+        valid_pred_candidate = final_model_candidate.predict(X_valid_candidate)
+        valid_c_index_candidate = concordance_index_censored(y_valid_candidate['OS_STATUS'], y_valid_candidate['OS_MONTHS'], valid_pred_candidate)[0]
+        print(f"Percentage {p*100:.0f}% ({num_features} features): Validation C-index = {valid_c_index_candidate:.3f}")
+        
+        results.append((p, num_features, mean_cv_score, se_cv_score, best_params, valid_c_index_candidate))
         # Annotate each fold's metrics with the current percentage and feature count
         for metric in fold_metrics:
             metric['percentage'] = p
@@ -167,25 +181,27 @@ if __name__ == "__main__":
     
     # Find best model based on mean CV score
     best_result = max(results, key=lambda x: x[2])
-    best_percentage, best_num_features, best_cv_score, best_cv_se, best_hyperparams = best_result
+    best_percentage, best_num_features, best_cv_score, best_cv_se, best_hyperparams, best_valid_c_index = best_result
     print("\n==========================")
     print(f"Best Model - Optimal percentage: {best_percentage*100:.0f}% ({best_num_features} features)")
     print(f"Best Model - Hyperparameters: {best_hyperparams}")
     print(f"Best Model - Mean CV C-index: {best_cv_score:.3f} (SE: {best_cv_se:.3f})")
+    print(f"Best Model - Validation C-index: {best_valid_c_index:.3f}")
     print("==========================\n")
 
     # Apply 1SE rule: select the simplest model (lowest num_features) with mean CV score >= (best_cv_score - best_cv_se)
     one_se_candidates = [res for res in results if res[2] >= best_cv_score - best_cv_se]
     one_se_result = min(one_se_candidates, key=lambda x: x[1]) if one_se_candidates else best_result
-    one_se_percentage, one_se_num_features, one_se_cv_score, one_se_cv_se, one_se_hyperparams = one_se_result
+    one_se_percentage, one_se_num_features, one_se_cv_score, one_se_cv_se, one_se_hyperparams, one_se_valid_c_index = one_se_result
     print("\n==========================")
     print(f"1SE Model - Optimal percentage: {one_se_percentage*100:.0f}% ({one_se_num_features} features)")
     print(f"1SE Model - Hyperparameters: {one_se_hyperparams}")
     print(f"1SE Model - Mean CV C-index: {one_se_cv_score:.3f} (SE: {one_se_cv_se:.3f})")
+    print(f"1SE Model - Validation C-index: {one_se_valid_c_index:.3f}")
     print("==========================\n")
     
     # Save results to CSV
-    results_df = pd.DataFrame(results, columns=["Percentage", "Num_Features", "Mean_CV_C_index", "SE_CV_C_index", "Best_Params"])
+    results_df = pd.DataFrame(results, columns=["Percentage", "Num_Features", "Mean_CV_C_index", "SE_CV_C_index", "Best_Params", "Validation_C_index"])
     
     # Save
     results_csv_path = os.path.join(output_dir, f"{current_date}_rsf_feature_selection_results.csv")

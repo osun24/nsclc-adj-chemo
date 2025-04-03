@@ -1,0 +1,1 @@
+tmux new -d -s mysession 'source venv/bin/activate && cd gcs-bucket && python3 rsf-randomsearch-affy.py; gcloud compute instances suspend "$(hostname)" --zone "$(curl -s -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/zone | awk -F/ '\''{print $NF}'\'')"'
