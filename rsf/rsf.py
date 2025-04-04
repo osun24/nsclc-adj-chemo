@@ -570,7 +570,7 @@ if __name__ == "__main__":
     
     #create_rsf(train, valid, '3-31', trees=500, max_depth=10, max_features=9, min_samples_leaf=100, evaluate_range=True, covariates=None)
     
-    #open_rsf(train, valid, 'rsf/rsf_results_affy/Affy RS_final_rsf_model_1se.pkl', name = "Affy RS 1SE" , feature_selected=False)
+    open_rsf(train, valid, 'rsf/rsf_results_affy/Affy RS_final_rsf_model_1se.pkl', name = "Affy RS 1SE" , feature_selected=False)
     
     """Estimators: 750
 Min samples split: 6
@@ -585,4 +585,4 @@ Train C-index: 0.794
 Validation C-index: 0.670
     """
     
-    create_rsf(train, valid, 'Affy RS 1SE', trees=750, min_samples_split=6, min_samples_leaf=60, max_features=0.1, max_depth=10, evaluate_range=True, covariates=None, feature_importance_path='rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv')
+    #create_rsf(train, valid, 'Affy RS 1SE', trees=750, min_samples_split=6, min_samples_leaf=60, max_features=0.1, max_depth=10, evaluate_range=True, covariates=None, feature_importance_path='rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv')
