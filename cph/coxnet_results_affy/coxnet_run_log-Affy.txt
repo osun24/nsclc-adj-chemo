@@ -1,0 +1,28 @@
+Loading train data from: affyTrain.csv
+Number of events in training set: 300 | Censored cases: 391
+Train data shape: (691, 13062)
+Loading validation data from: affyValidation.csv
+Number of events in validation set: 100 | Censored cases: 131
+Validation data shape: (231, 13062)
+Number of events in training set: 300
+Number of events in test set: 100
+Starting Nested Cross-Validation...
+[Fold 1/5] Starting outer fold...
+Fitting 5 folds for each of 4 candidates, totalling 20 fits
+[Fold 1] Completed outer fold with Test C-index: 0.500
+[Fold 2/5] Starting outer fold...
+Fitting 5 folds for each of 4 candidates, totalling 20 fits
+[Fold 2] Completed outer fold with Test C-index: 0.500
+[Fold 3/5] Starting outer fold...
+Fitting 5 folds for each of 4 candidates, totalling 20 fits
+[Fold 3] Completed outer fold with Test C-index: 0.500
+[Fold 4/5] Starting outer fold...
+Fitting 5 folds for each of 4 candidates, totalling 20 fits
+[Fold 4] Completed outer fold with Test C-index: 0.500
+[Fold 5/5] Starting outer fold...
+Fitting 5 folds for each of 4 candidates, totalling 20 fits
+[Fold 5] Completed outer fold with Test C-index: 0.500
+Nested CV completed in 20.83 seconds.
+Nested CV Mean Test C-index: 0.500
+Combined fold-level metrics (inner and outer) saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/coxnet_results_affy/Affy CPH RS_coxnet_all_fold_results_20250403.csv
+Creating regularization path visualization...
