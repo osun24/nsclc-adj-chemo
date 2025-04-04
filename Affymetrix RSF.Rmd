@@ -1,0 +1,61 @@
+---
+title: "affy rsf"
+output: pdf_document
+date: "2025-04-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ranger)
+library(survival)
+library(readr)
+
+set.seed(42)
+
+x_train <- affyTrain[, !(names(affyTrain) %in% c("OS_MONTHS", "OS_STATUS"))]
+y_train <- Surv(affyTrain$OS_MONTHS, affyTrain$OS_STATUS)
+
+# Fit ranger RSF with exact hyperparameters
+set.seed(42)
+rsf_model <- ranger(
+  x = x_train,
+  y = y_train,
+  num.trees = 750,
+  mtry = floor(0.1 * ncol(x_train)),  # max features = 0.1
+  min.node.size = 60,                # min samples per leaf
+  max.depth = 10,                    # max depth
+  splitrule = "logrank",
+  importance = "permutation",
+  seed = 42
+)
+
+# Validation set prep
+x_valid <- affyValidation[, !(names(affyValidation) %in% c("OS_MONTHS", "OS_STATUS"))]
+y_valid <- Surv(affyValidation$OS_MONTHS, affyValidation$OS_STATUS)
+
+# Predict survival on training and validation data
+train_preds <- predict(rsf_model, data = x_train)$chf
+valid_preds <- predict(rsf_model, data = x_valid)$chf
+
+train_risk_scores <- -rowSums(train_preds)
+valid_risk_scores <- -rowSums(valid_preds)
+
+# Recompute C-index
+train_cindex <- concordance(y_train ~ train_risk_scores)$concordance
+valid_cindex <- concordance(y_valid ~ valid_risk_scores)$concordance
+
+cat("Training C-index:", train_cindex, "\n")
+cat("Validation C-index:", valid_cindex, "\n")
+
+```
+
+
+
+
+
+
+
