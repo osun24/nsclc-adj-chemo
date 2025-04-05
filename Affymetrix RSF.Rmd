@@ -57,8 +57,8 @@ valid_cindex <- concordance(y_valid ~ valid_risk_scores)$concordance
 cat("Training C-index:", train_cindex, "\n")
 cat("Validation C-index:", valid_cindex, "\n")
 
-# Training C-index: 0.8458425 
-# Validation C-index: 0.6672072 
+# Training C-index: 0.8413683 
+# Validation C-index: 0.6784278  
 
 ```
 
