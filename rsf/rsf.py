@@ -40,7 +40,7 @@ def create_rsf(train_df, valid_df, name, trees,
 
     # Option to evaluate performance over a range of feature counts.
     if evaluate_range:
-        candidate_counts = sorted(set(list(np.linspace(1, 25, num = 6, dtype = int)) + list(np.linspace(25, 1117, num=10, dtype=int)) + list(np.linspace(1117, 13060, num=5, dtype=int))))
+        candidate_counts = sorted(set(list(np.linspace(1, 25, num = 6, dtype = int)) + list(np.linspace(25, 1117, num=10, dtype=int)) + [5000] + list(np.linspace(1117, 13060, num=5, dtype=int))))
         feature_counts, train_c_indices, valid_c_indices = [], [], []
         # Ensure clinical variables are included.
         clinical_vars = [var for var in ["Adjuvant Chemo", "Age", "Stage", "IS_MALE", "Histology", "Race", "Smoked?"]
@@ -585,4 +585,4 @@ Train C-index: 0.794
 Validation C-index: 0.670
     """
     
-    #create_rsf(train, valid, 'Affy RS 1SE', trees=750, min_samples_split=6, min_samples_leaf=60, max_features=0.1, max_depth=10, evaluate_range=True, covariates=None, feature_importance_path='rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv')
+    create_rsf(train, valid, 'Affy RS 1SE', trees=750, min_samples_split=6, min_samples_leaf=60, max_features=0.1, max_depth=10, evaluate_range=True, covariates=None, feature_importance_path='rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv')
