@@ -96,14 +96,14 @@ if __name__ == "__main__":
     log_file = open(os.path.join(output_dir, f"{current_date}_LOG-rsf-feature-search.txt"), "w")
     sys.stdout = Tee(sys.stdout, log_file)
     
-    print("Loading train data from: allTrain.csv")
-    train = pd.read_csv("allTrain.csv")
+    print("Loading train data from: affyTrain.csv")
+    train = pd.read_csv("affyTrain.csv")
     
     print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
     print("Train data shape:", train.shape)
     
-    print("Loading validation data from: allValidation.csv")
-    valid = pd.read_csv("allValidation.csv")
+    print("Loading validation data from: affyValidation.csv")
+    valid = pd.read_csv("affyValidation.csv")
     
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
@@ -111,27 +111,27 @@ if __name__ == "__main__":
     start = time.time()
     
     # Load preselection CSV from the 1SE model and filter features with >0 importance
-    imp_csv_path = os.path.join("rsf_results", "ALL 3-29-25 RS_rsf_preselection_importances_1SE.csv")
+    imp_csv_path = os.path.join("rsf_results_affy", "Affy RS_rsf_preselection_importances_1SE.csv")
     imp_df = pd.read_csv(imp_csv_path)
     imp_df = imp_df[imp_df["Importance"] > 0].sort_values(by="Importance", ascending=False)
     selected_features_all = imp_df["Feature"].tolist()
     
-    # Define hyperparameter grid for RSF
+    # Define hyperparameter grid for RSF (modified for the Affy dataset)
     param_distributions = {
-        "n_estimators": [500, 750, 1000],
-        "min_samples_leaf": list(range(60, 81, 5)),
-        "max_features": ["sqrt", "log2", 500],
+        "n_estimators": [500, 625, 750, 875], # previously 1000
+        "min_samples_leaf": [50, 60, 65, 70, 80], # 90, 100
+        "max_features": ["sqrt", "log2", 500, 0.1],
         "max_depth": [10],
     }
     
     all_fold_metrics = []  # Initialize list to collect all fold-level metrics
     all_inner_cv_results = []  # Initialize list to collect all inner CV results
     
-    # Evaluate different percentages of the >0 importance features (from 10% to 100%)
-    percentages = [0.01, 0.05, 0.1, 0.5, 1.0]
+    # Evaluate different percentages of the >0 importance features (from 1% to 100%)
+    number_of_features = [5000]
     results = []
-    for p in percentages:
-        num_features = max(1, int(len(selected_features_all) * p))
+    for p in number_of_features:
+        num_features = p
         features_subset = selected_features_all[:num_features]
         print(f"\nEvaluating with {num_features} features ({p*100:.0f}%)")
         
@@ -143,12 +143,12 @@ if __name__ == "__main__":
         y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train_subset)
         X_train = train_subset.drop(columns=['OS_STATUS', 'OS_MONTHS'])
         
-        # Restraining to 60-80 & max_depth of 10 aligning with previous results
+        # Use the Affy search space settings
         local_param_distributions = {
-            "n_estimators": [500, 750, 1000],
-            "min_samples_leaf": list(range(60, 81, 5)),
-            "max_features": ["sqrt", "log2", min(num_features, 500)],
-            "max_depth": [10], #20, None
+            "n_estimators": [500, 625, 750, 875], # previously 1000
+            "min_samples_leaf": [50, 60, 65, 70, 80], # 90, 100
+            "max_features": ["sqrt", "log2", 500, 0.1],
+            "max_depth": [10],
         }
         
         mean_cv_score, se_cv_score, best_params, fold_metrics, inner_cv_results = nested_cv_rsf(X_train, y_train, local_param_distributions)
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         X_valid_candidate = valid_subset_candidate.drop(columns=['OS_STATUS', 'OS_MONTHS'])
         valid_pred_candidate = final_model_candidate.predict(X_valid_candidate)
         valid_c_index_candidate = concordance_index_censored(y_valid_candidate['OS_STATUS'], y_valid_candidate['OS_MONTHS'], valid_pred_candidate)[0]
-        print(f"Percentage {p*100:.0f}% ({num_features} features): Validation C-index = {valid_c_index_candidate:.3f}")
+        print(f"Validation C-index for candidate model with {p} features: {valid_c_index_candidate:.3f}")
         
         results.append((p, num_features, mean_cv_score, se_cv_score, best_params, valid_c_index_candidate))
         # Annotate each fold's metrics with the current percentage and feature count
