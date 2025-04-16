@@ -110,19 +110,20 @@ colnames(GSE37745.data) = c("Adjuvant Chemo", "Age", "OS_STATUS", "Sex", "Histol
 
 GSE37745.data$OS_STATUS <- ifelse(GSE37745.data$OS_STATUS == "yes", 1, 0)
 GSE37745.data$Age = as.numeric(GSE37745.data$Age)
-GSE37745.data$Sex <- ifelse(GSE37745.data$Sex == "male", 1, 0)
+GSE37745.data$IS_MALE <- ifelse(GSE37745.data$Sex == "male", 1, 0)
 GSE37745.data$Histology[GSE37745.data$Histology == "adeno"] <- "Adenocarcinoma"
 GSE37745.data$Histology[GSE37745.data$Histology == "squamous"] <- "Squamous Cell Carcinoma"
 GSE37745.data$Histology[GSE37745.data$Histology == "large"] <- "Large Cell Carcinoma"
 GSE37745.data$Stage[GSE37745.data$Stage == "1a"  ] <- "IA"
 GSE37745.data$Stage[GSE37745.data$Stage == "1b"  ] <- "IB"
-GSE37745.data$Stage[GSE37745.data$Stage == "2a"  ] <- "IIA"
-GSE37745.data$Stage[GSE37745.data$Stage == "2b"  ] <- "IIB"
-GSE37745.data$Stage[GSE37745.data$Stage == "3a"  ] <- "IIIA"
-GSE37745.data$Stage[GSE37745.data$Stage == "3b"  ] <- "IIIB"
+GSE37745.data$Stage[GSE37745.data$Stage == "2a"  ] <- "II"
+GSE37745.data$Stage[GSE37745.data$Stage == "2b"  ] <- "II"
+GSE37745.data$Stage[GSE37745.data$Stage == "3a"  ] <- "III"
+GSE37745.data$Stage[GSE37745.data$Stage == "3b"  ] <- "III"
 GSE37745.data$Stage[GSE37745.data$Stage == "4"  ] <- "IV"
-GSE37745.data$'Smoked?' = NA
+GSE37745.data$'Smoked?' = "Unknown"
 GSE37745.data$Race = "Unknown"
+GSE37745.data$Sex <- NULL
 
 
 # fetch feature data to get gene symbols
@@ -143,6 +144,7 @@ GSE37745.data$`Adjuvant Chemo` <- ifelse(GSE37745.data$`Adjuvant Chemo` == "yes"
 GSE37745merged$`Adjuvant Chemo` <- ifelse(GSE37745merged$`Adjuvant Chemo` == "yes", 1, 0)
 GSE37745.expr = GSE37745merged[, -c(1:10)]
 
+GSE37745.data = GSE37745merged[, c(1:10)]
 ```
 
 ```{r}

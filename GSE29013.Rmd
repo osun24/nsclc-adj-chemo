@@ -109,16 +109,22 @@ GSE29013.data = as_tibble(gset@phenoData@data) %>%
 GSE29013.data = GSE29013.data[,c(1, 2, 3, 4, 5, 6, 7, 9, 10, 12)] 
 colnames(GSE29013.data) = c("Adjuvant Chemo", "Age", "OS_STATUS", "OS_MONTHS", "Stage",  "Sex", "Histology", "Race", "Smoked?", "PFS_MONTHS")
 
+unique(GSE29013.data$Stage)
 GSE29013.data$Age = as.numeric(GSE29013.data$Age)
-GSE29013.data$Sex <- ifelse(GSE29013.data$Sex == "M", 1, 0)
+GSE29013.data$IS_MALE <- ifelse(GSE29013.data$Sex == "M", 1, 0)
 GSE29013.data$`Adjuvant Chemo` <- ifelse(GSE29013.data$`Adjuvant Chemo` == "Yes", 1, 0)
 GSE29013.data$Histology[GSE29013.data$Histology == "Squamous"] <- "Squamous Cell Carcinoma"
 GSE29013.data$OS_STATUS = as.numeric(GSE29013.data$OS_STATUS)
 GSE29013.data$OS_MONTHS = as.numeric(GSE29013.data$OS_MONTHS)
-GSE29013.data$`Smoked?` = as.numeric(GSE29013.data$`Smoked?`)
+GSE29013.data$`Smoked?` <- ifelse(GSE29013.data$`Smoked?` == 1, "Yes", "No")
 GSE29013.data$PFS_MONTHS = as.numeric(GSE29013.data$PFS_MONTHS)
 GSE29013.data$OS_MONTHS = GSE29013.data$OS_MONTHS*12
 GSE29013.data$PFS_MONTHS = GSE29013.data$PFS_MONTHS*12
+GSE29013.data$Stage[GSE29013.data$Stage == "IIA"  ] <- "II"
+GSE29013.data$Stage[GSE29013.data$Stage == "IIB"  ] <- "II"
+GSE29013.data$Stage[GSE29013.data$Stage == "IIIA"  ] <- "III"
+GSE29013.data$Stage[GSE29013.data$Stage == "IIIB"  ] <- "III"
+GSE29013.data$Sex <- NULL
 
 # fetch feature data to get gene symbols
 feature.dat = gse$GSE29013_series_matrix.txt.gz@featureData@data 
@@ -134,6 +140,7 @@ write.csv(feature.df,
 write.csv(GSE29013.symbol, 
           "GSE29013_symbol.csv")
 
+GSE29013.data = GSE29013merged[, c(1:10)]
 write.csv(GSE29013.data, 
           file = "GSE29013_data.csv")
 ```

@@ -109,24 +109,31 @@ GSE31908.data = as_tibble(gset@phenoData@data) %>%
 
 
 GSE31908.data$`gender:ch1` = coalesce(GSE31908.data$`gender:ch1`, GSE31908.data$`Sex:ch1`)
-GSE31908.data = GSE31908.data[, c(1, 5, 8, 10, 11, 13, 15, 17)]
+GSE31908.data = GSE31908.data[, c(1, 5, 8, 10, 11, 12, 13, 15, 17)]
 GSE31908.data$Histology = "Adenocarcinoma"
 
 
 # Next, we want to append clinical information onto gene expression data
-colnames(GSE31908.data) = c("Adjuvant Chemo", "Sex", "PFS_MONTHS", "OS_MONTHS", "Stage","Race", "Smoked?", "OS_STATUS", "Histology")
+colnames(GSE31908.data) = c("Adjuvant Chemo", "Sex", "PFS_MONTHS", "OS_MONTHS", "Stage_N", "Stage_T","Race", "Smoked?", "OS_STATUS", "Histology")
 
-unique(GSE31908.data$Stage)
+unique(GSE31908.data$Stage_T)
 GSE31908.data$`Adjuvant Chemo` <- ifelse(GSE31908.data$`Adjuvant Chemo` == "Yes", 1, 0)
-GSE31908.data$`Smoked?` <- ifelse(GSE31908.data$`Smoked?` == "Smoked in the past", 1, 0)
+GSE31908.data$`Smoked?` <- ifelse(GSE31908.data$`Smoked?` == "Smoked in the past", "Yes", "No")
 GSE31908.data$`OS_STATUS` <- ifelse(GSE31908.data$`OS_STATUS` == "Dead", 1, 0)
-GSE31908.data$Histology[GSE31908.data$Histology == "Squamous"] <- "Squamous Cell Carcinoma"
 GSE31908.data$OS_STATUS = as.numeric(GSE31908.data$OS_STATUS)
 GSE31908.data$OS_MONTHS = as.numeric(GSE31908.data$OS_MONTHS)
 GSE31908.data$PFS_MONTHS = as.numeric(GSE31908.data$PFS_MONTHS)
-GSE31908.data$Stage <- ifelse(GSE31908.data$Stage == "N0, ACCORDING TO AJCC CRITERIA", "I", "II")
-GSE31908.data$Sex <- ifelse(GSE31908.data$Sex == "Male", 1, 0)
+GSE31908.data$IS_MALE <- ifelse(GSE31908.data$Sex == "Male", 1, 0)
 GSE31908.data$Age = c(73, 69, 67, 67, 67, 59, 74, 65, 73, 73, 65, 73, 65, 69, 62, 67, NA)
+GSE31908.data$Sex = NULL
+GSE31908.data$Stage <- ifelse(GSE31908.data$Stage_N == "N0, ACCORDING TO AJCC CRITERIA" & GSE31908.data$Stage_T == "T1, ACCORDING TO AJCC CRITERIA", "IA",
+                   ifelse(GSE31908.data$Stage_N == "N0, ACCORDING TO AJCC CRITERIA" & GSE31908.data$Stage_T == "T2, ACCORDING TO AJCC CRITERIA", "IB",
+                   ifelse(GSE31908.data$Stage_N == "N1, ACCORDING TO AJCC CRITERIA" & GSE31908.data$Stage_T == "T2, ACCORDING TO AJCC CRITERIA", "II",
+                   NA)))
+GSE31908.data$Stage_N = NULL
+GSE31908.data$Stage_T = NULL
+GSE31908.data$Race[GSE31908.data$Race == "White"] <- "Caucasian"
+GSE31908.data$Race[GSE31908.data$Race == "Not Reported"] <- "Unknown"
 
 
 
@@ -151,7 +158,7 @@ GSE31908.data <- subset(GSE31908.data, !is.na(OS_STATUS))
 write.csv(GSE31908merged, 
           "GSE31908merged.csv")
 
-GSE31908.expr = GSE31908merged[, -c(1:10)]
+GSE31908.data = GSE31908merged[, c(1:10)]
 
 ``` 
 

@@ -120,15 +120,20 @@ GSE68465.data$OS_MONTHS = as.numeric(GSE68465.data$OS_MONTHS)
 GSE68465.data$OS_STATUS <- ifelse(GSE68465.data$OS_STATUS == "Dead", 1, 0)
 GSE68465.data$`Adjuvant Chemo` <- ifelse(GSE68465.data$`Adjuvant Chemo` == "Yes", 1, 0)
 GSE68465.data$Histology[GSE68465.data$Histology == "Lung Adenocarcinoma"] <- "Adenocarcinoma"
-GSE68465.data$`Smoked?` <- ifelse(GSE68465.data$`Smoked?` %in% c("Smoked in the past", "Currently smoking"), 1,
-                                  ifelse(GSE68465.data$`Smoked?` == "Never smoked", 0, NA))
+GSE68465.data$`Smoked?` <- ifelse(GSE68465.data$`Smoked?` %in% c("Smoked in the past", "Currently smoking"), "Yes",
+                                  ifelse(GSE68465.data$`Smoked?` == "Never smoked", "No", "Unknown"))
 
-GSE68465.data$Sex = ifelse(GSE68465.data$Sex == "Male", 1, 0)
+GSE68465.data$IS_MALE = ifelse(GSE68465.data$Sex == "Male", 1, 0)
 GSE68465.data$Race[GSE68465.data$Race == "Not Reported"] <- "Unknown"
+GSE68465.data$Race[GSE68465.data$Race == "White"] <- "Caucasian"
+GSE68465.data$Race[GSE68465.data$Race == "Black or African American"] <- "African American"
+GSE68465.data$Sex = NULL
 
 convert_stage <- function(tnm) {
-  if (tnm %in% c("pN0pT1", "pN0pT2")) {
-    return("I")
+  if (tnm %in% c("pN0pT1")) {
+    return("IA")
+  } else if (tnm %in% c("pN0pT2")) {
+    return("IB")
   } else if (tnm %in% c("pN0pT3", "pN1pT1", "pN1pT2")) {
     return("II")
   } else if (tnm %in% c("pN2pT1", "pN2pT2", "pN1pT3", "pN0pT4", "pN1pT4")) {
@@ -162,8 +167,7 @@ GSE68465.data <- subset(GSE68465.data, !is.na(OS_STATUS))
 write.csv(GSE68465.merged, 
           "GSE68465merged.csv")
 
-GSE68465.expr = GSE68465.merged[, -c(1:10)]
-GSE68465data.expr = GSE68465.merged[, 1:9]
+GSE68465.data = GSE68465.merged[, c(1:10)]
 ```
 
 ```{r}

@@ -112,14 +112,15 @@ GSE31210.data = GSE31210.data[, c(1, 7, 9, 12, 15, 18, 20, 21)]
 # Next, we want to append clinical information onto gene expression data
 colnames(GSE31210.data) = c("Age", "OS_STATUS", "Sex", "RFS_MONTHS","Stage", "Smoked?", "OS_MONTHS", "Histology")
 
+unique(GSE31210.data$Stage)
 GSE31210.data$OS_STATUS <- ifelse(GSE31210.data$OS_STATUS == "dead", 1, 0)
 GSE31210.data$Age = as.numeric(GSE31210.data$Age)
-GSE31210.data$Sex <- ifelse(GSE31210.data$Sex == "male", 1, 0)
-GSE31210.data$`Smoked?` <- ifelse(GSE31210.data$`Smoked?` == "Never-smoker", "0", "1")
-GSE31210.data$`Smoked?` = as.numeric(GSE31210.data$`Smoked?`)
+GSE31210.data$IS_MALE <- ifelse(GSE31210.data$Sex == "male", 1, 0)
+GSE31210.data$`Smoked?` <- ifelse(GSE31210.data$`Smoked?` == "Never-smoker", "No", "Yes")
 GSE31210.data$"Adjuvant Chemo" = 0
 GSE31210.data$Race = "Unknown"
 GSE31210.data$RFS_MONTHS <- sapply(strsplit(as.character(GSE31210.data$RFS_MONTHS), ";"), function(x) round(as.numeric(x[1]), 2))
+GSE31210.data$Sex = NULL
 
 
 # fetch feature data to get gene symbols
@@ -141,7 +142,7 @@ GSE31210merged <- subset(GSE31210merged, !is.na(OS_STATUS))
 GSE31210.data = subset(GSE31210.data, !is.na(OS_STATUS))
 write.csv(GSE31210merged, 
           "GSE31210merged.csv")
-GSE31210.expr = GSE31210merged[, -c(1:10)]
+GSE31210.data = GSE31210merged[, c(1:10)]
 ```
 
 ```{r}
