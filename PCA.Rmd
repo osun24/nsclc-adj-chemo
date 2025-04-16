@@ -35,7 +35,7 @@ fviz_pca_ind(pca_res,
              geom = "point",
              col.ind = batch_labels,
              addEllipses = TRUE,
-             legend.title = "Dataset")
+             legend.title = "GPL96 (Before Correction)")
 
 ```
 
@@ -52,21 +52,15 @@ fviz_pca_ind(pca_corrected,
              geom = "point",
              col.ind = batch_labels,
              addEllipses = TRUE,
-             legend.title = "Dataset (Corrected)")
+             legend.title = "GPL96 (Corrected)")
 
 GPL96.data = bind_rows(GSE68465.data, GSE14814.data)
-GPL96.data$`Smoked?` <- ifelse(GPL96.data$`Smoked?` == 1, "Yes",
-                             ifelse(GPL96.data$`Smoked?` == 0, "No", "Unknown"))
-GPL96.data$`Smoked?`[is.na(GPL96.data$`Smoked?`)] <- "Unknown"
-GPL96.data$IS_MALE <- GPL96.data$Sex
-
-GPL96.data$Sex <- NULL
 
 write.csv(GPL96.data, 
           "GPL96_data.csv",
           row.names = F)
 
-GPL96.expr = expr_pair_corrected
+GPL96.expr = as.data.frame(expr_pair_corrected)
 write.csv(GPL96.expr, 
           "GPL96expr.csv",
           row.names = F)
@@ -99,7 +93,7 @@ fviz_pca_ind(pca_before,
              geom = "point",
              col.ind = batch_labels_all,
              addEllipses = TRUE,
-             legend.title = "Dataset (Before Correction)")
+             legend.title = "GPL570 (Before Correction)")
 
 ```
 
@@ -115,11 +109,11 @@ fviz_pca_ind(pca_after,
              geom = "point",
              col.ind = batch_labels_all,
              addEllipses = TRUE,
-             legend.title = "Dataset (After Correction)")
+             legend.title = "GPL570 (Corrected)")
 
 GPL570.expr = as.data.frame(expr_all_corrected)
 
-GPL570.data = bind_rows(GSE29013.data, GSE31908.data, GSE31210.data, GSE37745.data, GSE50081.data)
+GPL570.data = bind_rows(GSE29013.data, GSE37745.data, GSE50081.data, GSE31908.data, GSE31210.data)
 write.csv(GPL570.data, 
           "GPL570_data.csv",
           row.names = F)
@@ -148,12 +142,16 @@ write.csv(GPL96.genesymbols,
 ```
 
 ```{r}
+affygenes <- intersect(colnames(GPL570.expr), colnames(GPL96.expr))
+GPL570.expr2 = GPL570.expr[, affygenes]
+GPL96.expr2 = GPL96.expr[, affygenes]
+
 expr_all <- rbind(GPL570.expr2,
-                  GPL96.expr)
+                  GPL96.expr2)
 
 # Create batch labels for all samples
 batch_labels_all <- c(rep("GPL570", nrow(GPL570.expr2)),
-                      rep("GPL96", nrow(GPL96.expr)))
+                      rep("GPL96", nrow(GPL96.expr2)))
 
 library(factoextra)
 pca_before <- prcomp(expr_all, scale=TRUE)
@@ -161,7 +159,7 @@ fviz_pca_ind(pca_before,
              geom = "point",
              col.ind = batch_labels_all,
              addEllipses = TRUE,
-             legend.title = "Dataset (Before Correction)")
+             legend.title = "Affymetrix (Before Correction)")
 ```
 
 ```{r}
@@ -175,7 +173,7 @@ fviz_pca_ind(pca_after,
              geom = "point",
              col.ind = batch_labels_all,
              addEllipses = TRUE,
-             legend.title = "Dataset (After Correction)")
+             legend.title = "Affymetrix (Corrected)")
 
 affy.expr = as.data.frame(expr_all_corrected)
 
@@ -186,19 +184,16 @@ write.csv(affy.expr,
 
 ```{r}
 GPL570_96.data = bind_rows(GPL570.data, GPL96.data)
-unique(all.data$IS_MALE)
-unique(GPL570_96.data$IS_MALE)
-GPL570_96.data$Stage[GPL570_96.data$Stage == "I"  ] <- "IA"
-GPL570_96.data$Stage[GPL570_96.data$Stage == "IIIA"  ] <- "III"
-GPL570_96.data$Stage[GPL570_96.data$Stage == "IIIB"  ] <- "III"
-GPL570_96.data$Stage[GPL570_96.data$Stage == "IIA"  ] <- "II"
-GPL570_96.data$Stage[GPL570_96.data$Stage == "IIB"  ] <- "II"
-GPL570_96.data$Stage[is.na(GPL570_96.data$Stage)] <- "Unknown"
-GPL570_96.data$Sex <- NULL
-GPL570_96.data$Histology[GPL570_96.data$Histology == "Large Cell Undifferentiated Carcinoma"] <- "Large Cell Carcinoma"
-GPL570_96.data$Histology[is.na(GPL570_96.data$Histology)] <- "Unknown"
-GPL570_96.data$Race[GPL570_96.data$Race == "White"  ] <- "Caucasian"
-GPL570_96.data$Race[GPL570_96.data$Race == "Black or African American"  ] <- "African American"
+GPL570_96.data <- GPL570_96.data %>%
+  mutate("Adjuvant Chemo" = case_when(
+    `Adjuvant Chemo` == 1 ~ "ACT",
+    `Adjuvant Chemo` == 0 ~ "OBS"
+  ))
+
+GPL570_96.data$`Adjuvant Chemo` <- factor(GPL570_96.data$`Adjuvant Chemo`)
+GPL570_96.data$`Adjuvant Chemo` <- relevel(GPL570_96.data$`Adjuvant Chemo`, ref = "OBS")
+
+levels(GPL570_96.data$`Adjuvant Chemo`)
 
 write.csv(GPL570_96.data,
           "affymetrix.data.csv",
@@ -211,15 +206,6 @@ write.csv(GPL570_96.merged,
 ```
 
 ```{r}
-GPL570_96.data <- GPL570_96.data %>%
-  mutate("Adjuvant Chemo" = case_when(
-    `Adjuvant Chemo` == 1 ~ "ACT",
-    `Adjuvant Chemo` == 0 ~ "OBS"
-  ))
 
-GPL570_96.data$`Adjuvant Chemo` <- factor(GPL570_96.data$`Adjuvant Chemo`)
-GPL570_96.data$`Adjuvant Chemo` <- relevel(GPL570_96.data$`Adjuvant Chemo`, ref = "OBS")
-
-levels(GPL570_96.data$`Adjuvant Chemo`)
 ```
 
