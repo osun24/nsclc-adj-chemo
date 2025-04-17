@@ -1,0 +1,642 @@
+---
+title: "Affymetrix"
+output: pdf_document
+date: "2025-04-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Load Packages
+```{r}
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+library(GEOquery)
+library(tidyverse)
+if(!require("BiocManager", quietly = T))
+  install.packages("BiocManager")
+BiocManager::install("oligo")
+library(oligo)
+library(limma)
+```
+
+# Genomic Expression and Normalization
+```{r}
+options(timeout = 10000)
+
+# List of GSE numbers
+GSE_numbers_partial <- c("GSE29013", "GSE37745", "GSE31210", "GSE50081", "GSE68465", "GSE14814")  
+
+# Loop through each GSE number
+for (GSE in GSE_numbers_partial) {
+  # Get GEO supplementary files
+  getGEOSuppFiles(GSE)
+  
+  # Untar files
+  untar(paste0(GSE, "/", GSE, "_RAW.tar"), exdir = paste0(GSE, "/CEL"))
+  
+  # Read CEL files
+  celfiles <- list.files(paste0(GSE, "/CEL"), pattern = ".CEL.gz", full = TRUE)
+  assign(paste0(GSE, ".raw"), read.celfiles(celfiles))
+  
+  # Get the raw data
+  GSE.raw <- get(paste0(GSE, ".raw"))
+  
+  # Normalize data (RMA)
+  GSE.rma <- rma(GSE.raw)
+  GSE.rma = as.data.frame(exprs(GSE.rma))
+  assign(paste0(GSE, ".rma"), GSE.rma)
+  
+  # Get expression data
+  expr_data <- as.data.frame(t((GSE.rma)))
+  assign(paste0(GSE, ".expr"), expr_data)
+  
+   # Save probe (gene) names
+  assign(paste0(GSE, ".probes"), colnames(expr_data))
+}
+
+#GSE31908
+getGEOSuppFiles("GSE31908")
+
+# untar files
+untar("GSE31908/GSE31908_RAW.tar",exdir='GSE31908/CEL')
+
+celfiles = list.files("GSE31908/CEL",
+                      pattern = ".CEL.gz", full=T)
+GSE31908.raw = read.celfiles(celfiles[1:17])
+
+# normalization 
+GSE31908.rma = rma(GSE31908.raw)
+GSE31908.rma = as.data.frame(exprs(GSE31908.rma))
+
+# Get the data to be used in R
+GSE31908.expr = as.data.frame(t((GSE31908.rma)))
+
+GSE31908.probes = colnames(GSE31908.expr)
+```
+
+# GPL570 Gene Annotation
+```{r}
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("hgu133plus2.db")
+library(hgu133plus2.db)
+
+GPL570_numbers = c("GSE29013", "GSE37745", "GSE31908", "GSE31210", "GSE50081")  
+for (GSE in GPL570_numbers) {
+  # Get the probe list
+  probes <- get(paste0(GSE, ".probes"))
+
+  # Map probe IDs to gene symbols using hgu133plus2.db
+  annotation <- select(hgu133plus2.db,
+                       keys = probes,
+                       columns = c("SYMBOL", "GENENAME"),
+                       keytype = "PROBEID")
+
+  # Remove probes without a gene symbol
+  annotation <- annotation[!is.na(annotation$SYMBOL) & annotation$SYMBOL != "", ]
+
+  # Get the RMA object
+  rma_obj <- get(paste0(GSE, ".rma"))
+
+  # Keep only probes that have a mapped gene symbol
+  rma_obj <- rma_obj[rownames(rma_obj) %in% annotation$PROBEID, ]
+
+  # Create a column with gene symbols
+  rma_obj$Symbol <- annotation$SYMBOL[match(rownames(rma_obj), annotation$PROBEID)]
+
+  # Convert to a data frame and collapse by gene symbol
+  rma_df <- as.data.frame(rma_obj) %>%
+    group_by(Symbol) %>%
+    summarise_all(median) %>%
+    ungroup()
+
+  # Set gene symbols as row names and drop "Symbol" column
+  rma_df <- as.data.frame(rma_df)
+  rownames(rma_df) <- rma_df$Symbol
+  rma_df <- rma_df[, -1]
+
+  # Optional: check for duplicates
+  if (any(duplicated(rownames(rma_df)))) {
+    warning(paste("Duplicates found in", GSE))
+  }
+
+  # Transpose for final expression matrix
+  expr_data <- as.data.frame(t(rma_df))
+
+  # Assign back to global environment
+  assign(paste0(GSE, ".expr"), expr_data)
+}
+```
+
+# GPL96 Gene Annotation
+```{r}
+BiocManager::install("AnnotationDbi")
+library(AnnotationDbi)
+BiocManager::install("hgu133a.db")
+library(hgu133a.db)
+
+GPL96_numbers = c("GSE68465", "GSE14814")
+for (GSE in GPL96_numbers) {
+  # Get the probe list
+  probes <- get(paste0(GSE, ".probes"))
+
+  # Map probe IDs to gene symbols using hgu133plus2.db
+  annotation <- select(hgu133a.db,
+                     keys = probesGSE68465,
+                     columns = c("SYMBOL", "GENENAME"),
+                     keytype = "PROBEID")
+
+  # Remove probes without a gene symbol
+  annotation <- annotation[!is.na(annotation$SYMBOL) & annotation$SYMBOL != "", ]
+
+  # Get the RMA object
+  rma_obj <- get(paste0(GSE, ".rma"))
+
+  # Keep only probes that have a mapped gene symbol
+  rma_obj <- rma_obj[rownames(rma_obj) %in% annotation$PROBEID, ]
+
+  # Create a column with gene symbols
+  rma_obj$Symbol <- annotation$SYMBOL[match(rownames(rma_obj), annotation$PROBEID)]
+
+  # Convert to a data frame and collapse by gene symbol
+  rma_df <- as.data.frame(rma_obj) %>%
+    group_by(Symbol) %>%
+    summarise_all(median) %>%
+    ungroup()
+
+  # Set gene symbols as row names and drop "Symbol" column
+  rma_df <- as.data.frame(rma_df)
+  rownames(rma_df) <- rma_df$Symbol
+  rma_df <- rma_df[, -1]
+
+  # Optional: check for duplicates
+  if (any(duplicated(rownames(rma_df)))) {
+    warning(paste("Duplicates found in", GSE))
+  }
+
+  # Transpose for final expression matrix
+  expr_data <- as.data.frame(t(rma_df))
+
+  # Assign back to global environment
+  assign(paste0(GSE, ".expr"), expr_data)
+}
+```
+
+# Clinical Data
+```{r}
+library(dplyr)
+library(tibble)
+
+GSE_numbers = c("GSE29013", "GSE37745", "GSE31908", "GSE31210", "GSE50081", "GSE68465", "GSE14814")  
+
+for (GSE in GSE_numbers) {
+  # Load GEO dataset
+  gset <- getGEO(GSE, GSEMatrix = TRUE, getGPL = FALSE)
+  if (length(gset) > 1) idx <- grep("GPL", attr(gset, "names"))[1] else idx <- 1
+  gset <- gset[[idx]]
+
+  # Extract phenotype data
+  pdata <- as_tibble(gset@phenoData@data)
+
+  # Apply dataset-specific cleanup
+  if (GSE == "GSE37745") {
+    pdata <- as_tibble(gset@phenoData@data) %>%
+      select(-(title:data_row_count),
+           -`performance status corresponding to who criteria:ch1`,
+           -`recurrence:ch1`) %>%
+      mutate(
+        OS_MONTHS = round(as.numeric(`days to determined death status:ch1`) / 30.44, 2),
+        RFS_MONTHS = round(as.numeric(`days to recurrence / to last visit:ch1`) / 30.44, 2)
+      ) %>%
+    select(1, 2, 5, 6, 7, 8, 9, 10)
+
+    colnames(pdata) <- c("Adjuvant Chemo", "Age", "OS_STATUS", "Sex", "Histology", "Stage", "OS_MONTHS", "RFS_MONTHS")
+
+    pdata <- pdata %>%
+      mutate(
+        `Adjuvant Chemo` = case_when(
+          `Adjuvant Chemo` == "yes" ~ 1,
+          `Adjuvant Chemo` == "no" ~ 0,
+          `Adjuvant Chemo` == "not known" ~ NA_real_,
+          TRUE ~ NA_real_
+        ),
+        OS_STATUS = ifelse(OS_STATUS == "yes", 1, 0),
+        Age = as.numeric(Age),
+        IS_MALE = ifelse(Sex == "male", 1, 0),
+        Histology = recode(Histology,
+                         "adeno" = "Adenocarcinoma",
+                         "squamous" = "Squamous Cell Carcinoma",
+                         "large" = "Large Cell Carcinoma"),
+        Stage = recode(Stage,
+                     "1a" = "IA", "1b" = "IB",
+                     "2a" = "II", "2b" = "II",
+                     "3a" = "III", "3b" = "III",
+                     "4"  = "IV"),
+        `Smoked?` = "Unknown",
+        Race = "Unknown"
+      ) %>%
+    select(-Sex)
+  }
+
+  if (GSE == "GSE29013") {
+    pdata <- pdata %>%
+      select(-c(title:data_row_count), -`specimen.number:ch1`, -`spor.n:ch1`) %>%
+      select(1, 2, 3, 4, 5, 6, 7, 9, 10, 12)
+    colnames(pdata) <- c("Adjuvant Chemo", "Age", "OS_STATUS", "OS_MONTHS", "Stage",  "Sex", "Histology", "Race", "Smoked?", "PFS_MONTHS")
+    pdata <- pdata %>%
+      mutate(
+        Age = as.numeric(Age),
+        IS_MALE = ifelse(Sex == "M", 1, 0),
+        `Adjuvant Chemo` = ifelse(`Adjuvant Chemo` == "Yes", 1, 0),
+        OS_STATUS = as.numeric(OS_STATUS),
+        OS_MONTHS = as.numeric(OS_MONTHS) * 12,
+        PFS_MONTHS = as.numeric(PFS_MONTHS) * 12,
+        `Smoked?` = ifelse(`Smoked?` == 1, "Yes", "No"),
+        Histology = recode(Histology, "Squamous" = "Squamous Cell Carcinoma"),
+        Stage = recode(Stage, "IIA" = "II", "IIB" = "II", "IIIA" = "III", "IIIB" = "III")
+      ) %>%
+      select(-Sex)
+  }
+
+  if (GSE == "GSE31908") {
+    pdata <- as_tibble(gset@phenoData@data) %>%
+      select(-c(title:data_row_count))
+    pdata$`gender:ch1` <- coalesce(pdata$`gender:ch1`, pdata$`Sex:ch1`)
+    pdata <- pdata[, c(1, 5, 8, 10, 11, 12, 13, 15, 17)]
+    pdata$Histology <- "Adenocarcinoma"
+    colnames(pdata) <- c("Adjuvant Chemo", "Sex", "PFS_MONTHS", "OS_MONTHS", "Stage_N", "Stage_T", "Race", "Smoked?", "OS_STATUS", "Histology")
+
+    pdata <- pdata %>%
+      mutate(
+        `Adjuvant Chemo` = ifelse(`Adjuvant Chemo` == "Yes", 1, 0),
+        `Smoked?` = ifelse(`Smoked?` == "Smoked in the past", "Yes", "No"),
+        OS_STATUS = ifelse(OS_STATUS == "Dead", 1, 0),
+        OS_STATUS = as.numeric(OS_STATUS),
+        OS_MONTHS = as.numeric(OS_MONTHS),
+        PFS_MONTHS = as.numeric(PFS_MONTHS),
+        IS_MALE = ifelse(Sex == "Male", 1, 0),
+        Age = c(73, 69, 67, 67, 67, 59, 74, 65, 73, 73, 65, 73, 65, 69, 62, 67, NA),
+        Stage = case_when(
+          Stage_N == "N0, ACCORDING TO AJCC CRITERIA" & Stage_T == "T1, ACCORDING TO AJCC CRITERIA" ~ "IA",
+          Stage_N == "N0, ACCORDING TO AJCC CRITERIA" & Stage_T == "T2, ACCORDING TO AJCC CRITERIA" ~ "IB",
+          Stage_N == "N1, ACCORDING TO AJCC CRITERIA" & Stage_T == "T2, ACCORDING TO AJCC CRITERIA" ~ "II",
+          TRUE ~ NA_character_
+        ),
+        Race = recode(Race, "White" = "Caucasian", "Not Reported" = "Unknown")
+      ) %>%
+    select(-Sex, -Stage_N, -Stage_T)
+  }
+    
+  if (GSE == "GSE31210") {
+    pdata <- as_tibble(gset@phenoData@data) %>%
+    select(-c(title:data_row_count))
+    pdata$`age (years):ch1` <- coalesce(pdata$`age (years):ch1`, pdata$`age:ch1`)
+    pdata$OS_MONTHS <- round(as.numeric(pdata$`days before death/censor:ch1`) / 30.44, 2)
+    pdata$Histology <- "Adenocarcinoma"
+    pdata <- pdata[, c(1, 7, 9, 12, 15, 18, 20, 21)]
+    colnames(pdata) <- c("Age", "OS_STATUS", "Sex", "RFS_MONTHS", "Stage", "Smoked?", "OS_MONTHS", "Histology")
+ 
+    pdata <- pdata %>%
+      mutate(
+        OS_STATUS = ifelse(OS_STATUS == "dead", 1, 0),
+        Age = as.numeric(Age),
+        IS_MALE = ifelse(Sex == "male", 1, 0),
+        `Smoked?` = ifelse(`Smoked?` == "Never-smoker", "No", "Yes"),
+        `Adjuvant Chemo` = 0,
+        Race = "Unknown",
+        RFS_MONTHS = sapply(strsplit(as.character(RFS_MONTHS), ";"), function(x) round(as.numeric(x[1]), 2))
+      ) %>%
+    select(-Sex)
+  }
+
+  if (GSE == "GSE50081") {
+    pdata <- pdata %>%
+    select(-c(title:data_row_count)) %>%
+    select(1, 3, 7, 8, 9, 10, 11)
+    colnames(pdata) <- c("Age", "Histology", "Sex", "Smoked?", "Stage", "OS_STATUS", "OS_MONTHS")
+    
+    pdata <- pdata %>%
+      mutate(
+        OS_STATUS = ifelse(OS_STATUS == "dead", 1, 0),
+        `Smoked?` = case_when(
+          `Smoked?` %in% c("Current", "Ex-smoker") ~ "Yes",
+          `Smoked?` == "Never" ~ "No",
+          TRUE ~ "Unknown"
+        ),
+        Age = as.numeric(Age),
+        IS_MALE = ifelse(Sex == "M", 1, 0),
+        OS_MONTHS = as.numeric(OS_MONTHS) * 12,
+        `Adjuvant Chemo` = 0,
+        Race = "Unknown",
+        Histology = recode(Histology,
+                           "adenosquamous carcinoma" = "Adenosquamous Carcinoma",
+                           "adenocarcinoma" = "Adenocarcinoma",
+                           "squamous cell carcinoma" = "Squamous Cell Carcinoma",
+                           "large cell carcinoma" = "Large Cell Carcinoma",
+                           "NSClarge cell carcinoma-mixed" = "Large Cell Carcinoma",
+                           "NSCLC-favor adenocarcinoma" = "Adenocarcinoma",
+                           "squamous cell carcinoma X2" = "Squamous Cell Carcinoma"),
+        Stage = recode(Stage, "1A" = "IA", "1B" = "IB", "2A" = "II", "2B" = "II")
+      ) %>%
+      select(-Sex)
+  }
+
+ if (GSE == "GSE68465") {
+  pdata <- pdata %>%
+  select(-c(title:data_row_count)) %>%
+  select(1, 2, 4, 5, 8, 9, 12, 13, 14, 16)
+  colnames(pdata) <- c("Age", "Adjuvant Chemo", "Stage", "Histology", "PFS_MONTHS", "OS_MONTHS", "Race", "Sex", "Smoked?", "OS_STATUS")
+
+  convert_stage <- function(tnm) {
+    if (tnm %in% c("pN0pT1")) {
+      return("IA")
+    } else if (tnm %in% c("pN0pT2")) {
+      return("IB")
+    } else if (tnm %in% c("pN0pT3", "pN1pT1", "pN1pT2")) {
+      return("II")
+    } else if (tnm %in% c("pN2pT1", "pN2pT2", "pN1pT3", "pN0pT4", "pN1pT4")) {
+      return("III")
+    } else if (tnm %in% c("pN2pT3", "pN2pT4")) {
+      return("IV")
+    } else {
+      return("Unknown")
+    }
+  }
+
+  pdata <- pdata %>%
+    mutate(
+      Age = as.numeric(Age),
+      PFS_MONTHS = as.numeric(PFS_MONTHS),
+      OS_MONTHS = as.numeric(OS_MONTHS),
+      OS_STATUS = ifelse(OS_STATUS == "Dead", 1, 0),
+      `Adjuvant Chemo` = ifelse(`Adjuvant Chemo` == "Yes", 1, 0),
+      IS_MALE = ifelse(Sex == "Male", 1, 0),
+      `Smoked?` = case_when(
+        `Smoked?` %in% c("Smoked in the past", "Currently smoking") ~ "Yes",
+        `Smoked?` == "Never smoked" ~ "No",
+        TRUE ~ "Unknown"
+      ),
+      Race = recode(Race, "Not Reported" = "Unknown", "White" = "Caucasian", "Black or African American" = "African American"),
+      Histology = recode(Histology, "Lung Adenocarcinoma" = "Adenocarcinoma"),
+      Stage = sapply(Stage, convert_stage)
+    ) %>%
+    select(-Sex)
+  }
+
+  if (GSE == "GSE14814") {
+    pdata <- pdata %>%
+      select(-c(title:data_row_count), -relation) %>%
+      select(1, 7, 8, 9, 10, 12, 13)
+    colnames(pdata) <- c("Age", "Histology", "OS_STATUS", "OS_MONTHS", "Adjuvant Chemo", "Sex", "Stage")
+    
+    pdata <- pdata %>%
+      mutate(
+        OS_MONTHS = as.numeric(OS_MONTHS) * 12,
+        Age = as.numeric(Age),
+        OS_STATUS = ifelse(OS_STATUS == "Dead", 1, 0),
+        `Adjuvant Chemo` = ifelse(`Adjuvant Chemo` == "ACT", 1, 0),
+        Histology = recode(Histology,
+                           "ADC" = "Adenocarcinoma",
+                           "SQCC" = "Squamous Cell Carcinoma",
+                           "LCUC" = "Large Cell Carcinoma"),
+        `Smoked?` = "Unknown",
+        Race = "Unknown",
+        IS_MALE = ifelse(Sex == "Male", 1, 0),
+        Stage = recode(Stage, "I" = "IA", "1B" = "IB", "2A" = "II", "2B" = "II")
+      ) %>%
+      select(-Sex)
+  }
+
+  # Assign cleaned data
+  assign(paste0(GSE, ".data"), pdata)
+}
+
+```
+
+# Merged Data
+```{r}
+for (GSE in GSE_numbers) {
+  # Get clinical and expression data
+  clinical <- get(paste0(GSE, ".data"))
+  expr <- get(paste0(GSE, ".expr"))
+
+  # Combine using cbind
+  merged <- cbind(clinical, expr)
+
+  # Save merged data back to environment
+  assign(paste0(GSE, ".merged"), merged)
+}
+```
+
+# Clean the data
+```{r}
+for (GSE in GSE_numbers) {
+  # Combine clinical and expression data
+  merged <- cbind(get(paste0(GSE, ".data")), get(paste0(GSE, ".expr")))
+
+  # Remove rows with NA in Adjuvant Chemo or OS_STATUS
+  merged <- subset(merged, !is.na(`Adjuvant Chemo`) & !is.na(OS_STATUS))
+
+  # Split clinical and expression data
+  clinical_cols <- c("Adjuvant Chemo", "Age", "OS_STATUS", "Stage", "Histology", "Race", "Smoked?", "IS_MALE", "OS_MONTHS", "PFS_MONTHS", "RFS_MONTHS")
+  clinical_cols <- clinical_cols[clinical_cols %in% colnames(merged)]  # only keep existing ones
+
+  clinical_data <- merged[, clinical_cols, drop = FALSE]
+  expression_data <- merged[, !(colnames(merged) %in% clinical_cols), drop = FALSE]
+
+  # Save cleaned datasets
+  assign(paste0(GSE, ".merged"), merged)
+  assign(paste0(GSE, ".data"), clinical_data)
+  assign(paste0(GSE, ".expr"), expression_data)
+  
+  write.csv(merged, paste0(GSE, ".merged.csv"), row.names = TRUE)
+  write.csv(clinical_data, paste0(GSE, ".data.csv"), row.names = TRUE)
+  write.csv(expression_data, paste0(GSE, ".expr.csv"), row.names = TRUE)
+}
+```
+
+# PCA for GPL570
+```{r}
+library(survival)    # For survival analysis
+install.packages("survminer")
+library(survminer)   # For survival visualization
+install.packages("ggfortify")
+library(ggfortify)   # For PCA visualization
+install.packages("factoextra")
+library(factoextra)
+install.packages("sva")
+library(sva)
+
+GPL570.expr.all <- rbind(GSE29013.expr, 
+                  GSE37745.expr, 
+                  GSE50081.expr,
+                  GSE31908.expr,
+                  GSE31210.expr)
+
+# Create batch labels for all samples
+GPL570_batch_labels <- c(rep("GSE29013", nrow(GSE29013.expr)),
+                      rep("GSE37745", nrow(GSE37745.expr)),
+                      rep("GSE50081", nrow(GSE50081.expr)),
+                      rep("GSE31908", nrow(GSE31908.expr)),
+                      rep("GSE31210", nrow(GSE31210.expr)))
+#PCA Before
+GPL570_pca_before <- prcomp(GPL570.expr.all, scale=TRUE)
+fviz_pca_ind(GPL570_pca_before,
+             geom = "point",
+             col.ind = GPL570_batch_labels,
+             addEllipses = TRUE,
+             legend.title = "GPL570 (Before Correction)")
+
+#PCA After
+GPL570_combat <- ComBat(dat = t(GPL570.expr.all), batch = GPL570_batch_labels, mod = NULL)
+
+# transpose back for PCA and downstream analyses
+GPL570_corrected <- t(GPL570_combat)
+
+GPL570_pca_after <- prcomp(GPL570_corrected, scale=TRUE)
+fviz_pca_ind(GPL570_pca_after,
+             geom = "point",
+             col.ind = GPL570_batch_labels,
+             addEllipses = TRUE,
+             legend.title = "GPL570 (Corrected)")
+
+GPL570.expr = as.data.frame(GPL570_corrected)
+
+GPL570.data = bind_rows(GSE29013.data, GSE37745.data, GSE50081.data, GSE31908.data, GSE31210.data)
+write.csv(GPL570.data, 
+          "GPL570_data.csv",
+          row.names = F)
+
+write.csv(GPL570.expr, 
+          "GPL570expr.csv",
+          row.names = F)
+
+GPL570merged = cbind(GPL570.data, GPL570.expr)
+write.csv(GPL570merged, 
+          "GPL570merged.csv",
+          row.names = F)
+
+GPL570.genesymbols <- annotation29013[!duplicated(annotation29013$SYMBOL), ]
+write.csv(GPL570.genesymbols, 
+          "GPL570symbols.csv",
+          row.names = F)
+```
+
+
+# PCA for GPL 96
+```{r}
+# Directly combine datasets by rows (subjects)
+GPL96.expr.all <- rbind(GSE68465.expr, GSE14814.expr)
+
+# Generate batch labels clearly identifying samples
+GPL96_batch_labels <- c(rep("GSE68465", nrow(GSE68465.expr)),
+                  rep("GSE14814", nrow(GSE14814.expr)))
+
+GPL96_PCA_before <- prcomp(GPL96.expr.all, scale=TRUE)
+fviz_pca_ind(GPL96_PCA_before,
+             geom = "point",
+             col.ind = GPL96_batch_labels,
+             addEllipses = TRUE,
+             legend.title = "GPL96 (Before Correction)")
+
+GPL96_combat <- ComBat(dat = t(GPL96.expr.all), batch = GPL96_batch_labels, mod = NULL)
+
+# transpose back for PCA
+GPL96_corrected <- t(GPL96_combat)
+
+# PCA after correction
+GPL96_PCA_after <- prcomp(GPL96_corrected, scale=TRUE)
+fviz_pca_ind(GPL96_PCA_after,
+             geom = "point",
+             col.ind = GPL96_batch_labels,
+             addEllipses = TRUE,
+             legend.title = "GPL96 (Corrected)")
+
+GPL96.data = bind_rows(GSE68465.data, GSE14814.data)
+
+write.csv(GPL96.data, 
+          "GPL96_data.csv",
+          row.names = F)
+
+GPL96.expr = as.data.frame(expr_pair_corrected)
+write.csv(GPL96.expr, 
+          "GPL96expr.csv",
+          row.names = F)
+
+GPL96merged = cbind(GPL96.data, GPL96.expr)
+write.csv(GPL96merged, 
+          "GPL96merged.csv",
+          row.names = F)
+
+GPL96.genesymbols <- annotation68465[!duplicated(annotation68465$SYMBOL), ]
+write.csv(GPL96.genesymbols, 
+          "GPL96symbols.csv",
+          row.names = F)
+```
+
+#GPL570 + GPL96 PCA
+```{r}
+affygenes <- intersect(colnames(GPL570.expr), colnames(GPL96.expr))
+
+GPL570.expr2 = GPL570.expr[, affygenes]
+GPL96.expr2 = GPL96.expr[, affygenes]
+
+affy_expr_all <- rbind(GPL570.expr2,
+                  GPL96.expr2)
+
+# Create batch labels for all samples
+affy_batch_labels <- c(rep("GPL570", nrow(GPL570.expr2)),
+                      rep("GPL96", nrow(GPL96.expr2)))
+
+#PCA Before
+affy_PCA_before <- prcomp(affy_expr_all, scale=TRUE)
+fviz_pca_ind(affy_PCA_before,
+             geom = "point",
+             col.ind = affy_batch_labels,
+             addEllipses = TRUE,
+             legend.title = "Affymetrix (Before Correction)")
+
+#PCA After
+affy_combat <- ComBat(dat = t(affy_expr_all), batch = affy_batch_labels, mod = NULL)
+
+# transpose back for PCA and downstream analyses
+affy_corrected <- t(affy_combat)
+
+pca_after <- prcomp(affy_corrected, scale=TRUE)
+fviz_pca_ind(pca_after,
+             geom = "point",
+             col.ind = affy_batch_labels,
+             addEllipses = TRUE,
+             legend.title = "Affymetrix (Corrected)")
+
+affy.expr = as.data.frame(affy_corrected)
+
+write.csv(affy.expr, 
+          "affymetrix.expr.csv",
+          row.names = F)
+
+affy.data = bind_rows(GPL570.data, GPL96.data)
+affy.data <- affy.data %>%
+  mutate("Adjuvant Chemo" = case_when(
+    `Adjuvant Chemo` == 1 ~ "ACT",
+    `Adjuvant Chemo` == 0 ~ "OBS"
+  ))
+
+affy.data$`Adjuvant Chemo` <- factor(affy.data$`Adjuvant Chemo`)
+affy.data$`Adjuvant Chemo` <- relevel(affy.data$`Adjuvant Chemo`, ref = "OBS")
+
+levels(affy.data$`Adjuvant Chemo`)
+
+write.csv(affy.data,
+          "affymetrix.data.csv",
+          row.names = F)
+
+affy.merged = cbind(affy.data, affy.expr)
+write.csv(affy.merged,
+          "affymetrix.merged.csv",
+          row.names = F)
+```
+
