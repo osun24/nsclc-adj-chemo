@@ -1,0 +1,115 @@
+---
+title: "Deepsurv"
+output: pdf_document
+date: "2025-04-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages("remotes")
+install.packages(c("dplyr", "purrr", "tibble", "readr"))
+library(survivalmodels)
+library(torch)
+library(dplyr)
+library(purrr)
+library(tibble)
+library(readr)
+library(progressr)
+BiocManager::install("survcomp")
+library(survcomp)
+
+system2("C:/Users/Miche/AppData/Local/R/cache/R/reticulate/uv/cache/archive-v0/Kt4JZ5YltggosNPYx4RBG/Scripts/pip.exe",
+        args = c("install", "pycox", "torchtuples", "pandas", "scikit-learn", "torch"))
+```
+
+```{r}
+set.seed(42)
+
+affyTrain1 <- affyTrain %>%
+  mutate(across(where(is.logical), as.numeric))
+
+affyValidation1 <- affyValidation %>%
+  mutate(across(where(is.logical), as.numeric))
+
+hyper_grid <- tidyr::expand_grid(
+  num_nodes = list(c(32), c(64), c(32, 16), c(64, 32)),
+  dropout = c(0.0, 0.2, 0.5),               
+  learning_rate = c(0.001, 0.01),
+  weight_decay = c(0.0, 0.0001, 0.001)        
+)
+
+# Create an empty results tibble
+results <- tibble()
+
+# Loop through each combination
+for (i in seq_len(nrow(hyper_grid))) {
+  params <- hyper_grid[i, ]
+
+  cat("Running config:", paste(params, collapse = " | "), "\n")
+
+  try({
+    model <- deepsurv(
+      Surv(OS_MONTHS, OS_STATUS) ~ .,
+      data = affyTrain1,
+      num_nodes = params$num_nodes[[1]],
+      dropout = params$dropout,
+      batch_size = 64,
+      epochs = 100,
+      early_stopping = FALSE,
+      learning_rate = params$learning_rate,
+      weight_decay = params$weight_decay,
+      verbose = FALSE
+    )
+
+    pred <- predict(model, newdata = affyValidation1, type = "risk")
+    val_ci <- concordance.index(pred, affyValidation1$OS_MONTHS, affyValidation1$OS_STATUS)$c.index
+
+    results <- bind_rows(results, tibble(
+      num_nodes = paste0("[", paste(params$num_nodes[[1]], collapse = ", "), "]"),
+      dropout = params$dropout,
+      learning_rate = params$learning_rate,
+      weight_decay = params$weight_decay,
+      val_ci = val_ci
+    ))
+  })
+}
+results %>%
+  arrange(desc(val_ci)) %>%
+  slice(1)
+write.csv(results, "deepsurv_hyperparam_results_r.csv", row.names = FALSE)
+
+
+#Best Hyperparameters:
+#{'layers': [32, 16], 'dropout': 0.5, 'learning_rate': 0.01, 'weight_decay': 0.0001}
+#Best Validation CI: 0.6711209
+```
+
+```{r}
+library(survival)
+library(survivalmodels)
+
+model <- deepsurv(
+  Surv(OS_MONTHS, OS_STATUS) ~ .,
+  data = affyTrain1,
+  num_nodes = c(32, 16),
+  dropout = 0.2,
+  batch_size = 64,
+  epochs = 100,
+  early_stopping = FALSE,
+  learning_rate = 0.01,
+  weight_decay = 0.0001,
+  verbose = TRUE
+)
+
+pred <- predict(model, newdata = affyValidation1, type = "risk")
+val_ci <- concordance.index(pred, affyValidation1$OS_MONTHS, affyValidation1$OS_STATUS)$c.index
+print(val_ci)
+
+#C-index: 0.6423197
+```
+
+
+
