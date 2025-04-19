@@ -168,6 +168,7 @@ Validation set: 113 events, 163 censored
 Non-numeric columns at the end of preprocessing: []
 
 affy:
+Unique values in 'Adjuvant Chemo' before processing: ['ACT' 'OBS']
 Unique values in 'Stage' before processing: ['II' 'IB' 'III' 'IA' 'IV' 'Unknown']
 Unique values in 'Histology' before processing: ['Squamous Cell Carcinoma' 'Adenocarcinoma' 'Large Cell Carcinoma'
  'Adenosquamous Carcinoma']
@@ -188,4 +189,4 @@ Validation set: 231 samples
 Training set: 300 events, 391 censored
 Testing set: 100 events, 131 censored
 Validation set: 100 events, 131 censored
-Non-numeric columns at the end of preprocessing: []"""
+Non-numeric columns at the end of preprocessing: ['Adjuvant Chemo']"""
