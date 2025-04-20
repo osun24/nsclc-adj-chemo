@@ -9,33 +9,3 @@ Number of events in test set: 100
 Starting Nested Cross-Validation...
 [Fold 1/5] Starting outer fold...
 Fitting 5 folds for each of 144 candidates, totalling 720 fits
-[Fold 1] Completed outer fold with Test C-index: 0.555
-[Fold 2/5] Starting outer fold...
-Fitting 5 folds for each of 144 candidates, totalling 720 fits
-[Fold 2] Completed outer fold with Test C-index: 0.503
-[Fold 3/5] Starting outer fold...
-Fitting 5 folds for each of 144 candidates, totalling 720 fits
-[Fold 3] Completed outer fold with Test C-index: 0.599
-[Fold 4/5] Starting outer fold...
-Fitting 5 folds for each of 144 candidates, totalling 720 fits
-[Fold 4] Completed outer fold with Test C-index: 0.583
-[Fold 5/5] Starting outer fold...
-Fitting 5 folds for each of 144 candidates, totalling 720 fits
-[Fold 5] Completed outer fold with Test C-index: 0.650
-Nested CV completed in 15351.70 seconds.
-Nested CV Mean Test C-index: 0.578
-Combined fold-level metrics (inner and outer) saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_rsf_all_fold_results_20250403.csv
-Selected hyperparameters from nested CV: {'max_depth': 10, 'max_features': 0.1, 'min_samples_leaf': 60, 'n_estimators': 750}
-Nested CV results saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_rsf_nested_cv_results.csv
-1 SE RSF hyperparameters from nested CV: {'max_depth': 10, 'max_features': 0.1, 'min_samples_leaf': 60, 'n_estimators': 750} (threshold: 0.601)
-Best RSF model saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_final_rsf_model.pkl
-1 SE RSF model saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_final_rsf_model_1se.pkl
-Best RSF: Train C-index: 0.794, Test C-index: 0.670
-1 SE RSF: Train C-index: 0.794, Test C-index: 0.670
-Starting permutation importance for 1 SE model...
-Initial RSF Test C-index (1SE Model): 0.670
-Initial RSF Train C-index (1SE Model): 0.794
-RSF pre-selection importances saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv
-RSF pre-selection plot saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.png
-RSF pre-selection: selected top 1000 features.
-Step 1 (1SE) completed in 9745.69 seconds.

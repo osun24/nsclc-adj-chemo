@@ -339,6 +339,10 @@ if __name__ == "__main__":
     print("Loading validation data from: affyValidation.csv")
     valid = pd.read_csv("affyValidation.csv")
     
+    # Handle Adjuvant Chemo column with dummies to have OBS as baseline
+    train['Adjuvant Chemo'] = train['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
+    valid['Adjuvant Chemo'] = valid['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
+    
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
     
