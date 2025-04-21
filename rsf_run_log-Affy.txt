@@ -1,0 +1,41 @@
+Loading train data from: affyTrain.csv
+Number of events in training set: 300 | Censored cases: 391
+Train data shape: (691, 13062)
+Loading validation data from: affyValidation.csv
+Number of events in validation set: 100 | Censored cases: 131
+Validation data shape: (231, 13062)
+Number of events in training set: 300
+Number of events in test set: 100
+Starting Nested Cross-Validation...
+[Fold 1/5] Starting outer fold...
+Fitting 5 folds for each of 144 candidates, totalling 720 fits
+[Fold 1] Completed outer fold with Test C-index: 0.633
+[Fold 2/5] Starting outer fold...
+Fitting 5 folds for each of 144 candidates, totalling 720 fits
+[Fold 2] Completed outer fold with Test C-index: 0.526
+[Fold 3/5] Starting outer fold...
+Fitting 5 folds for each of 144 candidates, totalling 720 fits
+[Fold 3] Completed outer fold with Test C-index: 0.580
+[Fold 4/5] Starting outer fold...
+Fitting 5 folds for each of 144 candidates, totalling 720 fits
+[Fold 4] Completed outer fold with Test C-index: 0.576
+[Fold 5/5] Starting outer fold...
+Fitting 5 folds for each of 144 candidates, totalling 720 fits
+[Fold 5] Completed outer fold with Test C-index: 0.657
+Nested CV completed in 15488.14 seconds.
+Nested CV Mean Test C-index: 0.594
+Combined fold-level metrics (inner and outer) saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_rsf_all_fold_results_20250420.csv
+Selected hyperparameters from nested CV: {'max_depth': 10, 'max_features': 0.1, 'min_samples_leaf': 60, 'n_estimators': 750}
+Nested CV results saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_rsf_nested_cv_results.csv
+1 SE RSF hyperparameters from nested CV: {'max_depth': 10, 'max_features': 0.1, 'min_samples_leaf': 60, 'n_estimators': 750} (threshold: 0.611)
+Best RSF model saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_final_rsf_model.pkl
+1 SE RSF model saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_final_rsf_model_1se.pkl
+Best RSF: Train C-index: 0.803, Test C-index: 0.655
+1 SE RSF: Train C-index: 0.803, Test C-index: 0.655
+Starting permutation importance for 1 SE model...
+Initial RSF Test C-index (1SE Model): 0.655
+Initial RSF Train C-index (1SE Model): 0.803
+RSF pre-selection importances saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv
+RSF pre-selection plot saved to /home/owenzsun/gcs-bucket/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.png
+RSF pre-selection: selected top 1000 features.
+Step 1 (1SE) completed in 9823.01 seconds.
