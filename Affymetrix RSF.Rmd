@@ -8,13 +8,129 @@ date: "2025-04-04"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(tidyverse)
+library(ranger)
+library(survival)
+
+# Load datasets
+affyTrain <- read_csv("affyTrain.csv")
+affyValidation <- read_csv("affyValidation.csv")
+
+x_train <- affyTrain[, !(names(affyTrain) %in% c("OS_MONTHS", "OS_STATUS"))]
+y_train <- Surv(affyTrain$OS_MONTHS, affyTrain$OS_STATUS)
+
+x_valid <- affyValidation[, !(names(affyValidation) %in% c("OS_MONTHS", "OS_STATUS"))]
+y_valid <- Surv(affyValidation$OS_MONTHS, affyValidation$OS_STATUS)
+
+# Define grid of hyperparameters
+grid <- expand.grid(
+  num.trees = c(500, 750, 1000),         
+  mtry_frac = c(0.001, 0.004, 0.038, 0.1),
+  min.node.size = 1,                      
+  min.bucket = c(50, 60, 70, 80, 90, 100),
+  max.depth = c(10, 20)                  
+)
+
+# Initialize results list
+results <- list()
+
+# Loop over grid
+for (i in 1:nrow(grid)) {
+  params <- grid[i, ]
+  mtry_val <- floor(params$mtry_frac * ncol(x_train))
+
+  set.seed(42)
+  model <- ranger(
+    x = x_train,
+    y = y_train,
+    num.trees = params$num.trees,
+    mtry = mtry_val,
+    min.node.size = params$min.node.size,
+    min.bucket = params$min.bucket,
+    max.depth = params$max.depth,
+    splitrule = "logrank",
+    importance = "permutation",
+    seed = 12,
+    num.threads = 0
+  )
+
+  train_chf <- predict(model, data = x_train)$chf
+  valid_chf <- predict(model, data = x_valid)$chf
+
+  train_risk <- -rowSums(train_chf)
+  valid_risk <- -rowSums(valid_chf)
+
+  train_cindex <- concordance(y_train ~ train_risk)$concordance
+  valid_cindex <- concordance(y_valid ~ valid_risk)$concordance
+
+  results[[i]] <- cbind(params, train_cindex, valid_cindex)
+  cat("Finished combo", i, "of", nrow(grid), "\n")
+}
+
+# Combine results and sort
+results_df <- bind_rows(results) %>%
+  arrange(desc(valid_cindex))
+```
+
+```{r}
+# Print top result
+best_result <- results_df[1, ]
+cat("\n--- Best Hyperparameters ---\n")
+cat("num.trees     :", best_result$num.trees, "\n")
+cat("mtry (frac)   :", best_result$mtry_frac, "\n")
+cat("min.node.size :", best_result$min.node.size, "\n")
+cat("min.bucket    :", best_result$min.bucket, "\n")
+cat("max.depth     :", best_result$max.depth, "\n")
+cat("Train C-index :", round(best_result$train_cindex, 4), "\n")
+cat("Valid C-index :", round(best_result$valid_cindex, 4), "\n")
+```
+
+```{r}
+top_n <- 5
+top_cis <- results_df$valid_cindex[1:top_n]
+se_val <- sd(top_cis) / sqrt(top_n)
+
+# Threshold for 1SE rule
+threshold <- best_result$valid_cindex - se_val
+
+# Apply 1SE rule: models within 1SE of best and simpler (e.g., lower depth, fewer trees)
+within_1se <- results_df %>%
+  filter(valid_cindex >= threshold)
+
+# Define simplicity: prioritize shallower trees, smaller leaf size, fewer trees
+one_se_model <- within_1se %>%
+  arrange(min.bucket, max.depth, num.trees) %>%
+  slice(1)
+
+cat("\n--- 1SE Rule Selected Hyperparameters ---\n")
+cat("num.trees     :", one_se_model$num.trees, "\n")
+cat("mtry (frac)   :", one_se_model$mtry_frac, "\n")
+cat("min.node.size :", one_se_model$min.node.size, "\n")
+cat("min.bucket    :", one_se_model$min.bucket, "\n")
+cat("max.depth     :", one_se_model$max.depth, "\n")
+cat("Train C-index :", round(one_se_model$train_cindex, 4), "\n")
+cat("Valid C-index :", round(one_se_model$valid_cindex, 4), "\n")
+cat("1SE Threshold :", round(threshold, 4), "\n")
+
+# --- 1SE Rule Selected Hyperparameters ---
+#num.trees     : 1000 
+#mtry (frac)   : 0.1 
+#min.node.size : 1 
+#min.bucket    : 50 
+#max.depth     : 10 
+#Train C-index : 0.8705 
+#Valid C-index : 0.6684 
+#1SE Threshold : 0.6678 
+```
+
 
 ```{r}
 library(ranger)
 library(survival)
 library(readr)
 
-set.seed(42)
+set.seed(12)
 
 # Load train and validation datasets
 affyTrain <- read_csv("affyTrain.csv")
@@ -28,14 +144,14 @@ set.seed(42)
 rsf_model <- ranger(
   x = x_train,
   y = y_train,
-  num.trees = 750,
+  num.trees = 1000,
   mtry = floor(0.1 * ncol(x_train)),  # max features = 0.1
   min.node.size = 6,                  # minimum samples to split (min_samples_split)
-  min.bucket = 60,                    # minimum terminal node size (min_samples_leaf)
+  min.bucket = 50,                    # minimum terminal node size (min_samples_leaf)
   max.depth = 10,                    # max depth
   splitrule = "logrank",
   importance = "permutation",
-  seed = 42,
+  seed = 12,
   num.threads = 0  # use all available cores
 )
 
@@ -57,8 +173,8 @@ valid_cindex <- concordance(y_valid ~ valid_risk_scores)$concordance
 cat("Training C-index:", train_cindex, "\n")
 cat("Validation C-index:", valid_cindex, "\n")
 
-# Training C-index: 0.8413683 
-# Validation C-index: 0.6784278  
+# Training C-index:  0.8705403  
+# Validation C-index: 0.6683935   
 
 ```
 

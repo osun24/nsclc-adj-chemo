@@ -34,6 +34,7 @@ affyTrain1 <- affyTrain %>%
 affyValidation1 <- affyValidation %>%
   mutate(across(where(is.logical), as.numeric))
 
+
 hyper_grid <- tidyr::expand_grid(
   num_nodes = list(c(32), c(64), c(32, 16), c(64, 32)),
   dropout = c(0.0, 0.2, 0.5),               
@@ -42,7 +43,7 @@ hyper_grid <- tidyr::expand_grid(
 )
 
 # Create an empty results tibble
-results <- tibble()
+results.ds <- tibble()
 
 # Loop through each combination
 for (i in seq_len(nrow(hyper_grid))) {
@@ -67,7 +68,7 @@ for (i in seq_len(nrow(hyper_grid))) {
     pred <- predict(model, newdata = affyValidation1, type = "risk")
     val_ci <- concordance.index(pred, affyValidation1$OS_MONTHS, affyValidation1$OS_STATUS)$c.index
 
-    results <- bind_rows(results, tibble(
+    results.ds <- bind_rows(results.ds, tibble(
       num_nodes = paste0("[", paste(params$num_nodes[[1]], collapse = ", "), "]"),
       dropout = params$dropout,
       learning_rate = params$learning_rate,
@@ -76,15 +77,15 @@ for (i in seq_len(nrow(hyper_grid))) {
     ))
   })
 }
-results %>%
+results.ds %>%
   arrange(desc(val_ci)) %>%
   slice(1)
 write.csv(results, "deepsurv_hyperparam_results_r.csv", row.names = FALSE)
 
 
 #Best Hyperparameters:
-#{'layers': [32, 16], 'dropout': 0.5, 'learning_rate': 0.01, 'weight_decay': 0.0001}
-#Best Validation CI: 0.6711209
+#{'layers': [64, 32], 'dropout': 0.5, 'learning_rate': 0.01, 'weight_decay': 0.001}
+#Best Validation CI: 0.6271588
 ```
 
 ```{r}
@@ -94,13 +95,13 @@ library(survivalmodels)
 model <- deepsurv(
   Surv(OS_MONTHS, OS_STATUS) ~ .,
   data = affyTrain1,
-  num_nodes = c(32, 16),
-  dropout = 0.2,
+  num_nodes = c(64, 32),
+  dropout = 0.5,
   batch_size = 64,
   epochs = 100,
   early_stopping = FALSE,
   learning_rate = 0.01,
-  weight_decay = 0.0001,
+  weight_decay = 0.001,
   verbose = TRUE
 )
 
@@ -108,7 +109,7 @@ pred <- predict(model, newdata = affyValidation1, type = "risk")
 val_ci <- concordance.index(pred, affyValidation1$OS_MONTHS, affyValidation1$OS_STATUS)$c.index
 print(val_ci)
 
-#C-index: 0.6423197
+#C-index: 0.6271588
 ```
 
 
