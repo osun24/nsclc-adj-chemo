@@ -340,13 +340,9 @@ def create_rsf(train_df, test_df, name):
             perm_start_time = time.time()
             
             # Use a smaller number of iterations for permutation importance to save time
-            perm_importance = permutation_importance(
-                one_se_model, X_train, y_train,
-                n_repeats=5,
-                random_state=trial*42,
-                n_jobs=-1,
-                scoring=rsf_concordance_metric
-            )
+            perm_importance = permutation_importance(one_se_model, X_train, y_train,
+                                       scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
+                                       n_repeats=5, random_state=42, n_jobs=-1)
             
             perm_end_time = time.time()
             print(f"Permutation importance calculated in {perm_end_time - perm_start_time:.2f} seconds.")
