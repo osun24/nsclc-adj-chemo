@@ -1,0 +1,333 @@
+Loading train data from: affyTrain.csv
+Number of events in training set: 300 | Censored cases: 391
+Train data shape: (691, 13062)
+Loading validation data from: affyValidation.csv
+Number of events in validation set: 100 | Censored cases: 131
+Validation data shape: (231, 13062)
+
+Evaluating with 5000 features (500000%)
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 552
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 1: Test C-index = 0.650
+Fold 1: Train C-index = 0.855
+Fold 1: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 50, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 2: Test C-index = 0.560
+Fold 2: Train C-index = 0.841
+Fold 2: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 50, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 3: Test C-index = 0.600
+Fold 3: Train C-index = 0.852
+Fold 3: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 50, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 4: Test C-index = 0.605
+Fold 4: Train C-index = 0.852
+Fold 4: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 50, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 5: Test C-index = 0.654
+Fold 5: Train C-index = 0.840
+Fold 5: Best params = {'max_depth': 10, 'max_features': 0.1, 'min_samples_leaf': 60, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 552
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 6: Test C-index = 0.637
+Fold 6: Train C-index = 0.853
+Fold 6: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 50, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 7: Test C-index = 0.681
+Fold 7: Train C-index = 0.857
+Fold 7: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 50, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 8: Test C-index = 0.700
+Fold 8: Train C-index = 0.864
+Fold 8: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 50, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 9: Test C-index = 0.629
+Fold 9: Train C-index = 0.842
+Fold 9: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 10: Test C-index = 0.577
+Fold 10: Train C-index = 0.854
+Fold 10: Best params = {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 50, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 552
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 11: Test C-index = 0.651
+Fold 11: Train C-index = 0.861
+Fold 11: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 50, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 12: Test C-index = 0.612
+Fold 12: Train C-index = 0.849
+Fold 12: Best params = {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 50, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 13: Test C-index = 0.609
+Fold 13: Train C-index = 0.813
+Fold 13: Best params = {'max_depth': 10, 'max_features': 0.1, 'min_samples_leaf': 70, 'n_estimators': 875}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 14: Test C-index = 0.543
+Fold 14: Train C-index = 0.837
+Fold 14: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 50, 'n_estimators': 500}
+n_iterations: 2
+n_required_iterations: 7
+n_possible_iterations: 2
+min_resources_: 250
+max_resources_: 553
+aggressive_elimination: False
+factor: 2
+----------
+iter: 0
+n_candidates: 80
+n_resources: 250
+Fitting 5 folds for each of 80 candidates, totalling 400 fits
+----------
+iter: 1
+n_candidates: 40
+n_resources: 500
+Fitting 5 folds for each of 40 candidates, totalling 200 fits
+Fold 15: Test C-index = 0.683
+Fold 15: Train C-index = 0.839
+Fold 15: Best params = {'max_depth': 10, 'max_features': 'log2', 'min_samples_leaf': 60, 'n_estimators': 625}
+Validation C-index for candidate model with 5000 features: 0.640
+Percentage 500000% (5000 features): Mean CV C-index = 0.626 (SE: 0.011)
+
+==========================
+Best Model - Optimal percentage: 500000% (5000 features)
+Best Model - Hyperparameters: {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 50, 'n_estimators': 875}
+Best Model - Mean CV C-index: 0.626 (SE: 0.011)
+Best Model - Validation C-index: 0.640
+==========================
+
+
+==========================
+1SE Model - Optimal percentage: 500000% (5000 features)
+1SE Model - Hyperparameters: {'max_depth': 10, 'max_features': 'sqrt', 'min_samples_leaf': 50, 'n_estimators': 875}
+1SE Model - Mean CV C-index: 0.626 (SE: 0.011)
+1SE Model - Validation C-index: 0.640
+==========================
+
+Results saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_optimal/20250511_rsf_feature_selection_results.csv
+Combined fold-level metrics (inner and outer) saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_optimal/20250511_rsf_all_fold_results.csv
+Total time taken: 9182.12 seconds
+Validation C-index for Best model: 0.640
+Validation C-index for 1SE model: 0.640
+Final Best model saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_optimal/20250511_final_rsf_model_best_500000perc.pkl
+Final 1SE model saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_optimal/20250511_final_rsf_model_1SE_500000perc.pkl

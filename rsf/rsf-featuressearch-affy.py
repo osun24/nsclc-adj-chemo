@@ -55,7 +55,10 @@ def nested_cv_rsf(X, y, param_distributions):
             min_resources=250,
             error_score=np.nan
         )
-        halving_search.fit(X_train_fold, y_train_fold)
+        
+        # Configure joblib to use a longer timeout for workers
+        with joblib.parallel_backend('loky', timeout=300):  # 5-minute timeout
+            halving_search.fit(X_train_fold, y_train_fold)
 
         # Save detailed inner CV results for the current fold
         inner_cv_results_list.append({
@@ -111,10 +114,17 @@ if __name__ == "__main__":
     start = time.time()
     
     # Load preselection CSV from the 1SE model and filter features with >0 importance
-    imp_csv_path = os.path.join("rsf_results_affy", "Affy RS_rsf_preselection_importances_1SE.csv")
+    imp_csv_path = os.path.join("rsf/rsf_results_affy", "Affy RS_rsf_ensemble_feature_importance.csv")
     imp_df = pd.read_csv(imp_csv_path)
     imp_df = imp_df[imp_df["Importance"] > 0].sort_values(by="Importance", ascending=False)
     selected_features_all = imp_df["Feature"].tolist()
+    
+    # Handle Adjuvant Chemo column with dummies to have OBS as baseline
+    if 'Adjuvant Chemo' in train.columns:
+        train['Adjuvant Chemo'] = train['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
+    
+    if 'Adjuvant Chemo' in valid.columns:
+        valid['Adjuvant Chemo'] = valid['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
     
     # Define hyperparameter grid for RSF (modified for the Affy dataset)
     param_distributions = {
@@ -137,28 +147,31 @@ if __name__ == "__main__":
         
         # Prepare training subset using the selected features plus survival columns
         train_subset = train[['OS_STATUS', 'OS_MONTHS'] + features_subset].copy()
+        # Make sure to do the string replacement before converting to int
         for col in ['Adjuvant Chemo', 'IS_MALE']:
             if col in train_subset.columns:
+                # First replace string values with numeric values
+                if col == 'Adjuvant Chemo':
+                    train_subset[col] = train_subset[col].replace({'OBS': 0, 'ACT': 1})
+                # Then convert to int
                 train_subset[col] = train_subset[col].astype(int)
         y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train_subset)
         X_train = train_subset.drop(columns=['OS_STATUS', 'OS_MONTHS'])
         
-        # Use the Affy search space settings
-        local_param_distributions = {
-            "n_estimators": [500, 625, 750, 875], # previously 1000
-            "min_samples_leaf": [50, 60, 65, 70, 80], # 90, 100
-            "max_features": ["sqrt", "log2", 500, 0.1],
-            "max_depth": [10],
-        }
+        mean_cv_score, se_cv_score, best_params, fold_metrics, inner_cv_results = nested_cv_rsf(X_train, y_train, param_distributions)
         
-        mean_cv_score, se_cv_score, best_params, fold_metrics, inner_cv_results = nested_cv_rsf(X_train, y_train, local_param_distributions)
-        
-        # Evaluate candidate model on the validation set
+        # Train a candidate model on full training set using the best parameters from CV
         final_model_candidate = RandomSurvivalForest(random_state=42, n_jobs=-1, **best_params)
         final_model_candidate.fit(X_train, y_train)
+        
+        # Evaluate candidate model on the validation set
         valid_subset_candidate = valid[['OS_STATUS', 'OS_MONTHS'] + features_subset].copy()
         for col in ['Adjuvant Chemo', 'IS_MALE']:
             if col in valid_subset_candidate.columns:
+                # First replace string values with numeric values 
+                if col == 'Adjuvant Chemo':
+                    valid_subset_candidate[col] = valid_subset_candidate[col].replace({'OBS': 0, 'ACT': 1})
+                # Then convert to int
                 valid_subset_candidate[col] = valid_subset_candidate[col].astype(int)
         y_valid_candidate = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid_subset_candidate)
         X_valid_candidate = valid_subset_candidate.drop(columns=['OS_STATUS', 'OS_MONTHS'])

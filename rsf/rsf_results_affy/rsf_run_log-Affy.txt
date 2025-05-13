@@ -440,3 +440,12 @@ Nested CV results saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf
 1 SE RSF hyperparameters from nested CV: {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 750} (threshold: 0.612)
 Best RSF model for trial 20 saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/trials/Affy RS_final_rsf_model_trial20.pkl
 1 SE RSF model for trial 20 saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/trials/Affy RS_final_rsf_model_1se_trial20.pkl
+Best RSF: Train C-index: 0.800, Test C-index: 0.650
+1SE RSF: Train C-index: 0.800, Test C-index: 0.650
+Calculating permutation importance for 1SE model in trial 20...
+Permutation importance calculated in 11408.30 seconds.
+Feature importances for trial 20 saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/trials/Affy RS_rsf_preselection_importances_1SE_trial20.csv
+Ensemble feature importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/Affy RS_rsf_ensemble_feature_importance.csv
+Ensemble feature selection: selected top 1000 features.
+Selected features saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/Affy RS_rsf_ensemble_selected_features.txt
+Ensemble feature selection process complete. Selected 1000 features for future analysis.
