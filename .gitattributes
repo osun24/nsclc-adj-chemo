@@ -30,3 +30,4 @@ GPL570merged.csv filter=lfs diff=lfs merge=lfs -text
 GPL96expr.csv filter=lfs diff=lfs merge=lfs -text
 GPL96merged.csv filter=lfs diff=lfs merge=lfs -text
 >>>>>>> 512ff36aeeda4df553cd24e4f2e2ff8d570e92ad
+*.pkl filter=lfs diff=lfs merge=lfs -text
