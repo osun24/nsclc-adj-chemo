@@ -640,3 +640,58 @@ write.csv(affy.merged,
           row.names = F)
 ```
 
+```{r}
+fviz_pca_ind(pca_after,
+             geom = "point",
+             col.ind = affy.data$`Adjuvant Chemo`,  
+             addEllipses = TRUE,
+             legend.title = "Treatment Group")
+
+fviz_pca_ind(pca_after,
+             geom = "point",
+             col.ind = affy.data$Stage,
+             addEllipses = TRUE,
+             legend.title = "Clinical Stage")
+```
+
+
+# Variables
+```{r}
+# Total number of patients
+cat("Total patients:", nrow(affy.data), "\n")
+
+# ACT vs OBS
+cat("Adjuvant Chemotherapy:\n")
+print(table(affy.data$`Adjuvant Chemo`))
+
+# Sex (from IS_MALE)
+cat("Sex:\n")
+cat("Male:", sum(affy.data$IS_MALE == 1, na.rm = TRUE), "\n")
+cat("Female:", sum(affy.data$IS_MALE == 0, na.rm = TRUE), "\n")
+
+# Age summary
+cat("Age:\n")
+cat("Mean age:", round(mean(affy.data$Age, na.rm = TRUE), 1), "\n")
+cat("Median age:", round(median(affy.data$Age, na.rm = TRUE), 1), "\n")
+cat("Range:", paste(range(affy.data$Age, na.rm = T), collapse = " - "), "\n")
+
+# Stage breakdown
+cat("Stage distribution:\n")
+print(table(affy.data$Stage))
+
+# Histology breakdown
+cat("Histology:\n")
+print(table(affy.data$Histology))
+
+# Smoking status
+cat("Smoking History:\n")
+print(table(affy.data$`Smoked?`))
+
+# Race
+cat("Race:\n")
+print(table(affy.data$Race))
+```
+
+
+
+
