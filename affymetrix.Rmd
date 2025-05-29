@@ -525,7 +525,6 @@ write.csv(GPL570.genesymbols,
           row.names = F)
 ```
 
-
 # PCA for GPL 96
 ```{r}
 # Directly combine datasets by rows (subjects)
@@ -640,18 +639,246 @@ write.csv(affy.merged,
           row.names = F)
 ```
 
+#ComBat for all 7 datasets
 ```{r}
-fviz_pca_ind(pca_after,
+library(survival)    # For survival analysis
+install.packages("survminer")
+library(survminer)   # For survival visualization
+install.packages("ggfortify")
+library(ggfortify)   # For PCA visualization
+install.packages("factoextra")
+library(factoextra)
+install.packages("sva")
+library(sva)
+
+affygenes <- intersect(colnames(GPL570.expr.all), colnames(GPL96.expr.all))
+
+GSE29013.expr1 = GSE29013.expr[, affygenes]
+GSE37745.expr1 = GSE37745.expr[, affygenes]
+GSE50081.expr1 = GSE50081.expr[, affygenes]
+GSE31908.expr1 = GSE31908.expr[, affygenes]
+GSE31210.expr1 = GSE31210.expr[, affygenes]
+GSE68465.expr1 = GSE68465.expr[, affygenes]
+GSE14814.expr1 = GSE14814.expr[, affygenes]
+
+affy.expr.all <- rbind(GSE29013.expr1, 
+                  GSE37745.expr1, 
+                  GSE50081.expr1,
+                  GSE31908.expr1,
+                  GSE31210.expr1,
+                  GSE68465.expr1, 
+                  GSE14814.expr1)
+
+# Create batch labels for all samples
+affy.expr.batch <- c(rep("GSE29013", nrow(GSE29013.expr1)),
+                      rep("GSE37745", nrow(GSE37745.expr1)),
+                      rep("GSE50081", nrow(GSE50081.expr1)),
+                      rep("GSE31908", nrow(GSE31908.expr1)),
+                      rep("GSE31210", nrow(GSE31210.expr1)),
+                      rep("GSE68465", nrow(GSE68465.expr1)),
+                      rep("GSE14814", nrow(GSE14814.expr1)))
+#PCA Before
+affy.pca.before <- prcomp(affy.expr.all, scale=TRUE)
+fviz_pca_ind(affy.pca.before,
              geom = "point",
-             col.ind = affy.data$`Adjuvant Chemo`,  
+             col.ind = affy.expr.batch,
+             addEllipses = TRUE,
+             legend.title = "Affymetrix (Before Correction)")
+
+affy.data$Stage <- factor(affy.data$Stage)
+affy.data$Histology <- factor(affy.data$Histology)
+affy.data$Race <- factor(affy.data$Race)
+affy.data$`Smoked?` <- factor(affy.data$`Smoked?`)
+
+mod <- model.matrix(~ `Adjuvant Chemo` + Age + Stage + Histology +
+                    Race + `Smoked?` + IS_MALE + OS_STATUS, 
+                    data = affy.data)
+
+#PCA After
+affy.pca.combat <- ComBat(dat = t(affy.expr.all), batch = affy.expr.batch, mod = mod)
+
+# transpose back for PCA and downstream analyses
+affy.pca.corrected <- t(affy.pca.combat)
+
+affy.pca.after <- prcomp(affy.pca.corrected, scale=TRUE)
+fviz_pca_ind(affy.pca.after,
+             geom = "point",
+             col.ind = affy.expr.batch,
+             addEllipses = TRUE,
+             legend.title = "Affymetrix (Corrected)")
+
+affy.expr = as.data.frame(affy.pca.corrected)
+
+write.csv(affy.expr, 
+          "affymetrix.expr.csv",
+          row.names = F)
+
+affy.data = bind_rows(GPL570.data, GPL96.data)
+affy.data <- affy.data %>%
+  mutate("Adjuvant Chemo" = case_when(
+    `Adjuvant Chemo` == 1 ~ "ACT",
+    `Adjuvant Chemo` == 0 ~ "OBS"
+  ))
+
+affy.data$`Adjuvant Chemo` <- factor(affy.data$`Adjuvant Chemo`)
+affy.data$`Adjuvant Chemo` <- relevel(affy.data$`Adjuvant Chemo`, ref = "OBS")
+
+levels(affy.data$`Adjuvant Chemo`)
+
+write.csv(affy.data,
+          "affymetrix.data.csv",
+          row.names = F)
+
+affy.merged = cbind(affy.data, affy.expr)
+write.csv(affy.merged,
+          "affymetrix.merged.csv",
+          row.names = F)
+```
+
+#BatMan
+```{r}
+# Install batchelor from Bioconductor
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("batchelor")
+
+# Load the package
+library(batchelor)
+install.packages("factoextra")
+library(factoextra)
+
+affygenes <- intersect(colnames(GPL570.expr.all), colnames(GPL96.expr.all))
+
+GSE29013.expr1 = GSE29013.expr[, affygenes]
+GSE37745.expr1 = GSE37745.expr[, affygenes]
+GSE50081.expr1 = GSE50081.expr[, affygenes]
+GSE31908.expr1 = GSE31908.expr[, affygenes]
+GSE31210.expr1 = GSE31210.expr[, affygenes]
+GSE68465.expr1 = GSE68465.expr[, affygenes]
+GSE14814.expr1 = GSE14814.expr[, affygenes]
+
+affy.expr.all <- rbind(GSE29013.expr1, 
+                  GSE37745.expr1, 
+                  GSE50081.expr1,
+                  GSE31908.expr1,
+                  GSE31210.expr1,
+                  GSE68465.expr1, 
+                  GSE14814.expr1)
+
+affy.expr.batch <- c(rep("GSE29013", nrow(GSE29013.expr1)),
+                      rep("GSE37745", nrow(GSE37745.expr1)),
+                      rep("GSE50081", nrow(GSE50081.expr1)),
+                      rep("GSE31908", nrow(GSE31908.expr1)),
+                      rep("GSE31210", nrow(GSE31210.expr1)),
+                      rep("GSE68465", nrow(GSE68465.expr1)),
+                      rep("GSE14814", nrow(GSE14814.expr1)))
+
+affy.pca.before <- prcomp(affy.expr.all, scale=TRUE)
+fviz_pca_ind(affy.pca.before,
+             geom = "point",
+             col.ind = affy.expr.batch,
+             addEllipses = TRUE,
+             legend.title = "Affymetrix (Before Correction)")
+
+affy.expr.all.t <- list(
+  t(GSE37745.expr1),
+  t(GSE50081.expr1),
+  t(GSE68465.expr1),
+  t(GSE29013.expr1),
+  t(GSE31908.expr1),
+  t(GSE31210.expr1),
+  t(GSE14814.expr1)
+)
+
+mnn.corrected <- fastMNN(affy.expr.all.t)
+
+# Extract the corrected expression matrix
+corrected.matrix <- reducedDim(mnn.corrected, "corrected")
+rownames(corrected.matrix) <- rownames(affy.expr.all)
+
+affy.mnn.corrected <- do.call(mnnCorrect, affy.expr.all.t)
+corrected.expr <- assay(affy.mnn.corrected)
+
+affy.pca.after <- prcomp(t(corrected.expr), scale=TRUE)
+
+fviz_pca_ind(affy.pca.after,
+             geom = "point",
+             col.ind = affy.expr.batch,
+             addEllipses = TRUE,
+             legend.title = "After BatMan (fastMNN) Correction")
+```
+
+#data without batch correction
+```{r}
+write.csv(affy.expr.all, 
+          "affy.expr.raw.csv",
+          row.names = F)
+
+affy.data = bind_rows(GPL570.data, GPL96.data)
+affy.data <- affy.data %>%
+  mutate("Adjuvant Chemo" = case_when(
+    `Adjuvant Chemo` == 1 ~ "ACT",
+    `Adjuvant Chemo` == 0 ~ "OBS"
+  ))
+
+affy.data$`Adjuvant Chemo` <- factor(affy.data$`Adjuvant Chemo`)
+affy.data$`Adjuvant Chemo` <- relevel(affy.data$`Adjuvant Chemo`, ref = "OBS")
+
+levels(affy.data$`Adjuvant Chemo`)
+
+affy.data$Batch = affy.expr.batch
+
+write.csv(affy.data,
+          "affy.data.raw.csv",
+          row.names = F)
+
+affy.merged = cbind(affy.data, affy.expr)
+write.csv(affy.merged,
+          "affy.merged.raw.csv",
+          row.names = F)
+```
+
+
+#testing out ComBat
+```{r}
+fviz_pca_ind(affy.pca.after,
+             geom = "point",
+             col.ind = affy.data$`Adjuvant Chemo`,
              addEllipses = TRUE,
              legend.title = "Treatment Group")
 
-fviz_pca_ind(pca_after,
+fviz_pca_ind(affy.pca.after,
              geom = "point",
              col.ind = affy.data$Stage,
-             addEllipses = TRUE,
+             addEllipses = F,
              legend.title = "Clinical Stage")
+
+pca_df <- data.frame(
+  PC1 = pca.after$x[, 1],
+  PC2 = pca.after$x[, 2],
+  Batch = affy.expr.batch,  # or whatever your batch vector is
+  AdjuvantChemo = affy.data$`Adjuvant Chemo`,
+  Stage = affy.data$Stage
+)
+
+# Plot PCA colored by batch
+library(ggplot2)
+ggplot(pca_df, aes(x = PC1, y = PC2, color = Batch)) +
+  geom_point(size = 2) +
+  ggtitle("PCA After ComBat - Colored by Batch")
+
+ggplot(pca_df, aes(x = PC1, y = PC2, color = AdjuvantChemo)) +
+  geom_point(size = 2) +
+  ggtitle("PCA After ComBat - Colored by Adjuvant Chemo")
+
+summary(lm(PC1 ~ Batch, data = pca_df))
+summary(lm(PC2 ~ Batch, data = pca_df))
+
+summary(lm(PC1 ~ AdjuvantChemo + Stage, data = pca_df))
+summary(lm(PC2 ~ AdjuvantChemo + Stage, data = pca_df))
+
+table(affy.data$`Adjuvant Chemo`, affy.expr.batch)
+table(affy.data$Stage, affy.expr.batch)
 ```
 
 
