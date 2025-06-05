@@ -721,6 +721,7 @@ affy.data <- affy.data %>%
   ))
 
 affy.data$`Adjuvant Chemo` <- factor(affy.data$`Adjuvant Chemo`)
+
 affy.data$`Adjuvant Chemo` <- relevel(affy.data$`Adjuvant Chemo`, ref = "OBS")
 
 levels(affy.data$`Adjuvant Chemo`)
@@ -737,15 +738,21 @@ write.csv(affy.merged,
 
 #BatMan
 ```{r}
-# Install batchelor from Bioconductor
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
-BiocManager::install("batchelor")
 
-# Load the package
-library(batchelor)
-install.packages("factoextra")
-library(factoextra)
+BiocManager::install("vsn")
+# Install devtools if not already installed
+install.packages("devtools")
+
+# Install the PRECISION.survival package from GitHub
+devtools::install_github("LXQin/PRECISION.survival")
+
+library(PRECISION.survival)
+library(survival)
+
+surv_obj <- Surv(time = affy.data$OS_MONTHS,
+                 event = affy.data$OS_STATUS)
 
 affygenes <- intersect(colnames(GPL570.expr.all), colnames(GPL96.expr.all))
 
@@ -780,32 +787,98 @@ fviz_pca_ind(affy.pca.before,
              addEllipses = TRUE,
              legend.title = "Affymetrix (Before Correction)")
 
-affy.expr.all.t <- list(
-  t(GSE37745.expr1),
-  t(GSE50081.expr1),
-  t(GSE68465.expr1),
-  t(GSE29013.expr1),
-  t(GSE31908.expr1),
-  t(GSE31210.expr1),
-  t(GSE14814.expr1)
+library(matrixStats)
+### TRY DIFFERENT INTERVALS FIRST
+expr_all <- affy.expr.all
+batch <- affy.expr.batch
+
+# Remove genes with low mean expression
+mean_expr <- colMeans(expr_all)
+expr_filtered <- expr_all[, mean_expr > 5]
+dim(expr_filtered)  # Check how many genes remain
+
+gene_var <- apply(expr_filtered, 2, var)
+top_genes <- names(sort(gene_var, decreasing=TRUE))[1:5000]
+expr_filtered_var <- expr_filtered[, top_genes]
+dim(expr_filtered_var)
+
+library(caret)
+
+
+cor_matrix <- cor(expr_filtered_var)
+
+
+high_cor <- findCorrelation(cor_matrix, cutoff = 0.9)
+expr_filtered_final <- expr_filtered_var[, -high_cor]
+
+dim(expr_filtered_final)
+expr_filtered_final <- scale(expr_filtered_final)
+
+expr_mat <- as.matrix(expr_filtered_final)
+
+clinical_data <- affy.data[, c("OS_MONTHS", "OS_STATUS")]
+colnames(clinical_data) <- c("t", "delta")
+
+
+clinical_data <- clinical_data[rownames(expr_filtered_final), ]
+
+
+clinical_data <- clinical_data[complete.cases(clinical_data), ]
+
+
+expr_filtered_final_clean <- expr_filtered_final[rownames(clinical_data), ]
+
+# Combine for BatMan input
+full_data <- cbind(clinical_data, expr_filtered_final_clean)
+full_data$ID <- rownames(full_data)
+full_data <- full_data[, c(ncol(full_data), 1:(ncol(full_data)-1))]
+
+# Split into train/test
+set.seed(9)
+n <- nrow(full_data)
+idx <- sample(seq_len(n))
+
+n_train <- floor(0.6 * n)
+n_val <- floor(0.2 * n)
+n_test <- n - n_train - n_val
+
+train_idx <- idx[1:n_train]
+val_idx <- idx[(n_train + 1):(n_train + n_val)]
+test_idx <- idx[(n_train + n_val + 1):n]
+
+data_train <- full_data[train_idx, ]
+data_val <- full_data[val_idx, ]
+data_test <- full_data[test_idx, ]
+
+batch_train <- batch[train_idx]
+batch_val <- batch[val_idx]
+batch_test <- batch[test_idx]
+
+data_test_input <- rbind(data_val, data_test)
+batch_test_input <- c(batch_val, batch_test)
+
+
+batman_result <- BatMan(
+  data_train = data_train,
+  data_test = data_test_input,
+  batch_id_train = batch_train,
+  batch_id_test = batch_test_input,
+  ps_mean_cutoff = 0,       
+  ps_rho_cutoff = 1,       
+  BatMan_train = TRUE,
+  BatMan_test = TRUE,
+  cmbt_train = FALSE,
+  cmbt_test = FALSE,
+  norm_type = "none",
+  norm_train = FALSE,
+  norm_test = FALSE,
 )
 
-mnn.corrected <- fastMNN(affy.expr.all.t)
+batman_result$c_stats_BatMan
+nonzero_genes <- names(batman_result$bhat_lasso_BatMan)[batman_result$bhat_lasso_BatMan != 0]
+nonzero_genes
+batman_result$lambdas_BatMan
 
-# Extract the corrected expression matrix
-corrected.matrix <- reducedDim(mnn.corrected, "corrected")
-rownames(corrected.matrix) <- rownames(affy.expr.all)
-
-affy.mnn.corrected <- do.call(mnnCorrect, affy.expr.all.t)
-corrected.expr <- assay(affy.mnn.corrected)
-
-affy.pca.after <- prcomp(t(corrected.expr), scale=TRUE)
-
-fviz_pca_ind(affy.pca.after,
-             geom = "point",
-             col.ind = affy.expr.batch,
-             addEllipses = TRUE,
-             legend.title = "After BatMan (fastMNN) Correction")
 ```
 
 #data without batch correction
