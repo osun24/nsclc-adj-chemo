@@ -24,10 +24,6 @@ df = pd.get_dummies(df, columns=["Stage", "Histology", "Race", "Smoked?"])
 # No RFS for GPL96, so only drop PFS
 df = df.drop(columns=['PFS_MONTHS', 'RFS_MONTHS'])
 
-# Set Adjuvant Chemo's 'ACT' to 1 and 'OBS' to 0
-if 'Adjuvant Chemo' in df.columns:
-    df['Adjuvant Chemo'] = df['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
-
 # print number of na in OS_MONTHS
 print("Number of NA values in OS_MONTHS:", df["OS_MONTHS"].isna().sum())
 

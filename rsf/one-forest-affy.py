@@ -65,6 +65,10 @@ print("Validation data shape:", valid.shape)
 
 start = time.time()
 
+# Set Adjuvant Chemo's 'ACT' to 1 and 'OBS' to 0
+train['Adjuvant Chemo'] = train['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
+valid['Adjuvant Chemo'] = valid['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
+
 # Create structured arrays for survival analysis
 y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train)
 y_valid = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid)
@@ -97,6 +101,7 @@ print(f"Validation C-index: {valid_c_index:.4f}")
 # TEST 
 print("Loading test data from: affyTest.csv")
 test = pd.read_csv("affyTest.csv")
+test['Adjuvant Chemo'] = test['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
 
 print(f"Number of events in test set: {test['OS_STATUS'].sum()} | Censored cases: {test.shape[0] - test['OS_STATUS'].sum()}")
 print("Test data shape:", test.shape)
