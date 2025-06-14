@@ -24,6 +24,10 @@ df = pd.get_dummies(df, columns=["Stage", "Histology", "Race", "Smoked?"])
 # No RFS for GPL96, so only drop PFS
 df = df.drop(columns=['PFS_MONTHS', 'RFS_MONTHS'])
 
+# Set Adjuvant Chemo's 'ACT' to 1 and 'OBS' to 0
+if 'Adjuvant Chemo' in df.columns:
+    df['Adjuvant Chemo'] = df['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
+
 # print number of na in OS_MONTHS
 print("Number of NA values in OS_MONTHS:", df["OS_MONTHS"].isna().sum())
 
@@ -72,6 +76,10 @@ print(f"Validation set: {len(validation[validation['OS_STATUS'] == 1])} events, 
 # Check for non-numeric columns
 non_numeric_columns = df.columns[df.apply(lambda col: pd.to_numeric(col, errors='coerce').isna().any())]
 print("Non-numeric columns at the end of preprocessing:", non_numeric_columns.tolist())
+
+# PRINT UNIQUE VALUES FOR Adjuvant Chemo
+if 'Adjuvant Chemo' in df.columns:
+    print("Unique values in 'Adjuvant Chemo' before processing:", df['Adjuvant Chemo'].unique())  
 
 """GPL570:
 Unique values in 'Stage' before processing: ['II' 'IB' 'III' 'IA' 'IV']
