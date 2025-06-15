@@ -80,7 +80,7 @@ X_valid = valid.drop(columns=['OS_STATUS', 'OS_MONTHS'])
 # {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 750}
 rsf = RandomSurvivalForest(
     n_estimators=750,
-    max_depth=10,
+    max_depth=2,
     min_samples_leaf=60,
     max_features=500,
     random_state=42,
@@ -90,6 +90,7 @@ rsf = RandomSurvivalForest(
 # Fit the model
 print("Fitting Random Survival Forest model...")
 rsf.fit(X_train, y_train)
+
 
 # Print C-index on training data, testing data, and validation data
 train_c_index = rsf_concordance_metric(y_train, rsf.predict(X_train))
@@ -113,6 +114,10 @@ X_test = test.drop(columns=['OS_STATUS', 'OS_MONTHS'])
 # Evaluate C-index on test data
 test_c_index = rsf_concordance_metric(y_test, rsf.predict(X_test))
 print(f"Test C-index: {test_c_index:.4f}")
+
+# Print actual max depth and number of trees
+print(f"Actual max depth: {rsf.max_depth}")
+print(f"Number of trees in the forest: {len(rsf.estimators_)}")
 
 # Run permutation importance
 perm_result = permutation_importance(rsf, X_train, y_train,

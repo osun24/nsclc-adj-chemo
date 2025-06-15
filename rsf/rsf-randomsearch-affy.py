@@ -68,9 +68,9 @@ def create_rsf(train_df, test_df, name):
     # Define parameter grid for grid search
     param_grid = {
         "n_estimators": [500, 750, 1000],
-        "min_samples_leaf": [50, 60, 70, 80, 90, 100],    
-        "max_features": ["sqrt", "log2", 500, 0.1], # 0.1 * 13062 = 1306
-        "max_depth": [10, 20],
+        "min_samples_leaf": [50, 60, 70, 80],    
+        "max_features": ["sqrt", 500, 0.1], # 0.1 * 13062 = 1306
+        "max_depth": [2, 5, 10],
     }
 
     # Set up outer and inner KFold CV for nested CV
