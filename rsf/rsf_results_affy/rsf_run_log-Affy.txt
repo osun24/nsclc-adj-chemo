@@ -35,3 +35,7 @@ Best RSF: Train C-index: 0.778, Test C-index: 0.690
 Starting permutation importance for 1 SE model...
 Initial RSF Test C-index (1SE Model): 0.690
 Initial RSF Train C-index (1SE Model): 0.778
+RSF pre-selection importances saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv
+RSF pre-selection plot saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.png
+RSF pre-selection: selected top 1000 features.
+Step 1 (1SE) completed in 9694.52 seconds.

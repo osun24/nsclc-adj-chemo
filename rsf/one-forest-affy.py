@@ -79,13 +79,66 @@ X_valid = valid.drop(columns=['OS_STATUS', 'OS_MONTHS'])
 # Make RSF 
 # {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 750}
 rsf = RandomSurvivalForest(
-    n_estimators=750,
-    max_depth=2,
-    min_samples_leaf=60,
-    max_features=500,
+    n_estimators=500,
+    max_depth=5,
+    min_samples_leaf=70,
+    max_features=0.2,
     random_state=42,
     n_jobs=-1
 )
+
+"""
+n_estimators = 500
+max_depth = 5
+min_samples_leaf = 70
+max_features = 0.1  # 0.1 * 13062 = 1306
+Training C-index: 0.7802
+Validation C-index: 0.6985
+
+max_depth = 4 
+Training C-index: 0.7802
+Validation C-index: 0.6984
+
+max_depth = 3
+Training C-index: 0.7780
+Validation C-index: 0.6989
+
+max_depth = 2
+Training C-index: 0.7578
+Validation C-index: 0.6947
+
+max_depth = 1
+Training C-index: 0.7041
+Validation C-index: 0.6848
+
+n_estimators=500,
+    max_depth=5,
+    min_samples_leaf=70,
+    max_features=0.2,
+    random_state=42,
+    n_jobs=-1
+Training C-index: 0.7884
+Validation C-index: 0.7013
+
+max_features=0.5,
+Training C-index: 0.7943
+Validation C-index: 0.7061
+
+max_features = None
+Training C-index: 0.7955
+Validation C-index: 0.7041
+
+maybe there is a relationship between max_features and n_estimators
+as n_estimaors increases, max_features can be smaller --> more stable estimates, pushing down of spurious links
+"""
+
+""" 
+param_grid = {
+                "n_estimators": [500, 750, 1000],
+                "min_samples_leaf": [50, 60, 70],    
+                "max_features": ["sqrt", 500, 0.1], # 0.1 * 13062 = 1306
+                "max_depth": [2, 3, 4, 5],
+            }"""
 
 # Fit the model
 print("Fitting Random Survival Forest model...")
@@ -118,7 +171,7 @@ print(f"Test C-index: {test_c_index:.4f}")
 # Print actual max depth and number of trees
 print(f"Actual max depth: {rsf.max_depth}")
 print(f"Number of trees in the forest: {len(rsf.estimators_)}")
-
+""""
 # Run permutation importance
 perm_result = permutation_importance(rsf, X_train, y_train,
                                        scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
@@ -145,3 +198,4 @@ preselect_plot = os.path.join(output_dir, f"{current_date}_rsf_preselection_impo
 plt.savefig(preselect_plot)
 plt.close()
 print(f"RSF pre-selection plot saved to {preselect_plot}")
+"""
