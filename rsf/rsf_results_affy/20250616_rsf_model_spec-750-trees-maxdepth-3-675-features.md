@@ -694,7 +694,7 @@ Covariates
 - TRNAU1AP
 - ECE1
 
-## A Walk through the Forest:
+ ## A Walk through the Forest:
 
 ### Tree Structure Statistics:
 - **Number of trees**: 750
@@ -705,15 +705,14 @@ Covariates
 - **Event ratio in leaf nodes**: 0.4404 ± 0.1650
 
 ### Visualizations:
-![Distribution of Leaf Nodes per Tree](rsf/rsf_results_affy/20250616_leaf_nodes_distribution.png)
-![Distribution of Leaf Node Sizes](rsf/rsf_results_affy/20250616_node_sizes_distribution.png)
-![Distribution of Event Ratios in Leaf Nodes](rsf/rsf_results_affy/20250616_event_ratios_distribution.png)
+![Distribution of Leaf Nodes per Tree](20250616_leaf_nodes_distribution.png)
+![Distribution of Leaf Node Sizes](20250616_node_sizes_distribution.png)
+![Distribution of Event Ratios in Leaf Nodes](20250616_event_ratios_distribution.png)
 
 ### Key Findings:
 - The forest consists of 750 trees with an average of 4.6 leaf nodes per tree
 - Most leaf nodes contain between 117.0 and 175.0 samples (interquartile range)
 - The event ratio distribution shows moderate homogeneity across leaf nodes
 - Some leaf nodes are heavily skewed toward events or censoring
-
-# Date: 20250616
-# Time: 2025-06-16 09:05:14
+    # Date: 20250616
+# Time: 2025-06-16 09:09:07

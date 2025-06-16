@@ -293,9 +293,9 @@ def forest_analysis(rsf, X_train, y_train):
 - **Event ratio in leaf nodes**: {avg_event_ratio:.4f} ± {std_event_ratio:.4f}
 
 ### Visualizations:
-![Distribution of Leaf Nodes per Tree](rsf/rsf_results_affy/{os.path.basename(leaf_nodes_hist_path)})
-![Distribution of Leaf Node Sizes](rsf/rsf_results_affy/{os.path.basename(node_sizes_hist_path)})
-![Distribution of Event Ratios in Leaf Nodes](rsf/rsf_results_affy/{os.path.basename(event_ratios_hist_path)})
+![Distribution of Leaf Nodes per Tree]({os.path.basename(leaf_nodes_hist_path)})
+![Distribution of Leaf Node Sizes]({os.path.basename(node_sizes_hist_path)})
+![Distribution of Event Ratios in Leaf Nodes]({os.path.basename(event_ratios_hist_path)})
 
 ### Key Findings:
 - The forest consists of {len(rsf.estimators_)} trees with an average of {avg_leaf_nodes:.1f} leaf nodes per tree
