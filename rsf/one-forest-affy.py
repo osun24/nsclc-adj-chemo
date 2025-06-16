@@ -76,17 +76,30 @@ y_valid = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid)
 X_train = train.drop(columns=['OS_STATUS', 'OS_MONTHS'])
 X_valid = valid.drop(columns=['OS_STATUS', 'OS_MONTHS'])
 
-# Make RSF 
+num_of_cov = 675
+
 # {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 750}
 rsf = RandomSurvivalForest(
-    n_estimators=500,
-    max_depth=5,
+    n_estimators=750,
+    max_depth=3,
     min_samples_leaf=70,
-    max_features=0.2,
+    max_features=0.5,  # 0.5 * 13062 = 6531
     random_state=42,
     n_jobs=-1
 )
 
+
+"""
+num_of_cov = 675
+ n_estimators=750,
+    max_depth=3,
+    min_samples_leaf=70,
+    max_features=0.5,  # 0.5 * 13062 = 6531
+    random_state=42,
+    n_jobs=-1
+    
+Training C-index: 0.7970
+Validation C-index: 0.7119"""
 """
 n_estimators = 500
 max_depth = 5
@@ -140,6 +153,15 @@ param_grid = {
                 "max_depth": [2, 3, 4, 5],
             }"""
 
+# set covariates (Affy RS_rsf_all_fold_results_20250615.csv)
+# take the top 50 features from the pre-selection
+covariates = pd.read_csv("rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv")
+covariates = covariates['Feature'].tolist()[:num_of_cov]  # Take top 50 features
+
+# Filter X_train and X_valid to only include the covariates
+X_train = X_train[covariates]
+X_valid = X_valid[covariates]
+
 # Fit the model
 print("Fitting Random Survival Forest model...")
 rsf.fit(X_train, y_train)
@@ -156,6 +178,9 @@ print(f"Validation C-index: {valid_c_index:.4f}")
 print("Loading test data from: affyTest.csv")
 test = pd.read_csv("affyTest.csv")
 test['Adjuvant Chemo'] = test['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
+
+# keep only the covariates used in training
+test = test[covariates + ['OS_STATUS', 'OS_MONTHS']]
 
 print(f"Number of events in test set: {test['OS_STATUS'].sum()} | Censored cases: {test.shape[0] - test['OS_STATUS'].sum()}")
 print("Test data shape:", test.shape)

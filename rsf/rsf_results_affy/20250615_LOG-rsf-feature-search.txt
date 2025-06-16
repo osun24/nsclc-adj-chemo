@@ -1,0 +1,15 @@
+Loading train data from: affyTrain.csv
+Number of events in training set: 300 | Censored cases: 391
+Train data shape: (691, 13062)
+Loading validation data from: affyValidation.csv
+Number of events in validation set: 100 | Censored cases: 131
+Validation data shape: (231, 13062)
+Fitting Random Survival Forest model...
+Training C-index: 0.7970
+Validation C-index: 0.7119
+Loading test data from: affyTest.csv
+Number of events in test set: 100 | Censored cases: 131
+Test data shape: (231, 677)
+Test C-index: 0.6628
+Actual max depth: 3
+Number of trees in the forest: 750

@@ -128,10 +128,10 @@ if __name__ == "__main__":
     
     # Define hyperparameter grid for RSF (modified for the Affy dataset)
     param_distributions = {
-        "n_estimators": [500, 625, 750, 875], # previously 1000
-        "min_samples_leaf": [50, 60, 65, 70, 80], # 90, 100
-        "max_features": ["sqrt", "log2", 500, 0.1],
-        "max_depth": [10],
+        "n_estimators": [500, 750],
+        "min_samples_leaf": [50, 60, 70],    
+        "max_features": [0.1, 0.2, 0.5], # 0.1 * 13062 = 1306
+        "max_depth": [3, 4, 5],
     }
     
     all_fold_metrics = []  # Initialize list to collect all fold-level metrics
