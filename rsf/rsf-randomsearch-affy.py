@@ -29,7 +29,8 @@ class Tee:
         for f in self.files:
             f.flush()
 import sys
-log_file = open(os.path.join(output_dir, "rsf_run_log-Affy.txt"), "w")
+current_date = datetime.datetime.now().strftime("%Y%m%d")
+log_file = open(os.path.join(output_dir, f"{current_date}-rsf_run_log-Affy.txt"), "w")
 sys.stdout = Tee(sys.stdout, log_file)
 
 def rsf_concordance_metric(y, y_pred):
@@ -67,10 +68,10 @@ def create_rsf(train_df, test_df, name):
 
     # Define parameter grid for grid search
     param_grid = {
-        "n_estimators": [500, 750, 1000],
-        "min_samples_leaf": [50, 60, 70, 80],    
-        "max_features": ["sqrt", 500, 0.1], # 0.1 * 13062 = 1306
-        "max_depth": [2, 5, 10],
+        "n_estimators": [500, 750],
+        "min_samples_leaf": [50, 60, 70],    
+        "max_features": [0.1, 0.2, 0.5], # 0.1 * 13062 = 1306
+        "max_depth": [3, 4, 5],
     }
 
     # Set up outer and inner KFold CV for nested CV
