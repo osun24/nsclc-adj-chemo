@@ -7,7 +7,7 @@ from matplotlib import cm
 import pandas as pd
 
 # Import RSF model
-rsf = joblib.load('rsf_model-300-c0.641.pkl')
+rsf = joblib.load('rsf/rsf_results_affy/20250616_rsf_model-750-trees-maxdepth-3-675-features.pkl')
 
 def calculate_survival_stats(survival_function):
     # Extract times and corresponding survival probabilities
@@ -101,123 +101,16 @@ tree = rsf.estimators_[0]
 # Build the graph
 G = nx.DiGraph()
 
-# Data preprocessing (unchanged)
-surv = pd.read_csv('GPL570merged.csv')
-surv = pd.get_dummies(surv, columns=["Stage", "Histology", "Race"])
-surv = surv.drop(columns=['PFS_MONTHS','RFS_MONTHS'])
-print(surv.columns[surv.isna().any()].tolist())
-print(surv['Smoked?'].isna().sum())  # 121
-surv = surv.dropna()  # left with 457 samples
+# Data preprocessing to match one-forest-affy.py
+train = pd.read_csv("affyTrain.csv")
+train['Adjuvant Chemo'] = train['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
 
-top_100 =  [
-    "TP53",
-    "KRAS",
-    "EGFR",
-    "ERCC1",
-    "BRCA1",
-    "RRM1",
-    "BRAF",
-    "MET",
-    "ALK",
-    "STK11",
-    "RB1",
-    "CCNB1",
-    "CCND1",
-    "CDKN2A",
-    "CDK4",
-    "CDK6",
-    "MYC",
-    "BCL2",
-    "BAX",
-    "MLH1",
-    "MSH2",
-    "MSH6",
-    "ATM",
-    "ATR",
-    "CHEK1",
-    "CHEK2",
-    "FANCA",
-    "FANCD2",
-    "XRCC1",
-    "XRCC2",
-    "XRCC3",
-    "RAD51",
-    "TYMS",
-    "TUBB3",
-    "ABCC1",
-    "ABCB1",
-    "KEAP1",
-    "NFE2L2",
-    "PTEN",
-    "PIK3CA",
-    "AKT1",
-    "ERBB2",
-    "FGFR1",
-    "CUL3",
-    "GSTM1",
-    "GSTP1",
-    "SOD2",
-    "CASP3",
-    "CASP9",
-    "MDM2",
-    "CDKN1A",
-    "CDKN1B",
-    "PARP1",
-    "MTHFR",
-    "DUT",
-    "SLFN11",
-    "PDK1",
-    "MCL1",
-    "CCNE1",
-    "PKM",
-    "HIF1A",
-    "VEGFA",
-    "E2F1",
-    "BRCC3",
-    "MRE11",
-    "NBN",
-    "RAD50",
-    "RAD17",     # Alternative to CHEK1 duplication
-    "APAF1",
-    "ATG5",
-    "ATG7",
-    "SIRT1",
-    "MTHFD2",
-    "DNMT1",
-    "DNMT3A",
-    "TLE1",
-    "SOX2",
-    "NKX2-1",
-    "GTF2I",
-    "PRC1",
-    "KDM5B",
-    "SMARCA4",
-    "ARID1A",
-    "BRIP1",
-    "POLD1",
-    "POLE",
-    "MCM2",
-    "MCM4",
-    "CDC20",
-    "CDH1",
-    "VIM",
-    "SPARC",
-    "SNAI1",
-    "TWIST1",
-    "ERBB3",
-    "HERPUD1",
-    "GAPDH",
-    "ACTB",
-    "CD8A",
-    "CD274"
-]
-top_100 = list(set(top_100[:77]))
-    
-clinical_vars = ["Adjuvant Chemo", "Age", "Stage", "Sex", "Histology", "Race", "Smoked?"] + [col for col in surv.columns if col.startswith('Race')] + [col for col in surv.columns if col.startswith('Histology')] 
-selected_covariates = list(set(top_100[:77]).union(set(clinical_vars)))
-selected_covariates = [col for col in selected_covariates if col in surv.columns]
-df = surv[['OS_STATUS', 'OS_MONTHS'] + selected_covariates]
-        
+num_of_cov = 675
+covariates = pd.read_csv("rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv")
+covariates = covariates['Feature'].tolist()[:num_of_cov]
+covariates = [c for c in covariates if c in train.columns]
+df = train[['OS_STATUS', 'OS_MONTHS'] + covariates]
+
 # Check the feature index mapping
 for i, estimator in enumerate(rsf.estimators_):
     feature_indices = np.unique(estimator.tree_.feature)
@@ -225,8 +118,6 @@ for i, estimator in enumerate(rsf.estimators_):
 
 # MUST HAVE SAME ORDER AS TRAINING!!!!!
 covariates = df.columns[2:]
-
-#assert list(surv.columns) == covariates, "Mismatch between dataframe columns and covariates"
 
 # Start building the graph from the root (node_id = 0) with the option to fix the root node at the top
 build_graph(tree.tree_, 0, G, covariates, root_fixed=True)
