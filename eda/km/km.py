@@ -3,7 +3,7 @@ from lifelines import KaplanMeierFitter
 from lifelines.plotting import add_at_risk_counts
 import matplotlib.pyplot as plt
 
-data = pd.read_csv('GPL570merged.csv')
+data = pd.read_csv('affymetrix.merged.csv')
 data = pd.get_dummies(data, columns=["Stage", "Histology", "Race"])
 data = data.drop(columns=['PFS_MONTHS','RFS_MONTHS'])
 
@@ -17,7 +17,7 @@ E = data['OS_STATUS']
 print(E)
 
 # Create a KaplanMeierFitter instance
-kmf = KaplanMeierFitter(label = 'GPL570')
+kmf = KaplanMeierFitter(label = 'Affy Meta')
 
 # Fit the data into the model
 kmf.fit(T, event_observed=E)
@@ -34,5 +34,5 @@ plt.ylabel('Overall Survival Probability')
 plt.grid(True)
 add_at_risk_counts(kmf)
 plt.tight_layout()
-plt.savefig('GPL570-Kaplan-Meier.png')
+plt.savefig('Affy-Kaplan-Meier.png')
 plt.show()
