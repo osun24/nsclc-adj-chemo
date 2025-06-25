@@ -1,0 +1,11 @@
+Loading train data from: affyTrain.csv
+Number of events in training set: 300 | Censored cases: 391
+Train data shape: (691, 13062)
+Loading validation data from: affyValidation.csv
+Number of events in validation set: 100 | Censored cases: 131
+Validation data shape: (231, 13062)
+Number of events in training set: 300
+Number of events in test set: 100
+Starting Nested Cross-Validation...
+[Fold 1/5] Starting outer fold...
+Fitting 5 folds for each of 54 candidates, totalling 270 fits
