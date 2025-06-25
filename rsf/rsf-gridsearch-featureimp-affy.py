@@ -79,7 +79,7 @@ def create_rsf(train_df, test_df, name):
     }
 
     # Set up outer and inner KFold CV for nested CV
-    outer_cv = KFold(n_splits=5, shuffle=True, random_state=42) # probably just change this random state
+    outer_cv = KFold(n_splits=5, shuffle=True, random_state=42) # NOTE: probably just change this random state
     inner_cv = KFold(n_splits=5, shuffle=True, random_state=42)
 
     outer_scores = []
@@ -134,6 +134,28 @@ def create_rsf(train_df, test_df, name):
             y_train_outer['OS_STATUS'], y_train_outer['OS_MONTHS'], y_pred_train_outer
         )[0]
         
+        # Print selected hyperparameters and C-index results
+        print(f"[Fold {fold_idx+1}] Inner Best Hyperparameters: {best_params_inner}")
+        
+        # Inner fold results
+        print(f"[Fold {fold_idx+1}] Inner Best C-index: {grid_search_inner.best_score_:.3f}")
+        
+        # Outer fold results
+        print(f"[Fold {fold_idx+1}] Outer Test C-index: {outer_c_index:.3f}, Outer Train C-index: {outer_train_c_index:.3f}")
+        
+        outer_scores.append(outer_c_index)
+        outer_best_params.append(best_params_inner)
+        
+        # Save fold-level metrics for later post-hoc analysis
+        outer_fold_metrics.append({
+            'fold': fold_idx + 1,
+            'train_c_index': outer_train_c_index,
+            'test_c_index': outer_c_index,
+            'best_params': best_params_inner
+        })
+        
+        # Save RSF?
+        
         # Perform permutation feature importance on the retrained model
         print(f"[Fold {fold_idx+1}] Computing permutation feature importance...")
         fold_perm_start = time.time()
@@ -167,29 +189,14 @@ def create_rsf(train_df, test_df, name):
         fold_perm_end = time.time()
         print(f"[Fold {fold_idx+1}] Permutation importance completed in {fold_perm_end - fold_perm_start:.2f} seconds")
         print(f"[Fold {fold_idx+1}] Permutation importance saved to {fold_importance_csv}")
-    
-
-    
-        outer_scores.append(outer_c_index)
-        outer_best_params.append(best_params_inner)
         
-        # Save fold-level metrics for later post-hoc analysis
-        outer_fold_metrics.append({
-            'fold': fold_idx + 1,
-            'train_c_index': outer_train_c_index,
-            'test_c_index': outer_c_index,
-            'best_params': best_params_inner
-        })
-        
-        print(f"[Fold {fold_idx+1}] Completed outer fold with Test C-index: {outer_c_index:.3f}")
-    
     nested_cv_end_time = time.time()
     print(f"Nested CV completed in {nested_cv_end_time - outer_start_time:.2f} seconds.")
     
     nested_cv_mean_c_index = np.mean(outer_scores)
     print(f"Nested CV Mean Test C-index: {nested_cv_mean_c_index:.3f}")
  
-    # ---------------- Save Detailed Fold Metrics for Post-Hoc Analysis ---------------- #
+    # ---------------- Save Detailed Fold Metrics for Post-Hoc Analysis, Debug ---------------- #
     current_date = datetime.datetime.now().strftime("%Y%m%d")
     combined_rows = []
     
@@ -222,7 +229,7 @@ def create_rsf(train_df, test_df, name):
     combined_df.to_csv(combined_csv_path, index=False)
     print(f"Combined fold-level metrics (inner and outer) saved to {combined_csv_path}")
 
-    # ---------------- Final Model Training using Nested CV Results ---------------- #
+    """    # ---------------- Final Model Training using Nested CV Results ---------------- #
     # Select best hyperparameters from nested CV outer folds (fold with highest Test C-index)
     best_fold_idx = np.argmax(outer_scores)
     best_params_nested = outer_best_params[best_fold_idx]
@@ -337,8 +344,8 @@ def create_rsf(train_df, test_df, name):
     X_train_rsf = X_train[selected_features_rsf]
     X_test_rsf = X_test[selected_features_rsf]
     step1_end = time.time()
-    print(f"Step 1 (1SE) completed in {step1_end - step1_start:.2f} seconds.")
-
+    print(f"Step 1 (1SE) completed in {step1_end - step1_start:.2f} seconds.")"""
+    
     """# ---------------- Feature Selection on Best Model ---------------- #
     print("Starting feature selection on best model...")
     step_best_start = time.time()
@@ -372,10 +379,10 @@ def create_rsf(train_df, test_df, name):
     
     top_n_best = min(1000, len(importance_df_best))
     selected_features_best = importance_df_best.iloc[:top_n_best]["Feature"].tolist()
-    print(f"Best model: selected top {len(selected_features_best)} features.")"""
+    print(f"Best model: selected top {len(selected_features_best)} features.")
     
     # Return the best model, 1 SE model, and the selected features for further evaluation
-    return best_model, one_se_model, selected_features_rsf
+    return best_model, one_se_model, selected_features_rsf"""
 
 if __name__ == "__main__":
     print("Loading train data from: affyTrain.csv")
@@ -394,4 +401,4 @@ if __name__ == "__main__":
     print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     print("Validation data shape:", valid.shape)
     
-    create_rsf(train, valid, 'Affy RS')
+    create_rsf(train, valid, 'Affy RS') # NOTE: CHANGE THIS TO YOUR NAME
