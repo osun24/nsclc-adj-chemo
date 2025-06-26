@@ -10,8 +10,10 @@ import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
 import joblib
 from sklearn.metrics import make_scorer
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, RepeatedKFold
 from sklearn.model_selection import GridSearchCV
+
+np.random.seed(42)  # Set random seed for reproducibility
 
 # Determine script directory for consistent path handling in a VM
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,6 +30,7 @@ class Tee:
     def flush(self):
         for f in self.files:
             f.flush()
+            
 import sys
 current_date = datetime.datetime.now().strftime("%Y%m%d")
 log_file = open(os.path.join(output_dir, f"{current_date}-rsf_run_log-Affy.txt"), "w")
@@ -73,13 +76,14 @@ def create_rsf(train_df, test_df, name):
     # Define parameter grid for grid search
     param_grid = {
         "n_estimators": [500, 750],
-        "min_samples_leaf": [50, 60, 70],    
+        "min_samples_leaf": [60, 70, 80], # removed 50 (60: ~10 groups, 70: ~9 groups, 80: ~7 groups)
         "max_features": [0.1, 0.2, 0.5], # 0.1 * 13062 = 1306
-        "max_depth": [3, 4, 5],
+        "max_depth": [3, 5], # 4?, removed 4
     }
 
     # Set up outer and inner KFold CV for nested CV
-    outer_cv = KFold(n_splits=5, shuffle=True, random_state=42) # NOTE: probably just change this random state
+    outer_cv = RepeatedKFold(n_splits=5, n_repeats=2, random_state=42) # NOTE: probably just change this random state
+    #outer_cv = KFold(n_splits=5, shuffle=True, random_state=42) # NOTE: probably just change this random state
     inner_cv = KFold(n_splits=5, shuffle=True, random_state=42)
 
     outer_scores = []
@@ -92,8 +96,11 @@ def create_rsf(train_df, test_df, name):
     print("Starting Nested Cross-Validation...")
     outer_start_time = time.time()
     
+    # Get total number of splits for RepeatedKFold compatibility
+    total_folds = outer_cv.get_n_splits(X_train)
+    
     for fold_idx, (outer_train_idx, outer_test_idx) in enumerate(outer_cv.split(X_train)):
-        print(f"[Fold {fold_idx+1}/{outer_cv.get_n_splits()}] Starting outer fold...")
+        print(f"[Fold {fold_idx+1}/{total_folds}] Starting outer fold...")
         X_train_outer = X_train.iloc[outer_train_idx]
         y_train_outer = y_train[outer_train_idx]
         X_test_outer = X_train.iloc[outer_test_idx]
@@ -151,40 +158,46 @@ def create_rsf(train_df, test_df, name):
             'fold': fold_idx + 1,
             'train_c_index': outer_train_c_index,
             'test_c_index': outer_c_index,
-            'best_params': best_params_inner
+            'best_params': best_params_inner,
+            'train_size': len(outer_train_idx),
+            'test_size': len(outer_test_idx)
         })
         
-        # Save RSF?
+        # Save RSF model for each fold
+        fold_model_path = os.path.join(output_dir, f"{name}_fold_{fold_idx+1:02d}_model.pkl")
+        joblib.dump(best_model_outer, fold_model_path)
         
-        # Perform permutation feature importance on the retrained model
-        print(f"[Fold {fold_idx+1}] Computing permutation feature importance...")
+        # Perform permutation feature importance on the held-out test fold (to prevent overfitting)
+        print(f"[Fold {fold_idx+1}] Computing permutation feature importance on held-out test fold...")
         fold_perm_start = time.time()
         fold_perm_result = permutation_importance(
-            best_model_outer, X_train_outer, y_train_outer,
+            best_model_outer, X_test_outer, y_test_outer,
             scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
             n_repeats=5, random_state=42, n_jobs=-1
         )
         
         # Create importance dataframe for this fold
         fold_importance_df = pd.DataFrame({
-            "Feature": X_train_outer.columns,
+            "Feature": X_test_outer.columns,
             "Importance": fold_perm_result.importances_mean,
             "Std": fold_perm_result.importances_std,
             "Fold": fold_idx + 1
         }).sort_values(by="Importance", ascending=False)
         
         # Save fold-level permutation importance
-        fold_importance_csv = os.path.join(fold_importance_dir, f"{name}_fold_{fold_idx+1}_permutation_importance.csv")
+        fold_importance_csv = os.path.join(fold_importance_dir, f"{name}_fold_{fold_idx+1:02d}_permutation_importance.csv")
         fold_importance_df.to_csv(fold_importance_csv, index=False)
         
-        # Create a bar plot for fold-level permutation importance
-        plt.figure(figsize=(10, 6))
-        plt.barh(fold_importance_df['Feature'], fold_importance_df['Importance'],
-                    xerr=fold_importance_df['Std'], color='skyblue')
+        # Create a bar plot for fold-level permutation importance (only for top 20 features to keep plots readable)
+        top_features_plot = fold_importance_df.head(20)
+        plt.figure(figsize=(12, 8))
+        plt.barh(top_features_plot['Feature'][::-1], top_features_plot['Importance'][::-1],
+                    xerr=top_features_plot['Std'][::-1], color='skyblue')
         plt.xlabel('Permutation Importance')
-        plt.title(f'Fold {fold_idx + 1} Permutation Importance')
+        plt.title(f'Fold {fold_idx + 1} Permutation Importance (Top 20 Features)')
         plt.tight_layout()
-        plt.savefig(os.path.join(fold_importance_dir, f"{name}_fold_{fold_idx+1}_permutation_importance.png"))
+        plt.savefig(os.path.join(fold_importance_dir, f"{name}_fold_{fold_idx+1:02d}_permutation_importance.png"))
+        plt.close()  # Close the figure to prevent memory issues
         
         fold_perm_end = time.time()
         print(f"[Fold {fold_idx+1}] Permutation importance completed in {fold_perm_end - fold_perm_start:.2f} seconds")
@@ -194,7 +207,57 @@ def create_rsf(train_df, test_df, name):
     print(f"Nested CV completed in {nested_cv_end_time - outer_start_time:.2f} seconds.")
     
     nested_cv_mean_c_index = np.mean(outer_scores)
-    print(f"Nested CV Mean Test C-index: {nested_cv_mean_c_index:.3f}")
+    nested_cv_std_c_index = np.std(outer_scores)
+    print(f"Nested CV Mean Test C-index: {nested_cv_mean_c_index:.3f} ± {nested_cv_std_c_index:.3f}")
+    
+    # ---------------- Aggregate Fold-Level Permutation Importance Results ---------------- #
+    print("Aggregating fold-level permutation importance results...")
+    
+    # Read all fold-level importance files and combine them
+    all_fold_importance = []
+    for fold_idx in range(total_folds):
+        fold_csv = os.path.join(fold_importance_dir, f"{name}_fold_{fold_idx+1:02d}_permutation_importance.csv")
+        if os.path.exists(fold_csv):
+            fold_df = pd.read_csv(fold_csv)
+            all_fold_importance.append(fold_df)
+    
+    if all_fold_importance:
+        # Combine all fold importance data
+        combined_fold_importance = pd.concat(all_fold_importance, ignore_index=True)
+        
+        # Calculate aggregated statistics across folds for each feature
+        aggregated_importance = combined_fold_importance.groupby('Feature').agg({
+            'Importance': ['mean', 'std', 'min', 'max', 'count'],
+            'Std': 'mean'
+        }).round(6)
+        
+        # Flatten column names
+        aggregated_importance.columns = ['_'.join(col).strip() for col in aggregated_importance.columns.values]
+        aggregated_importance = aggregated_importance.reset_index()
+        aggregated_importance = aggregated_importance.sort_values(by='Importance_mean', ascending=False)
+        
+        # Save aggregated results
+        aggregated_csv = os.path.join(output_dir, f"{name}_aggregated_fold_permutation_importance.csv")
+        aggregated_importance.to_csv(aggregated_csv, index=False)
+        print(f"Aggregated fold-level permutation importance saved to {aggregated_csv}")
+        
+        # Save combined raw data
+        combined_csv = os.path.join(output_dir, f"{name}_combined_fold_permutation_importance.csv")
+        combined_fold_importance.to_csv(combined_csv, index=False)
+        print(f"Combined fold-level permutation importance saved to {combined_csv}")
+        
+        # Create a summary plot of top features across folds
+        top_features = aggregated_importance.head(20)
+        plt.figure(figsize=(12, 8))
+        plt.barh(top_features['Feature'][::-1], top_features['Importance_mean'][::-1],
+                 xerr=top_features['Importance_std'][::-1], color=(0.2, 0.6, 0.8))
+        plt.xlabel("Mean Permutation Importance Across Folds")
+        plt.title(f"Top 20 Features - Mean Permutation Importance Across {total_folds} Folds")
+        plt.tight_layout()
+        aggregated_plot = os.path.join(output_dir, f"{name}_aggregated_fold_permutation_importance.png")
+        plt.savefig(aggregated_plot)
+        plt.close()
+        print(f"Aggregated fold-level importance plot saved to {aggregated_plot}")
  
     # ---------------- Save Detailed Fold Metrics for Post-Hoc Analysis, Debug ---------------- #
     current_date = datetime.datetime.now().strftime("%Y%m%d")
@@ -229,161 +292,6 @@ def create_rsf(train_df, test_df, name):
     combined_df.to_csv(combined_csv_path, index=False)
     print(f"Combined fold-level metrics (inner and outer) saved to {combined_csv_path}")
 
-    """    # ---------------- Final Model Training using Nested CV Results ---------------- #
-    # Select best hyperparameters from nested CV outer folds (fold with highest Test C-index)
-    best_fold_idx = np.argmax(outer_scores)
-    best_params_nested = outer_best_params[best_fold_idx]
-    print(f"Selected hyperparameters from nested CV: {best_params_nested}")
-    
-    # Train final model on full training set using nested CV best hyperparameters
-    best_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **best_params_nested)
-    best_model.fit(X_train, y_train)
-    
-    # Save nested CV outer fold summary results to CSV
-    cv_results_df = pd.DataFrame({
-        "fold": list(range(1, len(outer_scores)+1)),
-        "Test_C_index": outer_scores,
-        "Hyperparameters": outer_best_params
-    })
-    results_csv = os.path.join(output_dir, f"{name}_rsf_nested_cv_results.csv")
-    cv_results_df.to_csv(results_csv, index=False)
-    print(f"Nested CV results saved to {results_csv}")
-
-    # ---------------- Select Simplest Model using the 1 SE Rule from Nested CV ---------------- #
-    max_score = max(outer_scores)
-    std_score = np.std(outer_scores)
-    one_se_threshold = max_score - std_score
-
-    candidates = []
-    for score, params in zip(outer_scores, outer_best_params):
-        if score >= one_se_threshold:
-            candidate = params.copy()
-            candidate["score"] = score
-            candidates.append(candidate)
-
-    if candidates:
-        one_se_candidates_sorted = sorted(
-            candidates,
-            key=lambda r: (r["n_estimators"], r["min_samples_leaf"], r["max_features"])
-        )
-        one_se_candidate = one_se_candidates_sorted[0]
-    else:
-        print("No candidate model met the 1 SE threshold. Defaulting to the best nested CV model.")
-        one_se_candidate = best_params_nested
-        
-    # Remove "score" key from candidate dictionary
-    one_se_candidate = {k: v for k, v in one_se_candidate.items() if k != "score"}
-    print(f"1 SE RSF hyperparameters from nested CV: {one_se_candidate} (threshold: {one_se_threshold:.3f})")
-    one_se_model = RandomSurvivalForest(random_state=42, n_jobs=-1, **one_se_candidate)
-    one_se_model.fit(X_train, y_train)
-
-    # Save best model 
-    best_model_file = os.path.join(output_dir, f"{name}_final_rsf_model.pkl")
-    joblib.dump(best_model, best_model_file)
-    print(f"Best RSF model saved to {best_model_file}")
-    
-    # Save simplest 1 SE model
-    one_se_model_file = os.path.join(output_dir, f"{name}_final_rsf_model_1se.pkl")
-    joblib.dump(one_se_model, one_se_model_file)
-    print(f"1 SE RSF model saved to {one_se_model_file}")
-
-    # ---------------- Evaluate Best and 1 SE RSF Models ---------------- #
-    best_pred_train = best_model.predict(X_train)
-    best_train_c_index = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], best_pred_train)[0]
-    best_pred_test = best_model.predict(X_test)
-    best_test_c_index = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], best_pred_test)[0]
-    print(f"Best RSF: Train C-index: {best_train_c_index:.3f}, Test C-index: {best_test_c_index:.3f}")
-
-    one_se_pred_train = one_se_model.predict(X_train)
-    one_se_train_c_index = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], one_se_pred_train)[0]
-    one_se_pred_test = one_se_model.predict(X_test)
-    one_se_test_c_index = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], one_se_pred_test)[0]
-    print(f"1 SE RSF: Train C-index: {one_se_train_c_index:.3f}, Test C-index: {one_se_test_c_index:.3f}")
-    
-    print(f"Starting permutation importance for 1 SE model...")
-    step1_start = time.time()
-    one_se_model.fit(X_train, y_train)
-
-    test_pred = one_se_model.predict(X_test)
-    c_index = concordance_index_censored(y_test['OS_STATUS'], y_test['OS_MONTHS'], test_pred)
-    print(f"Initial RSF Test C-index (1SE Model): {c_index[0]:.3f}")
-    train_pred = one_se_model.predict(X_train)
-    train_c_index = concordance_index_censored(y_train['OS_STATUS'], y_train['OS_MONTHS'], train_pred)
-    print(f"Initial RSF Train C-index (1SE Model): {train_c_index[0]:.3f}")
-
-    perm_result = permutation_importance(one_se_model, X_train, y_train,
-                                       scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
-                                       n_repeats=5, random_state=42, n_jobs=-1)
-    importances = perm_result.importances_mean
-    importance_df = pd.DataFrame({
-        "Feature": X_train.columns,
-        "Importance": importances,
-        "Std": perm_result.importances_std
-    }).sort_values(by="Importance", ascending=False)
-    
-    preselect_csv = os.path.join(output_dir, f"{name}_rsf_preselection_importances_1SE.csv")
-    importance_df.to_csv(preselect_csv, index=False)
-    print(f"RSF pre-selection importances saved to {preselect_csv}")
-    
-    top_preselect = importance_df.head(50)
-    plt.figure(figsize=(12, 8))
-    plt.barh(top_preselect["Feature"][::-1], top_preselect["Importance"][::-1],
-             xerr=top_preselect["Std"][::-1], color=(9/255, 117/255, 181/255))
-    plt.xlabel("Permutation Importance")
-    plt.title("RSF Pre-Selection (Top 50 Features)")
-    plt.tight_layout()
-    preselect_plot = os.path.join(output_dir, f"{name}_rsf_preselection_importances_1SE.png")
-    plt.savefig(preselect_plot)
-    plt.close()
-    print(f"RSF pre-selection plot saved to {preselect_plot}")
-    
-    top_n_rsf = min(1000, len(importance_df))
-    selected_features_rsf = importance_df.iloc[:top_n_rsf]["Feature"].tolist()
-    print(f"RSF pre-selection: selected top {len(selected_features_rsf)} features.")
-    
-    X_train_rsf = X_train[selected_features_rsf]
-    X_test_rsf = X_test[selected_features_rsf]
-    step1_end = time.time()
-    print(f"Step 1 (1SE) completed in {step1_end - step1_start:.2f} seconds.")"""
-    
-    """# ---------------- Feature Selection on Best Model ---------------- #
-    print("Starting feature selection on best model...")
-    step_best_start = time.time()
-    perm_result_best = permutation_importance(
-        best_model, X_train, y_train,
-        scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
-        n_repeats=5, random_state=42, n_jobs=-1
-    )
-    importances_best = perm_result_best.importances_mean
-    importance_df_best = pd.DataFrame({
-        "Feature": X_train.columns,
-        "Importance": importances_best,
-        "Std": perm_result_best.importances_std
-    }).sort_values(by="Importance", ascending=False)
-    preselect_csv_best = os.path.join(output_dir, f"{name}_rsf_preselection_importances_best.csv")
-    importance_df_best.to_csv(preselect_csv_best, index=False)
-    print(f"Best model pre-selection importances saved to {preselect_csv_best}")
-    
-    top_preselect_best = importance_df_best.head(50)
-    plt.figure(figsize=(12, 8))
-    plt.barh(top_preselect_best["Feature"][::-1], top_preselect_best["Importance"][::-1],
-             xerr=top_preselect_best["Std"][::-1], color=(9/255, 117/255, 181/255))
-    plt.xlabel("Permutation Importance")
-    plt.title("RSF Pre-Selection (Top 50 Features) - Best Model")
-    plt.tight_layout()
-    preselect_plot_best = os.path.join(output_dir, f"{name}_rsf_preselection_importances_best.png")
-    plt.savefig(preselect_plot_best)
-    plt.close()
-    step_best_end = time.time()
-    print(f"Feature selection on best model completed in {step_best_end - step_best_start:.2f} seconds.")
-    
-    top_n_best = min(1000, len(importance_df_best))
-    selected_features_best = importance_df_best.iloc[:top_n_best]["Feature"].tolist()
-    print(f"Best model: selected top {len(selected_features_best)} features.")
-    
-    # Return the best model, 1 SE model, and the selected features for further evaluation
-    return best_model, one_se_model, selected_features_rsf"""
-
 if __name__ == "__main__":
     print("Loading train data from: affyTrain.csv")
     train = pd.read_csv("affyTrain.csv")
@@ -394,11 +302,16 @@ if __name__ == "__main__":
     print("Loading validation data from: affyValidation.csv")
     valid = pd.read_csv("affyValidation.csv")
     
-    # Handle Adjuvant Chemo column with dummies to have OBS as baseline
+    # Combining train and validation
+    train = pd.concat([train, valid], ignore_index=True)
+    
+    # Load test set
+    print("Loading test data from: affyTest.csv")
+    test = pd.read_csv("affyTest.csv")
+    print(f"Number of events in test set: {test['OS_STATUS'].sum()} | Censored cases: {test.shape[0] - test['OS_STATUS'].sum()}")
+    print("Test data shape:", test.shape)
+    
     train['Adjuvant Chemo'] = train['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
-    valid['Adjuvant Chemo'] = valid['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
+    test['Adjuvant Chemo'] = test['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
     
-    print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
-    print("Validation data shape:", valid.shape)
-    
-    create_rsf(train, valid, 'Affy RS') # NOTE: CHANGE THIS TO YOUR NAME
+    create_rsf(train, test, 'Affy RS') # NOTE: CHANGE THIS TO YOUR NAME
