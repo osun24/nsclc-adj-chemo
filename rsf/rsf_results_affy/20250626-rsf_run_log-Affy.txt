@@ -1,0 +1,97 @@
+Loading train data from: affyTrain.csv
+Number of events in training set: 300 | Censored cases: 391
+Train data shape: (691, 13062)
+Loading validation data from: affyValidation.csv
+Loading test data from: affyTest.csv
+Number of events in test set: 100 | Censored cases: 131
+Test data shape: (231, 13062)
+Number of events in training set: 400
+Number of events in test set: 100
+Starting Nested Cross-Validation...
+[Fold 1/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 1] Inner Best Hyperparameters: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 80, 'n_estimators': 500}
+[Fold 1] Inner Best C-index: 0.673
+[Fold 1] Outer Test C-index: 0.589, Outer Train C-index: 0.791
+[Fold 1] Computing permutation feature importance on held-out test fold...
+[Fold 1] Permutation importance completed in 2676.97 seconds
+[Fold 1] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_01_permutation_importance.csv
+[Fold 2/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 2] Inner Best Hyperparameters: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 80, 'n_estimators': 750}
+[Fold 2] Inner Best C-index: 0.635
+[Fold 2] Outer Test C-index: 0.638, Outer Train C-index: 0.774
+[Fold 2] Computing permutation feature importance on held-out test fold...
+[Fold 2] Permutation importance completed in 3922.68 seconds
+[Fold 2] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_02_permutation_importance.csv
+[Fold 3/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 3] Inner Best Hyperparameters: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 60, 'n_estimators': 750}
+[Fold 3] Inner Best C-index: 0.634
+[Fold 3] Outer Test C-index: 0.634, Outer Train C-index: 0.781
+[Fold 3] Computing permutation feature importance on held-out test fold...
+[Fold 3] Permutation importance completed in 4148.70 seconds
+[Fold 3] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_03_permutation_importance.csv
+[Fold 4/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 4] Inner Best Hyperparameters: {'max_depth': 5, 'max_features': 0.2, 'min_samples_leaf': 60, 'n_estimators': 500}
+[Fold 4] Inner Best C-index: 0.643
+[Fold 4] Outer Test C-index: 0.667, Outer Train C-index: 0.826
+[Fold 4] Computing permutation feature importance on held-out test fold...
+[Fold 4] Permutation importance completed in 2900.63 seconds
+[Fold 4] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_04_permutation_importance.csv
+[Fold 5/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 5] Inner Best Hyperparameters: {'max_depth': 3, 'max_features': 0.2, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 5] Inner Best C-index: 0.619
+[Fold 5] Outer Test C-index: 0.673, Outer Train C-index: 0.774
+[Fold 5] Computing permutation feature importance on held-out test fold...
+[Fold 5] Permutation importance completed in 3993.05 seconds
+[Fold 5] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_05_permutation_importance.csv
+[Fold 6/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 6] Inner Best Hyperparameters: {'max_depth': 5, 'max_features': 0.1, 'min_samples_leaf': 60, 'n_estimators': 750}
+[Fold 6] Inner Best C-index: 0.651
+[Fold 6] Outer Test C-index: 0.543, Outer Train C-index: 0.795
+[Fold 6] Computing permutation feature importance on held-out test fold...
+[Fold 6] Permutation importance completed in 4312.17 seconds
+[Fold 6] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_06_permutation_importance.csv
+[Fold 7/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 7] Inner Best Hyperparameters: {'max_depth': 3, 'max_features': 0.1, 'min_samples_leaf': 80, 'n_estimators': 750}
+[Fold 7] Inner Best C-index: 0.630
+[Fold 7] Outer Test C-index: 0.664, Outer Train C-index: 0.762
+[Fold 7] Computing permutation feature importance on held-out test fold...
+[Fold 7] Permutation importance completed in 3889.51 seconds
+[Fold 7] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_07_permutation_importance.csv
+[Fold 8/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 8] Inner Best Hyperparameters: {'max_depth': 3, 'max_features': 0.2, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 8] Inner Best C-index: 0.626
+[Fold 8] Outer Test C-index: 0.657, Outer Train C-index: 0.791
+[Fold 8] Computing permutation feature importance on held-out test fold...
+[Fold 8] Permutation importance completed in 2680.95 seconds
+[Fold 8] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_08_permutation_importance.csv
+[Fold 9/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 9] Inner Best Hyperparameters: {'max_depth': 5, 'max_features': 0.5, 'min_samples_leaf': 60, 'n_estimators': 500}
+[Fold 9] Inner Best C-index: 0.648
+[Fold 9] Outer Test C-index: 0.649, Outer Train C-index: 0.816
+[Fold 9] Computing permutation feature importance on held-out test fold...
+[Fold 9] Permutation importance completed in 2962.12 seconds
+[Fold 9] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_09_permutation_importance.csv
+[Fold 10/10] Starting outer fold...
+Fitting 5 folds for each of 36 candidates, totalling 180 fits
+[Fold 10] Inner Best Hyperparameters: {'max_depth': 5, 'max_features': 0.5, 'min_samples_leaf': 60, 'n_estimators': 500}
+[Fold 10] Inner Best C-index: 0.640
+[Fold 10] Outer Test C-index: 0.645, Outer Train C-index: 0.806
+[Fold 10] Computing permutation feature importance on held-out test fold...
+[Fold 10] Permutation importance completed in 2985.13 seconds
+[Fold 10] Permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/fold_permutation_importance/Affy RS_fold_10_permutation_importance.csv
+Nested CV completed in 192918.67 seconds.
+Nested CV Mean Test C-index: 0.636 ± 0.038
+Aggregating fold-level permutation importance results...
+Aggregated fold-level permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/Affy RS_aggregated_fold_permutation_importance.csv
+Combined fold-level permutation importance saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/Affy RS_combined_fold_permutation_importance.csv
+Aggregated fold-level importance plot saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/Affy RS_aggregated_fold_permutation_importance.png
+Combined fold-level metrics (inner and outer) saved to /Users/owensun/Downloads/code/nsclc-adj-chemo/rsf/rsf_results_affy/Affy RS_rsf_all_fold_results_20250628.csv
