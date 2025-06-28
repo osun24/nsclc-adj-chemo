@@ -1,0 +1,19 @@
+================================================================================
+ITERATIVE FEATURE SELECTION WITH NESTED CROSS-VALIDATION
+================================================================================
+Loading training data...
+Combined training data shape: (922, 13062)
+Number of events: 400
+Number of censored: 522
+Total features available: 13060
+
+Loading pre-ranked features from median importance...
+Using 13060 pre-ranked features
+
+Starting iteration 1...
+
+============================================================
+ITERATION 1: Using 13060 features
+============================================================
+Starting Nested Cross-Validation...
+[Fold 1/5]: Performing 922 total fits

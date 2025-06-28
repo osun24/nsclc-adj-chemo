@@ -97,7 +97,8 @@ def run_nested_cv_iteration(X_train, y_train, features_to_use, iteration_num):
     print("Starting Nested Cross-Validation...")
     
     for fold_idx, (outer_train_idx, outer_test_idx) in enumerate(outer_cv.split(X_filtered)):
-        print(f"[Fold {fold_idx+1}/5] Processing...")
+        total_fits = len(outer_train_idx) + len(outer_test_idx)
+        print(f"[Fold {fold_idx+1}/5]: Performing {total_fits} total fits")
         
         # Split data
         X_train_outer = X_filtered.iloc[outer_train_idx]
@@ -259,7 +260,7 @@ def main():
     # Initialize with median-ranked features from previous analysis
     print("\nLoading pre-ranked features from median importance...")
     try:
-        preranked_features = pd.read_csv("rsf_results_affy/Affy RS_combined_fold_permutation_importance_median_ranked.csv")
+        preranked_features = pd.read_csv("rsf/rsf_results_affy/Affy RS_combined_fold_permutation_importance_median_ranked.csv")
         initial_features = preranked_features['Feature'].tolist()
         # Filter to only include features that exist in our data
         initial_features = [f for f in initial_features if f in all_features]
