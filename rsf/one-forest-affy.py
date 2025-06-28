@@ -52,38 +52,42 @@ log_file = open(os.path.join(output_dir, f"{current_date}_LOG-rsf-feature-search
 sys.stdout = Tee(sys.stdout, log_file)
 
 print("Loading train data from: affyTrain.csv")
-train = pd.read_csv("affyTrain.csv")
+train_orig = pd.read_csv("affyTrain.csv")
 
-print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
-print("Train data shape:", train.shape)
+print(f"Number of events in original training set: {train_orig['OS_STATUS'].sum()} | Censored cases: {train_orig.shape[0] - train_orig['OS_STATUS'].sum()}")
+print("Original train data shape:", train_orig.shape)
 
 print("Loading validation data from: affyValidation.csv")
-valid = pd.read_csv("affyValidation.csv")
+valid_orig = pd.read_csv("affyValidation.csv")
 
-print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
-print("Validation data shape:", valid.shape)
+print(f"Number of events in validation set: {valid_orig['OS_STATUS'].sum()} | Censored cases: {valid_orig.shape[0] - valid_orig['OS_STATUS'].sum()}")
+print("Validation data shape:", valid_orig.shape)
+
+# Combine train and validation datasets into one training set
+print("Combining train and validation datasets...")
+train = pd.concat([train_orig, valid_orig], axis=0, ignore_index=True)
+
+print(f"Number of events in combined training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
+print("Combined training data shape:", train.shape)
 
 start = time.time()
 
 # Set Adjuvant Chemo's 'ACT' to 1 and 'OBS' to 0
 train['Adjuvant Chemo'] = train['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
-valid['Adjuvant Chemo'] = valid['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
 
 # Create structured arrays for survival analysis
 y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train)
-y_valid = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid)
 
 X_train = train.drop(columns=['OS_STATUS', 'OS_MONTHS'])
-X_valid = valid.drop(columns=['OS_STATUS', 'OS_MONTHS'])
 
-num_of_cov = 675
+num_of_cov = 300
 
 # {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 750} 
 # num_of_cov = 675; # n_estimators = 750; max_depth = 3; min_samples_leaf = 70; max_features = 0.5 (6-15-25)
 rsf = RandomSurvivalForest(
     n_estimators=750,
     max_depth=3,
-    min_samples_leaf=70,
+    min_samples_leaf=80,
     max_features=0.5,  # 0.5 * 13062 = 6531
     random_state=42,
     n_jobs=-1
@@ -156,24 +160,23 @@ param_grid = {
 
 # set covariates (Affy RS_rsf_all_fold_results_20250615.csv)
 # take the top 50 features from the pre-selection
-covariates = pd.read_csv("rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv")
+covariates = pd.read_csv("rsf/rsf_results_affy/Affy_top_features_median_ranked.csv")
+# Affy RS_combined_fold_permutation_importance_median_ranked.csv
+
 covariates = covariates['Feature'].tolist()[:num_of_cov]  # Take top 50 features
 
-# Filter X_train and X_valid to only include the covariates
+# Filter X_train to only include the covariates
 X_train = X_train[covariates]
-X_valid = X_valid[covariates]
 
 # Fit the model
 print("Fitting Random Survival Forest model...")
 rsf.fit(X_train, y_train)
 
 
-# Print C-index on training data, testing data, and validation data
+# Print C-index on combined training data and test data
 train_c_index = rsf_concordance_metric(y_train, rsf.predict(X_train))
-valid_c_index = rsf_concordance_metric(y_valid, rsf.predict(X_valid))
 
-print(f"Training C-index: {train_c_index:.4f}")
-print(f"Validation C-index: {valid_c_index:.4f}")
+print(f"Training C-index (train + validation combined): {train_c_index:.4f}")
 
 # TEST 
 print("Loading test data from: affyTest.csv")
@@ -326,8 +329,7 @@ with open(os.path.join(output_dir, f"{current_date}_rsf_model_spec-{len(rsf.esti
     
     
     f.write(f"# Performance Metrics:\n")
-    f.write(f"Training C-index: {train_c_index:.4f}\n")
-    f.write(f"Validation C-index: {valid_c_index:.4f}\n")
+    f.write(f"Training C-index (train + validation combined): {train_c_index:.4f}\n")
     f.write(f"Test C-index: {test_c_index:.4f}\n")
     
     f.write(f"Covariates \n")

@@ -279,5 +279,7 @@ def analyze_rsf_hyperparameters(csv_file_path):
 
 if __name__ == "__main__":
     # Example usage with Affymetrix data
-    analyze_rsf_hyperparameters('rsf/rsf_results_affy/Affy RS_rsf_all_fold_results_20250615.csv')
+    analyze_rsf_hyperparameters('rsf/rsf_results_affy/Affy RS_rsf_all_fold_results_20250628.csv')
     print("\nAnalysis complete. Results saved to 'rsf/rsf_results_affy/rsf_analysis_results' directory.")
+    
+# 0.2, 70, 750
