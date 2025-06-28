@@ -79,7 +79,7 @@ def run_nested_cv_iteration(X_train, y_train, features_to_use, iteration_num):
         "n_estimators": [500, 750], 
         "min_samples_leaf": [70],  # Fixed
         "max_features": ["sqrt", "log2", 0.1, 0.2, 0.5],
-        "max_depth": [None]  # Unlimited depth
+        "max_depth": [3]
     }
     
     # Setup cross-validation

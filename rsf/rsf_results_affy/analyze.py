@@ -25,6 +25,7 @@ def analyze_rsf_hyperparameters(csv_file_path):
     
     # Extract outer fold data (where hyperparameter optimization results are stored)
     outer_fold_data = data[data['fold_type'] == 'outer'].copy()
+    inner_fold_data = data[data['fold_type'] == 'inner'].copy() if 'inner' in data['fold_type'].values else pd.DataFrame()
     
     # Check if dataset has percentage and num_features columns
     has_feature_info = 'percentage' in outer_fold_data.columns and 'num_features' in outer_fold_data.columns
@@ -120,7 +121,7 @@ def analyze_rsf_hyperparameters(csv_file_path):
     plt.show()
     
     # 4. Hyperparameter effects on performance
-    for param in ['max_features_std', 'min_samples_leaf', 'n_estimators']:
+    for param in ['max_features_std', 'min_samples_leaf', 'n_estimators', 'max_depth']:
         plt.figure(figsize=(12, 6))
         sns.boxplot(x=param, y='test_c_index', data=outer_fold_data)
         plt.title(f'Test C-index by {param}')
@@ -191,6 +192,32 @@ def analyze_rsf_hyperparameters(csv_file_path):
     plt.savefig(f"{output_dir}/heatmap_maxfeatures_vs_estimators.png")
     plt.show()
     
+    # max_depth vs n_estimators
+    plt.figure(figsize=(10, 8))
+    pivot = outer_fold_data.pivot_table(
+        values='test_c_index', 
+        index='max_depth', 
+        columns='n_estimators', 
+        aggfunc='mean'
+    )
+    sns.heatmap(pivot, annot=True, cmap='viridis', fmt='.3f')
+    plt.title('Mean Test C-index: max_depth vs n_estimators')
+    plt.savefig(f"{output_dir}/heatmap_maxdepth_vs_estimators.png")
+    plt.show()
+    
+    # max_depth vs min_samples_leaf
+    plt.figure(figsize=(10, 8))
+    pivot = outer_fold_data.pivot_table(
+        values='test_c_index', 
+        index='max_depth', 
+        columns='min_samples_leaf', 
+        aggfunc='mean'
+    )
+    sns.heatmap(pivot, annot=True, cmap='viridis', fmt='.3f')
+    plt.title('Mean Test C-index: max_depth vs min_samples_leaf')
+    plt.savefig(f"{output_dir}/heatmap_maxdepth_vs_leaf.png")
+    plt.show()
+    
     # 8. Analysis of performance across folds
     plt.figure(figsize=(14, 8))
     
@@ -210,7 +237,7 @@ def analyze_rsf_hyperparameters(csv_file_path):
     # 9. Summary statistics by hyperparameter value
     print("\n=== Mean Performance by Hyperparameter Value ===")
     
-    for param in ['max_features_std', 'min_samples_leaf', 'n_estimators']:
+    for param in ['max_features_std', 'min_samples_leaf', 'n_estimators', 'max_depth']:
         stats = outer_fold_data.groupby(param).agg({
             'test_c_index': ['mean', 'std', 'count'],
             'train_c_index': ['mean', 'std']
@@ -282,4 +309,4 @@ if __name__ == "__main__":
     analyze_rsf_hyperparameters('rsf/rsf_results_affy/Affy RS_rsf_all_fold_results_20250628.csv')
     print("\nAnalysis complete. Results saved to 'rsf/rsf_results_affy/rsf_analysis_results' directory.")
     
-# 0.2, 70, 750
+# 0.2, 70, 750, 
