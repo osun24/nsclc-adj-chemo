@@ -97,8 +97,13 @@ def run_nested_cv_iteration(X_train, y_train, features_to_use, iteration_num):
     print("Starting Nested Cross-Validation...")
     
     for fold_idx, (outer_train_idx, outer_test_idx) in enumerate(outer_cv.split(X_filtered)):
-        total_fits = len(outer_train_idx) + len(outer_test_idx)
-        print(f"[Fold {fold_idx+1}/5]: Performing {total_fits} total fits")
+        # Calculate actual number of model fits for this fold
+        n_param_combinations = len(param_grid["n_estimators"]) * len(param_grid["min_samples_leaf"]) * len(param_grid["max_features"])
+        inner_cv_fits = n_param_combinations * inner_cv.get_n_splits()
+        total_fits_this_fold = inner_cv_fits + 1  # +1 for final model
+        
+        print(f"[Fold {fold_idx+1}/5] Training samples: {len(outer_train_idx)}, Test samples: {len(outer_test_idx)}")
+        print(f"[Fold {fold_idx+1}/5] Model fits: {total_fits_this_fold} ({inner_cv_fits} inner CV + 1 final)")
         
         # Split data
         X_train_outer = X_filtered.iloc[outer_train_idx]
