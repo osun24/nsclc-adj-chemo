@@ -8,7 +8,7 @@ Number of censored: 522
 Total features available: 13060
 
 Loading pre-ranked features from median importance...
-Using 13060 pre-ranked features
+Using 13060 pre-ranked features (no recalculation needed)
 
 Starting iteration 1...
 
@@ -16,4 +16,5 @@ Starting iteration 1...
 ITERATION 1: Using 13060 features
 ============================================================
 Starting Nested Cross-Validation...
-[Fold 1/5]: Performing 922 total fits
+[Fold 1/5] Training samples: 737, Test samples: 185
+[Fold 1/5] Model fits: 51 (50 inner CV + 1 final)

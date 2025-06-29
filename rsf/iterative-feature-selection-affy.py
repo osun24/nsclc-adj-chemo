@@ -3,17 +3,13 @@ Iterative Feature Selection with Nested Cross-Validation for Random Survival For
 
 This script performs iterative feature selection by:
 1. Running nested 5-fold cross-validation 
-2. Computing median feature importance across folds
-3. Removing bottom 20% of features in each iteration
-4. Repeating until performance degrades or minimum    print(f"\nBest performance: {best_score:.4f} at iteration {best_iteration}")
-    print(f"Best feature set size: {all_iterations[best_iteration-1]['n_features']}")
-    
-    print("\nCreating performance visualization plots...")
-    
-    # Plot 1: Performance over iterationstures reached
+2. Using pre-ranked features from previous permutation importance analysis
+3. Removing bottom 20% of features in each iteration based on ranking
+4. Repeating until performance degrades or minimum features reached
 
+Uses pre-ranked features instead of recalculating feature importance.
 Fixed hyperparameters: 70 min_samples_leaf, 750 n_estimators
-Search space: max_features in ["sqrt", "log", 0.1, 0.2, 0.5]
+Search space: max_features in ["sqrt", "log2", 0.1, 0.2, 0.5]
 """
 
 import os
@@ -25,7 +21,7 @@ from sksurv.ensemble import RandomSurvivalForest
 from sksurv.util import Surv
 from sksurv.metrics import concordance_index_censored
 import matplotlib.pyplot as plt
-from sklearn.inspection import permutation_importance
+# Feature importance removed - using pre-ranked features
 import joblib
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import KFold
@@ -65,7 +61,7 @@ def run_nested_cv_iteration(X_train, y_train, features_to_use, iteration_num):
     
     Returns:
     --------
-    dict: Results including CV scores, feature importances, and best parameters
+    dict: Results including CV scores and best parameters
     """
     print(f"\n{'='*60}")
     print(f"ITERATION {iteration_num}: Using {len(features_to_use)} features")
@@ -92,7 +88,6 @@ def run_nested_cv_iteration(X_train, y_train, features_to_use, iteration_num):
     outer_scores = []
     outer_train_scores = []
     best_params_list = []
-    all_feature_importances = []
     
     print("Starting Nested Cross-Validation...")
     
@@ -145,22 +140,6 @@ def run_nested_cv_iteration(X_train, y_train, features_to_use, iteration_num):
         
         print(f"[Fold {fold_idx+1}] Best params: {best_params}")
         print(f"[Fold {fold_idx+1}] Test C-index: {test_c_index:.4f}, Train C-index: {train_c_index:.4f}")
-        
-        # Compute permutation importance on test fold
-        perm_result = permutation_importance(
-            final_model, X_test_outer, y_test_outer,
-            scoring=lambda est, X, y: rsf_concordance_metric(y, est.predict(X)),
-            n_repeats=20, random_state=42, n_jobs=-1
-        )
-        
-        # Store feature importances
-        fold_importance = pd.DataFrame({
-            'Feature': features_to_use,
-            'Importance': perm_result.importances_mean,
-            'Std': perm_result.importances_std,
-            'Fold': fold_idx + 1
-        })
-        all_feature_importances.append(fold_importance)
     
     # Aggregate results
     mean_test_score = np.mean(outer_scores)
@@ -171,19 +150,6 @@ def run_nested_cv_iteration(X_train, y_train, features_to_use, iteration_num):
     print(f"\nIteration {iteration_num} Results:")
     print(f"Test C-index: {mean_test_score:.4f} ± {std_test_score:.4f}")
     print(f"Train C-index: {mean_train_score:.4f} ± {std_train_score:.4f}")
-    
-    # Combine and aggregate feature importances
-    combined_importance = pd.concat(all_feature_importances, ignore_index=True)
-    
-    # Calculate median importance for each feature
-    median_importance = combined_importance.groupby('Feature').agg({
-        'Importance': ['median', 'mean', 'std', 'min', 'max']
-    }).round(6)
-    
-    median_importance.columns = ['Median_Importance', 'Mean_Importance', 
-                                'Std_Importance', 'Min_Importance', 'Max_Importance']
-    median_importance = median_importance.reset_index()
-    median_importance = median_importance.sort_values('Median_Importance', ascending=False)
     
     # Save iteration results
     iteration_results = {
@@ -196,34 +162,12 @@ def run_nested_cv_iteration(X_train, y_train, features_to_use, iteration_num):
         'std_train_score': std_train_score,
         'test_scores': outer_scores,
         'train_scores': outer_train_scores,
-        'best_params_list': best_params_list,
-        'feature_importance': median_importance,
-        'raw_importance': combined_importance
+        'best_params_list': best_params_list
     }
     
     # Save detailed results for this iteration
     iteration_dir = os.path.join(output_dir, f"iteration_{iteration_num:02d}")
     os.makedirs(iteration_dir, exist_ok=True)
-    
-    # Save feature importance
-    median_importance.to_csv(
-        os.path.join(iteration_dir, f"iteration_{iteration_num:02d}_median_importance.csv"), 
-        index=False
-    )
-    combined_importance.to_csv(
-        os.path.join(iteration_dir, f"iteration_{iteration_num:02d}_raw_importance.csv"), 
-        index=False
-    )
-    
-    # Create importance plot
-    top_20 = median_importance.head(20)
-    plt.figure(figsize=(12, 8))
-    plt.barh(top_20['Feature'][::-1], top_20['Median_Importance'][::-1], color='skyblue')
-    plt.xlabel('Median Permutation Importance')
-    plt.title(f'Iteration {iteration_num}: Top 20 Features (n_features={len(features_to_use)})')
-    plt.tight_layout()
-    plt.savefig(os.path.join(iteration_dir, f"iteration_{iteration_num:02d}_top20_importance.png"))
-    plt.close()
     
     return iteration_results
 
@@ -269,7 +213,7 @@ def main():
         initial_features = preranked_features['Feature'].tolist()
         # Filter to only include features that exist in our data
         initial_features = [f for f in initial_features if f in all_features]
-        print(f"Using {len(initial_features)} pre-ranked features")
+        print(f"Using {len(initial_features)} pre-ranked features (no recalculation needed)")
     except FileNotFoundError:
         print("Pre-ranked features not found, using all features")
         initial_features = all_features.copy()
@@ -308,7 +252,7 @@ def main():
             print(f"\nEarly stopping: No improvement for {patience} iterations")
             break
         
-        # Remove bottom 20% of features based on median importance
+        # Remove bottom 20% of features based on pre-ranked order
         n_features_to_remove = max(1, int(len(current_features) * 0.2))
         n_features_to_keep = len(current_features) - n_features_to_remove
         
@@ -316,12 +260,11 @@ def main():
             print(f"Would reduce to {n_features_to_keep} features, below minimum of {min_features}")
             break
         
-        # Get top features based on median importance
-        feature_ranking = results['feature_importance']
-        top_features = feature_ranking.head(n_features_to_keep)['Feature'].tolist()
+        # Keep top features based on pre-ranked order (current_features is already in ranked order)
+        top_features = current_features[:n_features_to_keep]
         
         print(f"Removing {n_features_to_remove} features (keeping top {n_features_to_keep})")
-        print(f"Bottom 5 features being removed: {feature_ranking.tail(5)['Feature'].tolist()}")
+        print(f"Bottom 5 features being removed: {current_features[-5:]}")
         
         current_features = top_features
         iteration += 1
