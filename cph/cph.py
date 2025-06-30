@@ -58,8 +58,8 @@ def dataframe_to_latex(df, caption="Table Caption", label="table:label"):
     # Print the LaTeX table
     print(latex_str)
 
-# Modified run_model: removed splitting; now expects separate train_df and valid_df.
-def run_model(train_df, valid_df, name, penalizer=0.1, l1_ratio=1.0, duration_col='OS_MONTHS', event_col='OS_STATUS'):
+# Modified run_model: removed splitting; now expects separate train_df and test_df.
+def run_model(train_df, test_df, name, penalizer=0.1, l1_ratio=1.0, duration_col='OS_MONTHS', event_col='OS_STATUS'):
     # Fit the Cox proportional hazards model on the provided training set using elastic net
     cph = CoxPHFitter(penalizer=penalizer, l1_ratio=l1_ratio)
     cph.fit(train_df, duration_col=duration_col, event_col=event_col)
@@ -67,11 +67,11 @@ def run_model(train_df, valid_df, name, penalizer=0.1, l1_ratio=1.0, duration_co
     # Print summary of the fitted model
     cph.print_summary(style="ascii")
 
-    # Evaluate the model using the training set and the provided validation set
+    # Evaluate the model using the training set and the provided test set
     train_c_index = cph.concordance_index_
     print(f"Concordance Index on Training Set: {train_c_index:.3f}")
-    valid_c_index = cph.score(valid_df, scoring_method="concordance_index")
-    print(f"Concordance Index on Validation Set: {valid_c_index:.3f}")
+    test_c_index = cph.score(test_df, scoring_method="concordance_index")
+    print(f"Concordance Index on Test Set: {test_c_index:.3f}")
 
     summary_df = cph.summary  # Get the summary as a DataFrame
     model_metrics = [cph.log_likelihood_, cph.concordance_index_]
@@ -100,7 +100,7 @@ def run_model(train_df, valid_df, name, penalizer=0.1, l1_ratio=1.0, duration_co
     ll_ratio_test_df = cph.log_likelihood_ratio_test().degrees_freedom
     neg_log2_p_ll_ratio_test = -np.log2(cph.log_likelihood_ratio_test().p_value)
 
-    with open(f'cph-{valid_c_index:.3f}-{name}-summary.txt', 'w') as f:
+    with open(f'cph-{test_c_index:.3f}-{name}-summary.txt', 'w') as f:
         f.write(summary_df.to_string())
         formatted_metrics = '\n'.join([f'{metric:.4f}' for metric in model_metrics])
         f.write(f"\n\nModel metrics: {formatted_metrics}")
@@ -108,7 +108,7 @@ def run_model(train_df, valid_df, name, penalizer=0.1, l1_ratio=1.0, duration_co
         # Write additional metrics in the specified format
         f.write(f"\n\nTrain Concordance = {concordance:.3f}")
         # Test c-index
-        f.write(f"\nConcordance on validation set = {valid_c_index:.3f}")
+        f.write(f"\nConcordance on test set = {test_c_index:.3f}")
         f.write(f"\nPartial AIC = {partial_aic:.3f}")
         f.write(f"\nlog-likelihood ratio test = {log_likelihood_ratio_test:.3f} on {ll_ratio_test_df} df")
         f.write(f"\n-log2(p) of ll-ratio test = {neg_log2_p_ll_ratio_test:.3f}")
@@ -155,7 +155,7 @@ def run_model(train_df, valid_df, name, penalizer=0.1, l1_ratio=1.0, duration_co
     plt.figure(figsize=(12, 8))
 
     # Include lambda value in the title 
-    plt.title(f'{name} Hazard Ratios (Validation C-index: {valid_c_index:.3f}, 95% CI)')
+    plt.title(f'{name} Hazard Ratios (Test C-index: {test_c_index:.3f}, 95% CI)')
 
     # Generate a forest plot for hazard ratios with 95% confidence intervals
     plt.errorbar(sorted_hazard_ratios, range(len(sorted_hazard_ratios)), 
@@ -181,7 +181,7 @@ def run_model(train_df, valid_df, name, penalizer=0.1, l1_ratio=1.0, duration_co
     # Display the plot
     plt.tight_layout()
     name = name.replace(' ', '-')
-    plt.savefig(f'cph-{valid_c_index:.3f}-{name}-forest-plot.png')
+    plt.savefig(f'cph-{test_c_index:.3f}-{name}-forest-plot.png')
     plt.show()
 
 def c_index_score(estimator, X, y):
@@ -189,7 +189,7 @@ def c_index_score(estimator, X, y):
     risk_scores = -estimator.predict(X)
     return concordance_index_censored(y["OS_STATUS"], y["OS_MONTHS"], risk_scores)[0]
 
-def optimize_penalties(train_df, valid_df, name, duration_col='OS_MONTHS', event_col='OS_STATUS'):
+def optimize_penalties(train_df, test_df, name, duration_col='OS_MONTHS', event_col='OS_STATUS'):
     # Prepare training data: separate features and convert survival labels
     X_train = train_df.drop(columns=[duration_col, event_col])
     y_train = Surv.from_dataframe(event_col, duration_col, train_df)
@@ -211,23 +211,34 @@ def optimize_penalties(train_df, valid_df, name, duration_col='OS_MONTHS', event
     
     print(f"Optimal parameters: {grid_search.best_params_} with Best CV Concordance = {grid_search.best_score_:.3f}")
     
-    # Evaluate on the validation set
-    X_valid = valid_df.drop(columns=[duration_col, event_col])
-    y_valid = Surv.from_dataframe(event_col, duration_col, valid_df)
-    valid_c_index = c_index_score(grid_search.best_estimator_, X_valid, y_valid)
-    print(f"Concordance Index on Validation Set: {valid_c_index:.3f}")
+    # Evaluate on the test set
+    X_test = test_df.drop(columns=[duration_col, event_col])
+    y_test = Surv.from_dataframe(event_col, duration_col, test_df)
+    test_c_index = c_index_score(grid_search.best_estimator_, X_test, y_test)
+    print(f"Concordance Index on Test Set: {test_c_index:.3f}")
 
 if __name__ == "__main__":
     print("Loading train data from: allTrain.csv")
-    train = pd.read_csv("allTrain.csv")
-    print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
-    print("Train data shape:", train.shape)
+    train_orig = pd.read_csv("allTrain.csv")
+    print(f"Number of events in training set: {train_orig['OS_STATUS'].sum()} | Censored cases: {train_orig.shape[0] - train_orig['OS_STATUS'].sum()}")
+    print("Train data shape:", train_orig.shape)
     
     # Data Loading and Preprocessing for validation data
     print("Loading validation data from: allValidation.csv")
-    valid = pd.read_csv("allValidation.csv")
-    print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
-    print("Validation data shape:", valid.shape)
+    valid_orig = pd.read_csv("allValidation.csv")
+    print(f"Number of events in validation set: {valid_orig['OS_STATUS'].sum()} | Censored cases: {valid_orig.shape[0] - valid_orig['OS_STATUS'].sum()}")
+    print("Validation data shape:", valid_orig.shape)
+    
+    # Combine train and validation for training (matching iterative feature selection approach)
+    train = pd.concat([train_orig, valid_orig], axis=0, ignore_index=True)
+    print(f"Combined training data shape: {train.shape}")
+    print(f"Number of events in combined training: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
+    
+    # Load test data separately
+    print("Loading test data from: allTest.csv")
+    test = pd.read_csv("allTest.csv")
+    print(f"Number of events in test set: {test['OS_STATUS'].sum()} | Censored cases: {test.shape[0] - test['OS_STATUS'].sum()}")
+    print("Test data shape:", test.shape)
     
     # rsf/rsf-results/ALL 3-29-25 RS_rsf_preselection_importances_1SE.csv
     selected_columns = pd.read_csv("rsf/rsf_results/ALL 3-29-25 RS_rsf_preselection_importances_1SE.csv")['Feature'].tolist()
@@ -240,16 +251,16 @@ if __name__ == "__main__":
     low_variance = train.columns[~selector.get_support()]
     print(f"Dropping low variance columns: {low_variance}")
     train = train.drop(columns=low_variance)
-    valid = valid.drop(columns=low_variance)
+    test = test.drop(columns=low_variance)
     
-    # Take first 800
+    # Take first 300 features 
     selected_columns = selected_columns[:300]
     
     train = train[selected_columns + ['OS_MONTHS', 'OS_STATUS']] 
-    valid = valid[selected_columns + ['OS_MONTHS', 'OS_STATUS']]
+    test = test[selected_columns + ['OS_MONTHS', 'OS_STATUS']]
 
-    # Call run_model with the separate train and validation datasets
-    #run_model(train, valid, 'All, First 800 3-29 1SE', penalizer=0.0, l1_ratio=0.25)
+    # Call run_model with the separate train and test datasets (updated variable names)
+    #run_model(train, test, 'All, First 300 3-29 1SE', penalizer=0.0, l1_ratio=0.25)
     
     # Optionally, call optimize_penalties using the provided CSVs
-    optimize_penalties(train, valid, 'All - First 800 - 3-29 1SE')
+    optimize_penalties(train, test, 'All - First 300 - 3-29 1SE')
