@@ -53,19 +53,39 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Load RSF model
-rsf = joblib.load('rsf/rsf_results_affy/20250616_rsf_model-750-trees-maxdepth-3-675-features.pkl')
+# Load RSF model (best model from iterative feature selection - 19 features, iteration 31)
+rsf = joblib.load('rsf/rsf_results_affy/iterative_feature_selection/20250628_best_rsf_model_iter_31_19_features.pkl')
 
-# Data preprocessing to match one-forest-affy.py
-train = pd.read_csv("affyTrain.csv")
-train['Adjuvant Chemo'] = train['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
+# Data preprocessing to match iterative-feature-selection-affy.py
+# Load and combine train + validation data as done in iterative feature selection
+train_orig = pd.read_csv("affyTrain.csv")
+valid_orig = pd.read_csv("affyValidation.csv")
+train = pd.concat([train_orig, valid_orig], axis=0, ignore_index=True)
 
-num_of_cov = 675
-covariates = pd.read_csv("rsf/rsf_results_affy/Affy RS_rsf_preselection_importances_1SE.csv")
-covariates = covariates['Feature'].tolist()[:num_of_cov]
+# Apply same preprocessing as iterative feature selection
+train['Adjuvant Chemo'] = train['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
+
+# Load the best 19 features from iteration 31
+try:
+    best_features_df = pd.read_csv("rsf/rsf_results_affy/iterative_feature_selection/20250628_best_features_iteration_31.csv")
+    covariates = best_features_df['Feature'].tolist()
+    print(f"✅ Loaded {len(covariates)} best features from iteration 31")
+except FileNotFoundError:
+    # Fallback to hardcoded features if file not found
+    covariates = [
+        'Stage_IA', 'FAM117A', 'CCNB1', 'PURA', 'PFKP', 'PARM1', 
+        'ADGRF5', 'GUCY1A1', 'SLC1A4', 'TENT5C', 'Age', 'HILPDA', 
+        'ETV5', 'STIM1', 'KDM5C', 'NCAPG2', 'ZFR2', 'SETBP1', 'RTCA'
+    ]
+    print(f"⚠️ Using hardcoded 19 features (best features file not found)")
+
+# Filter to only include features that exist in the data
 covariates = [c for c in covariates if c in train.columns]
 df = train[['OS_STATUS', 'OS_MONTHS'] + covariates]
 covariates = df.columns[2:]
+
+print(f"📊 Model info: {len(rsf.estimators_)} trees, {len(covariates)} features")
+print(f"🎯 Features: {list(covariates)}")
 
 # Make feature names globally accessible
 feature_names = covariates
@@ -1333,7 +1353,7 @@ def main():
     st.session_state['leaf_info'] = leaf_info
     
     with main_col1:
-        st.subheader("Decision Tree Visualization")
+        st.subheader("RSF Tree Visualization")
         
         # Build graph for visualization
         G = nx.DiGraph()

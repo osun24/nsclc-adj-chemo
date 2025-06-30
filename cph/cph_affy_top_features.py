@@ -355,6 +355,7 @@ if __name__ == "__main__":
         
         best_features_df = pd.read_csv(best_features_path)
         selected_features = best_features_df['Feature'].tolist()
+        selected_features.append('Adjuvant Chemo')  # Ensure 'Adjuvant Chemo' is included
         print(f"Using {len(selected_features)} top features from iteration 31")
         print("Top features:", selected_features)
         
@@ -364,7 +365,7 @@ if __name__ == "__main__":
         selected_features = [
             'Stage_IA', 'FAM117A', 'CCNB1', 'PURA', 'PFKP', 'PARM1', 
             'ADGRF5', 'GUCY1A1', 'SLC1A4', 'TENT5C', 'Age', 'HILPDA', 
-            'ETV5', 'STIM1', 'KDM5C', 'NCAPG2', 'ZFR2', 'SETBP1', 'RTCA'
+            'ETV5', 'STIM1', 'KDM5C', 'NCAPG2', 'ZFR2', 'SETBP1', 'RTCA', "Adjuvant Chemo"
         ]
         print(f"Using {len(selected_features)} hardcoded top features")
     
