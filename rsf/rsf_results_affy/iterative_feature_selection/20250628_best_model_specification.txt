@@ -1,0 +1,47 @@
+BEST MODEL SPECIFICATION
+==================================================
+
+Model File: 20250628_best_rsf_model_iter_31_19_features.pkl
+Best Iteration: 31
+Number of Features: 19
+Training Data Shape: (922, 13060)
+Date Created: 20250628
+
+HYPERPARAMETERS:
+--------------------
+max_depth: 3
+max_features: 0.1
+min_samples_leaf: 70
+n_estimators: 750
+
+CROSS-VALIDATION PERFORMANCE:
+------------------------------
+Mean Test C-Index: 0.7034
+Std Test C-Index: 0.0278
+
+FINAL MODEL PERFORMANCE:
+-------------------------
+Training C-Index: 0.7336
+Test C-Index: 0.6593406593406593
+
+FEATURES (19):
+---------------
+  1. Stage_IA
+  2. FAM117A
+  3. CCNB1
+  4. PURA
+  5. PFKP
+  6. PARM1
+  7. ADGRF5
+  8. GUCY1A1
+  9. SLC1A4
+ 10. TENT5C
+ 11. Age
+ 12. HILPDA
+ 13. ETV5
+ 14. STIM1
+ 15. KDM5C
+ 16. NCAPG2
+ 17. ZFR2
+ 18. SETBP1
+ 19. RTCA
