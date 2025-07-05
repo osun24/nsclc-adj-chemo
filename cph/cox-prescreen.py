@@ -87,24 +87,14 @@ def load_and_combine_data():
     print(f"Validation data shape: {valid.shape}")
     print(f"Validation events: {valid['OS_STATUS'].sum()} | Censored: {valid.shape[0] - valid['OS_STATUS'].sum()}")
     
-    print("Loading test data from: affyTest.csv")
-    test = pd.read_csv("affyTest.csv")
-    print(f"Test data shape: {test.shape}")
-    print(f"Test events: {test['OS_STATUS'].sum()} | Censored: {test.shape[0] - test['OS_STATUS'].sum()}")
-    
     # Combine train and validation first (as in rsf script)
     train_combined = pd.concat([train, valid], ignore_index=True)
     print(f"Combined train+validation shape: {train_combined.shape}")
-    
-    # Then combine with test for full dataset
-    full_data = pd.concat([train_combined, test], ignore_index=True)
-    print(f"Full combined dataset shape: {full_data.shape}")
-    print(f"Total events: {full_data['OS_STATUS'].sum()} | Total censored: {full_data.shape[0] - full_data['OS_STATUS'].sum()}")
-    
+
     # Apply same preprocessing as in rsf script
-    full_data['Adjuvant Chemo'] = full_data['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
+    train_combined['Adjuvant Chemo'] = train_combined['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
     
-    return full_data
+    return train_combined
 
 def identify_feature_types(df):
     """Identify clinical vs genomic features"""

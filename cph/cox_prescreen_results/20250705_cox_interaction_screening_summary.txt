@@ -1,0 +1,40 @@
+COX PROPORTIONAL HAZARDS INTERACTION SCREENING SUMMARY
+============================================================
+
+Date: 2025-07-05 12:09:13
+Screening method: Treatment-gene interaction testing
+Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)
+
+DATASET SUMMARY:
+--------------------
+Total genes tested: 13039
+Median sample size: 922
+Median events: 400
+
+SCREENING RESULTS:
+--------------------
+Significant interactions at α = 0.05: 2817 (21.6%)
+Significant interactions at α = 0.1: 3899 (29.9%)
+
+TOP 10 MOST SIGNIFICANT INTERACTIONS:
+----------------------------------------
+JMJD7-PLA2G4B: p = 1.77e-07, HR = 5.349 (2.851-10.038)
+GOLGA8A: p = 1.68e-06, HR = 2.283 (1.629-3.201)
+USP53: p = 1.84e-06, HR = 3.174 (1.975-5.101)
+NELFE: p = 2.30e-06, HR = 0.318 (0.197-0.511)
+NFAT5: p = 2.60e-06, HR = 2.136 (1.557-2.932)
+PDE8B: p = 4.02e-06, HR = 3.361 (2.007-5.627)
+PCSK2: p = 4.53e-06, HR = 2.112 (1.534-2.906)
+IL6ST: p = 5.15e-06, HR = 1.817 (1.406-2.349)
+IFI35: p = 5.90e-06, HR = 0.429 (0.297-0.618)
+BCL2L13: p = 5.97e-06, HR = 0.311 (0.188-0.516)
+
+FILES GENERATED:
+--------------------
+- 20250705_cox_interaction_screening_full_results.csv
+- 20250705_significant_interactions_alpha_0.05.csv
+- 20250705_significant_genes_alpha_0.05_list.txt
+- 20250705_significant_interactions_alpha_0.10.csv
+- 20250705_significant_genes_alpha_0.10_list.txt
+- 20250705_interaction_screening_overview.png
+- 20250705_interaction_volcano_plot.png

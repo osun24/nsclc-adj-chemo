@@ -1,0 +1,114 @@
+================================================================================
+COX PROPORTIONAL HAZARDS INTERACTION SCREENING
+================================================================================
+Prescreening genomic features using treatment-gene interactions
+Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)
+Selection criteria: Significant interaction term (p < α)
+================================================================================
+================================================================================
+LOADING AND COMBINING DATASETS
+================================================================================
+Loading train data from: affyTrain.csv
+Train data shape: (691, 13062)
+Train events: 300 | Censored: 391
+Loading validation data from: affyValidation.csv
+Validation data shape: (231, 13062)
+Validation events: 100 | Censored: 131
+Combined train+validation shape: (922, 13062)
+
+================================================================================
+IDENTIFYING FEATURE TYPES
+================================================================================
+Total columns in dataset: 13062
+Clinical features found: 19
+Clinical features missing: 0
+Genomic features to screen: 13039
+First 10 genomic features: ['TMEM255A', 'ANKRD2', 'RNF123', 'ATF7', 'ADAM17', 'CYC1', 'DVL2', 'GAS7', 'PBLD', 'METTL3']
+
+================================================================================
+RUNNING TREATMENT-GENE INTERACTION SCREENING
+================================================================================
+Testing 13039 genomic features for treatment interactions
+Alpha levels: [0.05, 0.1]
+Model for each gene: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)
+Parallelization: Enabled
+Using 14 CPU cores
+Preparing data for parallel processing...
+Running parallel Cox regression screening with 14 cores...
+
+Screening completed in 0.7 minutes
+Successfully tested 13039/13039 genes
+Significant interactions (p <= 0.05): 2817 (21.6%)
+Significant interactions (p <= 0.10): 3899 (29.9%)
+Processing rate: 293.2 genes/second
+
+================================================================================
+PERFORMANCE METRICS
+================================================================================
+Total processing time: 0.7 minutes (44.5 seconds)
+Genes processed: 13,039
+Processing rate: 293.2 genes/second
+CPU cores used: 14
+Parallel efficiency: 20.9 genes/second/core
+Estimated speedup vs sequential: 195.5x
+Estimated sequential time: 144.9 minutes
+================================================================================
+
+================================================================================
+ANALYZING SCREENING RESULTS
+================================================================================
+Total genes tested: 13039
+Median sample size: 922
+Median events: 400
+Significant interactions at alpha = 0.05: 2817 (21.6%)
+Significant interactions at alpha = 0.1: 3899 (29.9%)
+
+Top 20 most significant interactions:
+         gene  interaction_p_value interaction_hr_formatted  significant_at_0.05  significant_at_0.10
+JMJD7-PLA2G4B         1.769667e-07     5.349 (2.851-10.038)                 True                 True
+      GOLGA8A         1.679367e-06      2.283 (1.629-3.201)                 True                 True
+        USP53         1.838456e-06      3.174 (1.975-5.101)                 True                 True
+        NELFE         2.303788e-06      0.318 (0.197-0.511)                 True                 True
+        NFAT5         2.597957e-06      2.136 (1.557-2.932)                 True                 True
+        PDE8B         4.016471e-06      3.361 (2.007-5.627)                 True                 True
+        PCSK2         4.531893e-06      2.112 (1.534-2.906)                 True                 True
+        IL6ST         5.146972e-06      1.817 (1.406-2.349)                 True                 True
+        IFI35         5.899700e-06      0.429 (0.297-0.618)                 True                 True
+      BCL2L13         5.973351e-06      0.311 (0.188-0.516)                 True                 True
+       PIK3R1         6.466865e-06      2.198 (1.561-3.095)                 True                 True
+         DHX8         7.078814e-06      0.205 (0.102-0.409)                 True                 True
+         TBX2         8.279342e-06      3.405 (1.987-5.836)                 True                 True
+        ZMYM2         9.481393e-06      2.440 (1.644-3.621)                 True                 True
+        DNAI4         9.748585e-06      3.987 (2.160-7.359)                 True                 True
+        RAB7A         1.187811e-05      0.270 (0.150-0.485)                 True                 True
+        SPIN1         1.245886e-05      2.636 (1.706-4.071)                 True                 True
+        SNRPC         1.350221e-05      0.233 (0.121-0.449)                 True                 True
+       LRRC59         1.351946e-05      0.307 (0.180-0.523)                 True                 True
+        KAT6B         1.506885e-05      3.812 (2.080-6.988)                 True                 True
+
+================================================================================
+CREATING VISUALIZATIONS
+================================================================================
+Visualizations saved:
+- 20250705_interaction_screening_overview.png
+- 20250705_interaction_volcano_plot.png
+
+================================================================================
+SAVING RESULTS
+================================================================================
+Full results saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250705_cox_interaction_screening_full_results.csv
+Significant results (α=0.05) saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250705_significant_interactions_alpha_0.05.csv
+Significant gene list (α=0.05) saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250705_significant_genes_alpha_0.05_list.txt
+Significant results (α=0.1) saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250705_significant_interactions_alpha_0.10.csv
+Significant gene list (α=0.1) saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250705_significant_genes_alpha_0.10_list.txt
+
+================================================================================
+CREATING SUMMARY REPORT
+================================================================================
+Summary report saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250705_cox_interaction_screening_summary.txt
+
+================================================================================
+COX INTERACTION SCREENING COMPLETE
+================================================================================
+Total pipeline time: 0.8 minutes
+Results saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results
