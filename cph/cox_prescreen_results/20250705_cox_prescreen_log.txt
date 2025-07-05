@@ -1,0 +1,11 @@
+================================================================================
+COX PROPORTIONAL HAZARDS INTERACTION SCREENING
+================================================================================
+Prescreening genomic features using treatment-gene interactions
+Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)
+Selection criteria: Significant interaction term (p < α)
+================================================================================
+================================================================================
+LOADING AND COMBINING DATASETS
+================================================================================
+Loading train data from: affyTrain.csv
