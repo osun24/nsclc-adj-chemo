@@ -182,8 +182,27 @@ def test_interaction_for_gene_parallel(gene_data, alpha_levels=[0.05, 0.10]):
         # Extract interaction term results
         interaction_coef = cph.params_[f'Adjuvant_Chemo_x_{gene_name}']
         interaction_p_value = cph.summary.loc[f'Adjuvant_Chemo_x_{gene_name}', 'p']
-        interaction_ci_lower = cph.confidence_intervals_.loc[f'Adjuvant_Chemo_x_{gene_name}', 'coef lower 95%']
-        interaction_ci_upper = cph.confidence_intervals_.loc[f'Adjuvant_Chemo_x_{gene_name}', 'coef upper 95%']
+        
+        # Handle different column names for confidence intervals
+        ci_cols = cph.confidence_intervals_.columns
+        if 'coef lower 95%' in ci_cols:
+            ci_lower_col = 'coef lower 95%'
+            ci_upper_col = 'coef upper 95%'
+        elif '95% CI lower' in ci_cols:
+            ci_lower_col = '95% CI lower'
+            ci_upper_col = '95% CI upper'
+        else:
+            # Try to find CI columns by pattern
+            lower_cols = [col for col in ci_cols if 'lower' in col.lower()]
+            upper_cols = [col for col in ci_cols if 'upper' in col.lower()]
+            if lower_cols and upper_cols:
+                ci_lower_col = lower_cols[0]
+                ci_upper_col = upper_cols[0]
+            else:
+                raise KeyError(f"Could not find confidence interval columns. Available columns: {list(ci_cols)}")
+        
+        interaction_ci_lower = cph.confidence_intervals_.loc[f'Adjuvant_Chemo_x_{gene_name}', ci_lower_col]
+        interaction_ci_upper = cph.confidence_intervals_.loc[f'Adjuvant_Chemo_x_{gene_name}', ci_upper_col]
         interaction_hr = np.exp(interaction_coef)
         interaction_hr_ci_lower = np.exp(interaction_ci_lower)
         interaction_hr_ci_upper = np.exp(interaction_ci_upper)
@@ -229,6 +248,12 @@ def test_interaction_for_gene_parallel(gene_data, alpha_levels=[0.05, 0.10]):
         
         return results
         
+    except KeyError as e:
+        print(f"Error testing gene {gene_name}: Column access error - {str(e)}")
+        # Print available columns for debugging
+        if 'cph' in locals():
+            print(f"Available confidence interval columns: {list(cph.confidence_intervals_.columns)}")
+        return None
     except Exception as e:
         print(f"Error testing gene {gene_name}: {str(e)}")
         return None
@@ -253,8 +278,27 @@ def test_interaction_for_gene(df, gene, alpha_levels=[0.05, 0.10]):
         # Extract interaction term results
         interaction_coef = cph.params_[f'Adjuvant_Chemo_x_{gene}']
         interaction_p_value = cph.summary.loc[f'Adjuvant_Chemo_x_{gene}', 'p']
-        interaction_ci_lower = cph.confidence_intervals_.loc[f'Adjuvant_Chemo_x_{gene}', 'coef lower 95%']
-        interaction_ci_upper = cph.confidence_intervals_.loc[f'Adjuvant_Chemo_x_{gene}', 'coef upper 95%']
+        
+        # Handle different column names for confidence intervals
+        ci_cols = cph.confidence_intervals_.columns
+        if 'coef lower 95%' in ci_cols:
+            ci_lower_col = 'coef lower 95%'
+            ci_upper_col = 'coef upper 95%'
+        elif '95% CI lower' in ci_cols:
+            ci_lower_col = '95% CI lower'
+            ci_upper_col = '95% CI upper'
+        else:
+            # Try to find CI columns by pattern
+            lower_cols = [col for col in ci_cols if 'lower' in col.lower()]
+            upper_cols = [col for col in ci_cols if 'upper' in col.lower()]
+            if lower_cols and upper_cols:
+                ci_lower_col = lower_cols[0]
+                ci_upper_col = upper_cols[0]
+            else:
+                raise KeyError(f"Could not find confidence interval columns. Available columns: {list(ci_cols)}")
+        
+        interaction_ci_lower = cph.confidence_intervals_.loc[f'Adjuvant_Chemo_x_{gene}', ci_lower_col]
+        interaction_ci_upper = cph.confidence_intervals_.loc[f'Adjuvant_Chemo_x_{gene}', ci_upper_col]
         interaction_hr = np.exp(interaction_coef)
         interaction_hr_ci_lower = np.exp(interaction_ci_lower)
         interaction_hr_ci_upper = np.exp(interaction_ci_upper)
@@ -301,6 +345,12 @@ def test_interaction_for_gene(df, gene, alpha_levels=[0.05, 0.10]):
         
         return results
         
+    except KeyError as e:
+        print(f"Error testing gene {gene}: Column access error - {str(e)}")
+        # Print available columns for debugging
+        if 'cph' in locals():
+            print(f"Available confidence interval columns: {list(cph.confidence_intervals_.columns)}")
+        return None
     except Exception as e:
         print(f"Error testing gene {gene}: {str(e)}")
         return None
