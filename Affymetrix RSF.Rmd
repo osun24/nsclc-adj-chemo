@@ -155,6 +155,22 @@ rsf_model <- ranger(
   num.threads = 0  # use all available cores
 )
 
+#Number of covariates: 675 Number of trees: 750 Max depth: 3 min_samples_leaf: 70 max_features: 0.5 min_weight_fraction_leaf: 0.0 Bootstrap: True min_samples_split: 6 max_leaf_nodes: None oob_score: False warm_start: False max_samples: None Random state: 42
+
+rsf_model_new <- rfsrc(
+  Surv(OS_MONTHS, OS_STATUS) ~ .,  # formula interface
+  data = cbind(OS_MONTHS = affyTrain$OS_MONTHS,
+               OS_STATUS = affyTrain$OS_STATUS,
+               x_train),
+  ntree = 750,
+  mtry = floor(0.5 * ncol(x_train)),
+  nodesize = 70,       # min_samples_leaf
+  max.depth = 3,       # max tree depth
+  nsplit = 6,          # number of random splits per variable (approx min_samples_split)
+  importance = "permute",  # permutation importance
+  block.size = 1        # builds trees one at a time (for reproducibility)
+)
+
 # Validation set prep
 x_valid <- affyValidation[, !(names(affyValidation) %in% c("OS_MONTHS", "OS_STATUS"))]
 y_valid <- Surv(affyValidation$OS_MONTHS, affyValidation$OS_STATUS)
@@ -178,9 +194,422 @@ cat("Validation C-index:", valid_cindex, "\n")
 
 ```
 
+```{r}
+install.packages(c("foreach", "doParallel"))
+library(doParallel)
+library(foreach)
+library(caret)
+library(ranger)
+library(ggplot2)
+library(dplyr)
+library(survival)
+library(gridExtra)
+
+# Register parallel backend
+num_cores <- parallel::detectCores() - 1
+cl <- makeCluster(num_cores)
+registerDoParallel(cl)
+
+# Parameters
+num_repeats <- 20
+num_folds <- 5
+top_n <- 20
+
+# Parallel loop
+results_list <- foreach(trial = 1:num_repeats, .packages = c("ranger", "caret", "ggplot2", "dplyr", "survival")) %dopar% {
+
+  set.seed(trial)
+  indices <- sample(1:nrow(affyTrain))
+  shuffled_data <- affyTrain[indices, ]
+
+  x_data <- shuffled_data[, !(names(shuffled_data) %in% c("OS_MONTHS", "OS_STATUS"))]
+  y_data <- Surv(shuffled_data$OS_MONTHS, shuffled_data$OS_STATUS)
+
+  folds <- createFolds(shuffled_data$OS_MONTHS, k = num_folds, returnTrain = TRUE)
+
+  trial_importances <- list()
+
+  for (fold_idx in 1:num_folds) {
+    message(sprintf("Trial %d - Fold %d", trial, fold_idx))
+
+    train_idx <- folds[[fold_idx]]
+    x_train_cv <- x_data[train_idx, ]
+    y_train_cv <- y_data[train_idx]
+
+    model_cv <- ranger(
+      x = x_train_cv,
+      y = y_train_cv,
+      num.trees = one_se_model$num.trees,
+      mtry = floor(one_se_model$mtry_frac * ncol(x_train_cv)),
+      min.node.size = one_se_model$min.node.size,
+      max.depth = one_se_model$max.depth,
+      min.bucket = one_se_model$min.bucket,
+      splitrule = "logrank",
+      importance = "permutation",
+      seed = trial * 100 + fold_idx,
+      num.threads = 1  # avoid nested parallelism
+    )
+
+    importance_df <- data.frame(
+      feature = names(model_cv$variable.importance),
+      importance = model_cv$variable.importance,
+      fold = fold_idx,
+      trial = trial
+    )
+
+    trial_importances[[fold_idx]] <- importance_df
+  }
+
+  # Combine fold importances for this trial
+  trial_importance_all <- bind_rows(trial_importances) %>%
+    group_by(feature) %>%
+    summarise(mean_importance = mean(importance), .groups = "drop") %>%
+    arrange(desc(mean_importance))
+
+  # Create plot
+  p <- ggplot(trial_importance_all[1:top_n, ], 
+              aes(x = reorder(feature, mean_importance), y = mean_importance)) +
+    geom_bar(stat = "identity", fill = "#1f77b4", width = 0.8) +
+    coord_flip() +
+    labs(
+      title = sprintf("RSF Pre-Selection (Top %d Features) - Trial %d", top_n, trial),
+      x = NULL, y = "Permutation Importance"
+    ) +
+    theme_minimal(base_size = 14) +
+    theme(plot.title = element_text(hjust = 0.5), axis.text.y = element_text(size = 9))
+
+  # Return both the plot and raw importances
+  list(
+    plot = p,
+    importances = bind_rows(trial_importances)
+  )
+}
+
+ # Stop parallel cluster
+stopCluster(cl)
+
+plot_list <- lapply(results_list, function(x) x$plot)
+importance_all_df <- bind_rows(lapply(results_list, function(x) x$importances))
+
+# Compute summary of mean ± SD importance
+feature_summary <- importance_all_df %>%
+  group_by(feature) %>%
+  summarise(
+    mean_importance = mean(importance),
+    sd_importance = sd(importance),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(mean_importance))
+
+# View top 20 features across all trials
+print(head(feature_summary, 20))
+
+for (i in seq_along(plot_list)) {
+  print(plot_list[[i]])
+}
+```
 
 
 
+```{r}
+library(ranger)
+library(survival)
+
+# Combine the full cohort of 900 patients
+affyCombined <- rbind(affyTrain, affyValidation)
+
+# x = all predictors (genes + clinical)
+x_all <- affyCombined[, !(names(affyCombined) %in% c("OS_MONTHS", "OS_STATUS"))]
+
+x_all <- as.data.frame(x_all)
+
+# Step 2: Convert character columns to factor
+for (colname in names(x_all)) {
+  if (is.character(x_all[[colname]])) {
+    x_all[[colname]] <- as.factor(x_all[[colname]])
+  }
+}
+
+# y = survival outcome
+y_all <- Surv(affyCombined$OS_MONTHS, affyCombined$OS_STATUS)
+
+# 2. Fit ranger RSF model
+
+set.seed(42)
+rsf_model <- ranger(
+  x = x_all,
+  y = y_all,
+  num.trees = 500,
+  mtry = floor(sqrt(ncol(x_all))),  # sqrt(p)
+  splitrule = "logrank",
+  importance = "permutation",
+  seed = 42,
+  num.threads = 0  # use all cores
+)
+
+# 5. Extract selected variables
+# 1. Get all importance scores
+importance_vals <- rsf_model$variable.importance
+
+# 2. Filter only variables that were used (importance > 0)
+selected_vars <- names(importance_vals[importance_vals > 0])
+
+# 3. Optional: See top important features
+head(sort(importance_vals[importance_vals > 0], decreasing = TRUE), 20)
+
+cat("✅ Variables selected:", length(selected_vars), "\n")
+print(head(selected_vars, 10))
+```
+
+```{r}
+affyCombined <- rbind(affyTrain, affyValidation)
+
+# x = all predictors (genes + clinical)
+x_all <- affyCombined[, !(names(affyCombined) %in% c("OS_MONTHS", "OS_STATUS"))]
+
+x_all <- as.data.frame(x_all)
+
+# Step 2: Convert character columns to factor
+for (colname in names(x_all)) {
+  if (is.character(x_all[[colname]])) {
+    x_all[[colname]] <- as.factor(x_all[[colname]])
+  }
+}
+
+# y = survival outcome
+y_all <- Surv(affyCombined$OS_MONTHS, affyCombined$OS_STATUS)
 
 
+n_folds <- 10
+n_patients <- nrow(x_all)
+n_vars <- ncol(x_all)
+
+selection_matrix <- matrix(0, nrow = n_folds, ncol = n_vars)
+colnames(selection_matrix) <- colnames(x_all)
+fold_ids <- character(n_folds)
+
+# Shuffle once
+set.seed(1001)
+shuffled_idx <- sample(n_patients)
+x_shuffled <- x_all[shuffled_idx, ]
+y_shuffled <- y_all[shuffled_idx]
+
+folds <- createFolds(1:n_patients, k = n_folds)
+
+for (fold in 1:n_folds) {
+  cat(sprintf("▶ Fold %d\n", fold))
+  
+  test_idx <- folds[[fold]]
+  train_idx <- setdiff(1:n_patients, test_idx)
+  
+  x_fold <- x_shuffled[train_idx, ]
+  y_fold <- y_shuffled[train_idx]
+  
+  rsf_model <- ranger(
+    x = x_fold,
+    y = y_fold,
+    num.trees = 500,
+    mtry = floor(sqrt(ncol(x_all))),
+    splitrule = "logrank",
+    importance = "permutation",
+    seed = 1001 + fold,
+    num.threads = 0
+  )
+  
+  used_vars <- names(rsf_model$variable.importance[rsf_model$variable.importance > 0])
+  selection_matrix[fold, used_vars] <- 1
+  fold_ids[fold] <- paste0("Fold_", fold)
+}
+
+# Convert to data frame
+selection_df <- as.data.frame(selection_matrix)
+rownames(selection_df) <- fold_ids
+
+# Add total row
+selection_df <- rbind(selection_df, Total = colSums(selection_df))
+
+# Optional: filter and sort
+selection_df_filtered <- selection_df[, selection_df["Total", ] > 1]
+selection_df_filtered <- selection_df_filtered[, order(selection_df_filtered["Total", ], decreasing = TRUE)]
+
+# View result
+View(selection_df_filtered)
+```
+
+```{r}
+library(ranger)
+library(survival)
+library(caret)
+
+# Outcome
+y_all <- Surv(affyCombined$OS_MONTHS, affyCombined$OS_STATUS)
+
+# Setup
+n_trials <- 20
+n_folds <- 10
+n_patients <- nrow(x_all)
+n_vars <- ncol(x_all)
+
+selection_matrix <- matrix(0, nrow = n_trials * n_folds, ncol = n_vars)
+colnames(selection_matrix) <- colnames(x_all)
+fold_ids <- character(n_trials * n_folds)
+
+fold_counter <- 1
+
+for (trial in 1:n_trials) {
+  set.seed(1000 + trial)
+  cat(sprintf("🔁 Trial %d...\n", trial))
+  
+  shuffled_idx <- sample(n_patients)
+  x_shuffled <- x_all[shuffled_idx, ]
+  y_shuffled <- y_all[shuffled_idx]
+  
+  folds <- createFolds(1:n_patients, k = n_folds)
+  
+  for (fold in 1:n_folds) {
+    cat(sprintf("  ▶ Trial %d - Fold %d (Global Fold %d)\n", trial, fold, fold_counter))
+    
+    test_idx <- folds[[fold]]
+    train_idx <- setdiff(1:n_patients, test_idx)
+    
+    x_fold <- x_shuffled[train_idx, ]
+    y_fold <- y_shuffled[train_idx]
+    
+    rsf_model <- ranger(
+      x = x_fold,
+      y = y_fold,
+      num.trees = 500,
+      mtry = floor(sqrt(ncol(x_all))),
+      splitrule = "logrank",
+      importance = "permutation",
+      seed = trial * 100 + fold,
+      num.threads = 0
+    )
+    
+    used_vars <- names(rsf_model$variable.importance[rsf_model$variable.importance > 0])
+    selection_matrix[fold_counter, used_vars] <- 1
+    fold_ids[fold_counter] <- paste0("Trial_", trial, "_Fold_", fold)
+    
+    fold_counter <- fold_counter + 1
+  }
+}
+
+# Create dataframe
+selection_df <- as.data.frame(selection_matrix)
+rownames(selection_df) <- fold_ids
+
+# Add total row
+selection_df <- rbind(selection_df, Total = colSums(selection_df))
+
+# Filter to variables selected >1 time
+selection_df_filtered <- selection_df[, selection_df["Total", ] > 1]
+
+# Sort by total
+ordering <- order(unlist(selection_df_filtered["Total", ]), decreasing = TRUE)
+selection_df_filtered <- selection_df_filtered[, ordering]
+
+# Number of folds (excluding Total row)
+n_folds <- nrow(selection_df_filtered) - 1
+
+# Replace row names
+rownames(selection_df_filtered) <- c(1:n_folds, "Total")
+
+# View the result
+View(selection_df_filtered)
+
+write.csv(selection_df_filtered, "RSF_variable_selection_matrix.csv", row.names = TRUE)
+
+
+```
+
+```{r}
+# Required libraries
+library(survival)
+library(caret)
+
+n_trials <- 20
+n_folds <- 10
+n_patients <- nrow(affyCombined)
+
+# Identify gene expression columns (all numeric columns excluding clinical)
+gene_cols <- names(affyCombined)[sapply(affyCombined, is.numeric)]
+gene_cols <- setdiff(gene_cols, c("OS_MONTHS", "OS_STATUS", "Age", "IS_MALE"))
+
+# Initialize matrix to store selection (genes x 200 folds)
+selection_matrix <- matrix(0, nrow = length(gene_cols), ncol = n_trials * n_folds)
+rownames(selection_matrix) <- gene_cols
+colnames(selection_matrix) <- paste0("CV_", 1:(n_trials * n_folds))
+
+fold_counter <- 1
+
+for (trial in 1:n_trials) {
+  set.seed(2000 + trial)
+  shuffled_idx <- sample(n_patients)
+  shuffled_data <- affyCombined[shuffled_idx, ]
+
+  folds <- createFolds(shuffled_data$OS_MONTHS, k = n_folds)
+
+  for (fold in 1:n_folds) {
+    cat(sprintf("Running Trial %d - Fold %d\n", trial, fold))
+
+    test_idx <- folds[[fold]]
+    train_data <- shuffled_data[-test_idx, ]
+
+    # Convert treatment to numeric: ACT = 1, OBS = 0
+    treat_raw <- train_data$Adjuvant.Chemo
+    treat <- ifelse(treat_raw == "ACT", 1,
+                    ifelse(treat_raw == "OBS", 0, NA))
+
+    # Remove rows with NA treatment
+    valid_rows <- !is.na(treat)
+    train_data <- train_data[valid_rows, ]
+    treat <- treat[valid_rows]
+
+    for (i in seq_along(gene_cols)) {
+      gene <- gene_cols[i]
+      gene_expr <- as.numeric(train_data[[gene]])
+
+      if (length(gene_expr) == 0 || length(gene_expr) != length(treat)) next
+
+      interaction <- gene_expr * treat
+
+      cox_data <- data.frame(
+        time = train_data$OS_MONTHS,
+        status = train_data$OS_STATUS,
+        treat = treat,
+        gene = gene_expr,
+        inter = interaction
+      )
+
+      cox_fit <- tryCatch(
+        suppressWarnings(coxph(Surv(time, status) ~ treat + gene + inter, data = cox_data)),
+        error = function(e) NULL
+      )
+
+      if (!is.null(cox_fit)) {
+        pval <- tryCatch(
+          summary(cox_fit)$coefficients["inter", "Pr(>|z|)"],
+          error = function(e) NA
+        )
+        if (!is.na(pval) && pval < 0.05) {
+          selection_matrix[i, fold_counter] <- 1
+        }
+      }
+    }
+
+    fold_counter <- fold_counter + 1
+  }
+}
+
+# Final table
+selection_df <- as.data.frame(selection_matrix)
+selection_df$Total <- rowSums(selection_matrix)
+
+# Optional: filter genes with Total > 1
+selection_df_filtered_cox <- selection_df[selection_df$Total > 1, ]
+
+write.csv(selection_df_filtered_cox, "cox_interaction_gene_selection_20trials.csv", row.names = TRUE)
+
+
+```
 
