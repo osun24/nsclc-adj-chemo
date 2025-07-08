@@ -606,7 +606,7 @@ selection_df <- as.data.frame(selection_matrix)
 selection_df$Total <- rowSums(selection_matrix)
 
 # Optional: filter genes with Total > 1
-selection_df_filtered_cox <- selection_df[selection_df$Total > 1, ]
+selection_df_filtered_cox <- selection_df[selection_df$Total >= 1, ]
 
 write.csv(selection_df_filtered_cox, "cox_interaction_gene_selection_20trials.csv", row.names = TRUE)
 
