@@ -137,9 +137,11 @@ GSE37745.symbol =
 ```{r}
 #Merge clinical data and expression data
 GSE37745merged = cbind(GSE37745.data, GSE37745.expr)
-GSE37745merged <- GSE37745merged[(GSE37745merged$`Adjuvant Chemo`) != "not known", ]
+GSE37745merged <- GSE37745merged[
+  GSE37745merged$`Adjuvant Chemo` != "not known" & GSE37745merged$Stage != "IV", ]
 
-GSE37745.data = GSE37745.data[(GSE37745.data$`Adjuvant Chemo`) != "not known", ]
+GSE37745.data <- GSE37745.data[
+  GSE37745.data$`Adjuvant Chemo` != "not known" & GSE37745.data$Stage != "IV", ]
 GSE37745.data$`Adjuvant Chemo` <- ifelse(GSE37745.data$`Adjuvant Chemo` == "yes", 1, 0)
 GSE37745merged$`Adjuvant Chemo` <- ifelse(GSE37745merged$`Adjuvant Chemo` == "yes", 1, 0)
 GSE37745.expr = GSE37745merged[, -c(1:10)]

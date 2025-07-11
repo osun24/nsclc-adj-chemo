@@ -99,7 +99,7 @@ write.csv(feature.df,
 
 gset = getGEO("GSE68465", GSEMatrix=T, getGPL=F)
 if (length(gset) > 1) 
-  idx <- grep("GPL201", attr(gset, "names")) else idx <- 1
+  idx <- grep("GPL96", attr(gset, "names")) else idx <- 1
 gset <- gset[[idx]]
 
 # Extract microarray expression values from NCBI
@@ -130,18 +130,17 @@ GSE68465.data$Race[GSE68465.data$Race == "Black or African American"] <- "Africa
 GSE68465.data$Sex = NULL
 
 convert_stage <- function(tnm) {
-  if (tnm %in% c("pN0pT1")) {
+  if (tnm %in% "pN0pT1") {
     return("IA")
-  } else if (tnm %in% c("pN0pT2")) {
+  } else if (tnm %in%  "pN0pT2") {
     return("IB")
   } else if (tnm %in% c("pN0pT3", "pN1pT1", "pN1pT2")) {
     return("II")
-  } else if (tnm %in% c("pN2pT1", "pN2pT2", "pN1pT3", "pN0pT4", "pN1pT4")) {
+  } else if (tnm %in% c("pN0pT4", "pN1pT3", "pN1pT4", 
+                        "pN2pT1", "pN2pT2", "pN2pT3", "pN2pT4")) {
     return("III")
-  } else if (tnm %in% c("pN2pT3", "pN2pT4")) {
-    return("IV")
   } else {
-    return("Unknown")  # Handling "pp", "pNXpT1", or other undefined cases
+    return("Unknown")  # Handles pp, pNXpT1, NA, etc.
   }
 }
 
@@ -162,11 +161,14 @@ write.csv(GSE68465.data,
 ```{r}
 #Merge clinical data and expression data
 GSE68465.merged = cbind(GSE68465.data, GSE68465.expr)
-GSE68465.merged <- subset(GSE68465.merged, !is.na(OS_STATUS))
-GSE68465.data <- subset(GSE68465.data, !is.na(OS_STATUS))
+GSE68465.merged <- subset(GSE68465.merged,
+                          !is.na(OS_STATUS) & Stage != "Unknown")
+GSE68465.data <- subset(GSE68465.data,
+                          !is.na(OS_STATUS) & Stage != "Unknown")
 write.csv(GSE68465.merged, 
           "GSE68465merged.csv")
 
+GSE68465.expr = GSE68465.merged[, -c(1:10)]
 GSE68465.data = GSE68465.merged[, c(1:10)]
 ```
 
