@@ -474,7 +474,8 @@ GPL570.expr.all <- rbind(GSE29013.expr,
                   GSE37745.expr, 
                   GSE50081.expr,
                   GSE31908.expr,
-                  GSE31210.expr)
+                  GSE31210.expr, 
+                  GSE157010.expr)
 
 GPL96.expr.all <- rbind(GSE68465.expr, GSE14814.expr)
 
@@ -485,14 +486,17 @@ GSE37745.expr1 = GSE37745.expr[, affygenes]
 GSE50081.expr1 = GSE50081.expr[, affygenes]
 GSE31908.expr1 = GSE31908.expr[, affygenes]
 GSE31210.expr1 = GSE31210.expr[, affygenes]
+GSE157010.expr1 = GSE157010.expr[, affygenes]
 GSE68465.expr1 = GSE68465.expr[, affygenes]
 GSE14814.expr1 = GSE14814.expr[, affygenes]
+
 
 affy.expr.all <- rbind(GSE29013.expr1, 
                   GSE37745.expr1, 
                   GSE50081.expr1,
                   GSE31908.expr1,
                   GSE31210.expr1,
+                  GSE157010.expr1,
                   GSE68465.expr1, 
                   GSE14814.expr1)
 
@@ -502,10 +506,11 @@ affy.expr.batch <- c(rep("GSE29013", nrow(GSE29013.expr1)),
                       rep("GSE50081", nrow(GSE50081.expr1)),
                       rep("GSE31908", nrow(GSE31908.expr1)),
                       rep("GSE31210", nrow(GSE31210.expr1)),
+                      rep("GSE157010", nrow(GSE157010.expr1)),
                       rep("GSE68465", nrow(GSE68465.expr1)),
                       rep("GSE14814", nrow(GSE14814.expr1)))
 
-affy.data = bind_rows(GSE29013.data, GSE37745.data, GSE50081.data, GSE31908.data, GSE31210.data, GSE68465.data, GSE14814.data)
+affy.data = bind_rows(GSE29013.data, GSE37745.data, GSE50081.data, GSE31908.data, GSE31210.data, GSE157010.data, GSE68465.data, GSE14814.data)
 
 #PCA Before
 affy.pca.before <- prcomp(affy.expr.all, scale=TRUE)
