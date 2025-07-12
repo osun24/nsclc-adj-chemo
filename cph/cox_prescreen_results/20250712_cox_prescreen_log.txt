@@ -1,0 +1,37 @@
+================================================================================
+COX PROPORTIONAL HAZARDS INTERACTION SCREENING
+================================================================================
+Prescreening genomic features using treatment-gene interactions
+Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)
+Selection criteria: Significant interaction term (p < α)
+================================================================================
+================================================================================
+LOADING AND COMBINING DATASETS
+================================================================================
+Loading train data from: affyTrain.csv
+Train data shape: (691, 13062)
+Train events: 300 | Censored: 391
+Loading validation data from: affyValidation.csv
+Validation data shape: (231, 13062)
+Validation events: 100 | Censored: 131
+Combined train+validation shape: (922, 13062)
+
+================================================================================
+IDENTIFYING FEATURE TYPES
+================================================================================
+Total columns in dataset: 13062
+Clinical features found: 19
+Clinical features missing: 0
+Genomic features to screen: 13039
+First 10 genomic features: ['BCL7B', 'RPP38', 'LGI2', 'LEPR', 'RBM42', 'MKS1', 'POLR3F', 'VRK1', 'GBE1', 'NCAPH']
+
+================================================================================
+RUNNING TREATMENT-GENE INTERACTION SCREENING
+================================================================================
+Testing 13039 genomic features for treatment interactions
+Alpha levels: [0.05, 0.1]
+Model for each gene: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)
+Parallelization: Enabled
+Using 8 CPU cores
+Preparing data for parallel processing...
+Running parallel Cox regression screening with 8 cores...
