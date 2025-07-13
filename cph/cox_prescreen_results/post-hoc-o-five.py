@@ -11,21 +11,22 @@ from datetime import datetime
 df = pd.read_csv('cph/cox_prescreen_results/20250712_cox_interaction_cv_detailed_results.csv')
 
 # Filter for significant interactions (p <= 0.05)
-significant_df = df[df['interaction_p_value'] <= 0.05].copy()
+significant_df = df[df['significant_at_0.05'] == True].copy()
 
-# Get unique genes only (remove duplicates if any)
+# Extract number of occurrences for each gene (total_selections), selection_frequency, and unique genes
+total_selections = significant_df['gene'].value_counts()
+selection_frequency = total_selections / 200 # 20 trials x 10 folds
 unique_genes = significant_df['gene'].unique()
 
 # Create selection results format matching the template
 selection_results = pd.DataFrame({
-    'gene': unique_genes,
-    'total_selections': 1.0,  # Since each gene appears once
-    'selection_frequency': 1.0,  # 100% selection frequency for p <= 0.05
-    'selected_in_trials': 1  # Selected in 1 trial (the significance test)
+    'selected_gene': unique_genes,
+    'total_selections': total_selections[unique_genes],
+    'selection_frequency': selection_frequency[unique_genes]
 })
 
-# Sort by gene name for consistency
-selection_results = selection_results.sort_values('gene')
+# Sort by total_selections in descending order
+selection_results = selection_results.sort_values(by='total_selections', ascending=False)
 
 # Create output filename with current date
 current_date = datetime.now().strftime("%Y%m%d")
