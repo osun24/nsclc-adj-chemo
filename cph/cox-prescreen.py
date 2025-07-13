@@ -5,15 +5,21 @@ This script prescreens genomic features using Cox regression with treatment-gene
 For each genomic feature, we test the interaction between adjuvant chemotherapy and the gene.
 Only genomic features with significant treatment interactions are retained.
 
+Two methodologies are supported:
+1. CV-based screening (default): 20 trials × 10-fold CV (similar to RSF approach)
+2. Single-analysis screening: One analysis on combined dataset
+
 Approach:
 - For each gene: Cox model with Adjuvant Chemo + Gene + Adjuvant Chemo * Gene
-- Test significance of interaction term at alpha = 0.05 and 0.10
-- Use entire dataset (train + validation + test)
+- CV method: Count selection frequency across CV folds
+- Single method: Test significance of interaction term at alpha = 0.05 and 0.10
+- Use train + validation data (follows rsf-gridsearch-featureimp-affy.py)
 - Exclude clinical features from screening
 
 Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)
 
 Key Features:
+- ROBUST CV-BASED GENE SELECTION (similar to R implementation)
 - OPTIMIZED FOR COMPUTATIONAL EFFICIENCY with parallel processing
 - Uses joblib for multiprocessing with n_jobs=-1 (all CPU cores)
 - Processes thousands of genes simultaneously instead of sequentially
@@ -22,15 +28,17 @@ Key Features:
 - Provides comprehensive results with multiple significance levels
 
 Performance:
-- Sequential processing: ~1-2 genes/second
-- Parallel processing: ~10-50 genes/second (depends on CPU cores)
-- For ~22,000 genes: Sequential ~6-12 hours vs Parallel ~10-40 minutes
+- CV method: ~20-200 CV folds × genes/second (depends on CPU cores)
+- Single method: ~10-50 genes/second (depends on CPU cores)
+- For ~22,000 genes: CV ~1-4 hours vs Single ~10-40 minutes
 
 Usage:
-    python cox-prescreen.py                    # Use all CPU cores
-    python cox-prescreen.py --n-jobs 4         # Use 4 cores
-    python cox-prescreen.py --no-parallel      # Sequential processing
-    python cox-prescreen.py --alpha 0.05 0.01  # Custom alpha levels
+    python cox-prescreen.py                       # CV method (default)
+    python cox-prescreen.py --no-cv               # Single analysis
+    python cox-prescreen.py --n-trials 10         # 10 trials x 10 folds
+    python cox-prescreen.py --n-jobs 4            # Use 4 cores
+    python cox-prescreen.py --no-parallel         # Sequential processing
+    python cox-prescreen.py --alpha 0.05 0.01     # Custom alpha levels
 """
 
 import os
@@ -47,6 +55,7 @@ import warnings
 warnings.filterwarnings("ignore")
 from joblib import Parallel, delayed
 import multiprocessing
+from sklearn.model_selection import KFold
 
 np.random.seed(42)
 
@@ -345,6 +354,281 @@ def test_interaction_for_gene(df, gene, alpha_levels=[0.05, 0.10]):
         print(f"Error testing gene {gene}: {str(e)}")
         return None
 
+def run_interaction_screening_cv(df, genomic_features, n_trials=20, n_folds=10, alpha_levels=[0.05, 0.10], use_parallel=True, n_jobs=-1):
+    """
+    Run interaction screening using 20 trials of 10-fold CV methodology (similar to RSF script)
+    
+    This approach provides more robust gene selection by:
+    1. Running multiple trials with different random seeds
+    2. Using k-fold cross-validation within each trial
+    3. Counting how many times each gene is selected across all CV folds
+    4. Only retaining genes that are consistently selected
+    
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        Combined dataset with survival outcomes and genomic features
+    genomic_features : list
+        List of genomic feature names to test
+    n_trials : int
+        Number of CV trials to run (default: 20)
+    n_folds : int
+        Number of folds per trial (default: 10)
+    alpha_levels : list
+        Significance levels for interaction term (default: [0.05, 0.10])
+    use_parallel : bool
+        Whether to use parallel processing (default: True)
+    n_jobs : int
+        Number of cores to use for parallel processing (default: -1)
+    
+    Returns:
+    --------
+    selection_results : pandas.DataFrame
+        DataFrame with selection frequencies for each gene across all CV folds
+    detailed_results : list
+        List of detailed results for each significant interaction found
+    """
+    print("\n" + "="*80)
+    print("RUNNING CV-BASED TREATMENT-GENE INTERACTION SCREENING")
+    print("="*80)
+    
+    print(f"Configuration:")
+    print(f"- Number of trials: {n_trials}")
+    print(f"- Folds per trial: {n_folds}")
+    print(f"- Total CV iterations: {n_trials * n_folds}")
+    print(f"- Genes to test: {len(genomic_features)}")
+    print(f"- Alpha levels: {alpha_levels}")
+    print(f"- Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)")
+    
+    # Determine number of cores
+    if n_jobs == -1:
+        n_cores = multiprocessing.cpu_count()
+    else:
+        n_cores = min(n_jobs, multiprocessing.cpu_count())
+    
+    print(f"- Parallelization: {'Enabled' if use_parallel else 'Disabled'}")
+    if use_parallel:
+        print(f"- CPU cores: {n_cores}")
+    
+    # Initialize selection matrix (genes × CV folds)
+    total_cv_folds = n_trials * n_folds
+    selection_matrix = np.zeros((len(genomic_features), total_cv_folds))
+    
+    # Store detailed results for significant interactions
+    detailed_results = []
+    
+    # Track timing
+    start_time = time.time()
+    cv_fold_counter = 0
+    
+    print(f"\nStarting {n_trials} trials of {n_folds}-fold CV...")
+    
+    for trial in range(n_trials):
+        print(f"\n[Trial {trial+1}/{n_trials}] Starting...")
+        
+        # Set seed for reproducibility (similar to RSF script)
+        trial_seed = 2000 + trial
+        np.random.seed(trial_seed)
+        
+        # Shuffle data for this trial
+        n_patients = len(df)
+        shuffled_idx = np.random.permutation(n_patients)
+        shuffled_data = df.iloc[shuffled_idx].reset_index(drop=True)
+        
+        # Create K-fold splits
+        kfold = KFold(n_splits=n_folds, shuffle=True, random_state=trial_seed)
+        
+        for fold_idx, (train_idx, test_idx) in enumerate(kfold.split(shuffled_data)):
+            cv_fold_counter += 1
+            print(f"[Trial {trial+1}, Fold {fold_idx+1}] Processing CV fold {cv_fold_counter}/{total_cv_folds}")
+            
+            # Get training data for this fold
+            train_fold = shuffled_data.iloc[train_idx].copy()
+            
+            # Process genes in parallel or sequentially
+            if use_parallel:
+                # Prepare data for parallel processing
+                clinical_data = train_fold[['OS_STATUS', 'OS_MONTHS', 'Adjuvant Chemo']].copy()
+                gene_data_list = []
+                
+                for gene_idx, gene in enumerate(genomic_features):
+                    gene_series = train_fold[gene]
+                    gene_data_list.append((gene_idx, gene, gene_series, clinical_data, alpha_levels))
+                
+                # Run parallel processing
+                fold_results = Parallel(n_jobs=n_cores, verbose=0)(
+                    delayed(test_gene_interaction_cv_fold)(gene_data)
+                    for gene_data in gene_data_list
+                )
+                
+                # Process results
+                for result in fold_results:
+                    if result is not None:
+                        gene_idx, gene_name, is_significant, interaction_result = result
+                        
+                        # Mark as selected if significant at any alpha level
+                        if is_significant:
+                            selection_matrix[gene_idx, cv_fold_counter-1] = 1
+                            
+                            # Store detailed results
+                            interaction_result['trial'] = trial + 1
+                            interaction_result['fold'] = fold_idx + 1
+                            interaction_result['cv_fold'] = cv_fold_counter
+                            detailed_results.append(interaction_result)
+            
+            else:
+                # Sequential processing
+                for gene_idx, gene in enumerate(genomic_features):
+                    result = test_gene_interaction_single_fold(
+                        train_fold, gene, alpha_levels
+                    )
+                    
+                    if result is not None:
+                        is_significant = any(result[f'significant_at_{alpha:.2f}'] for alpha in alpha_levels)
+                        
+                        if is_significant:
+                            selection_matrix[gene_idx, cv_fold_counter-1] = 1
+                            
+                            # Store detailed results
+                            result['trial'] = trial + 1
+                            result['fold'] = fold_idx + 1
+                            result['cv_fold'] = cv_fold_counter
+                            detailed_results.append(result)
+        
+        # Progress update
+        elapsed = time.time() - start_time
+        remaining_trials = n_trials - (trial + 1)
+        if trial > 0:
+            avg_time_per_trial = elapsed / (trial + 1)
+            eta = remaining_trials * avg_time_per_trial
+            print(f"[Trial {trial+1}] Completed. ETA: {eta/60:.1f} minutes")
+    
+    total_time = time.time() - start_time
+    print(f"\nCV screening completed in {total_time/60:.1f} minutes")
+    
+    # Create selection results DataFrame
+    selection_results = pd.DataFrame(selection_matrix.T, columns=genomic_features)
+    
+    # Add summary statistics
+    selection_summary = pd.DataFrame({
+        'gene': genomic_features,
+        'total_selections': selection_matrix.sum(axis=1),
+        'selection_frequency': selection_matrix.sum(axis=1) / total_cv_folds,
+        'selected_in_trials': [np.sum(selection_matrix[i, :].reshape(n_trials, n_folds).any(axis=1)) 
+                              for i in range(len(genomic_features))]
+    })
+    
+    # Sort by selection frequency
+    selection_summary = selection_summary.sort_values('total_selections', ascending=False)
+    
+    # Filter genes with at least 1 selection
+    selected_genes = selection_summary[selection_summary['total_selections'] >= 1].copy()
+    
+    print(f"\nCV Selection Results:")
+    print(f"- Total genes tested: {len(genomic_features)}")
+    print(f"- Genes selected ≥1 time: {len(selected_genes)}")
+    print(f"- Most selected gene: {selected_genes.iloc[0]['gene'] if len(selected_genes) > 0 else 'None'} "
+          f"({selected_genes.iloc[0]['total_selections'] if len(selected_genes) > 0 else 0}/{total_cv_folds} folds)")
+    
+    return selected_genes, detailed_results, selection_results
+
+def test_gene_interaction_cv_fold(gene_data):
+    """
+    Test gene interaction for a single CV fold (parallel processing version)
+    
+    Parameters:
+    -----------
+    gene_data : tuple
+        (gene_idx, gene_name, gene_series, clinical_data, alpha_levels)
+    
+    Returns:
+    --------
+    tuple or None : (gene_idx, gene_name, is_significant, interaction_result)
+    """
+    gene_idx, gene_name, gene_series, clinical_data, alpha_levels = gene_data
+    
+    try:
+        # Prepare data for this gene
+        model_data = clinical_data.copy()
+        model_data[gene_name] = gene_series.reset_index(drop=True)
+        
+        # Create interaction term
+        model_data[f'Adjuvant_Chemo_x_{gene_name}'] = (
+            model_data['Adjuvant Chemo'] * model_data[gene_name]
+        )
+        
+        # Fit Cox model
+        cph = CoxPHFitter()
+        cph.fit(model_data, duration_col='OS_MONTHS', event_col='OS_STATUS', show_progress=False)
+        
+        # Extract interaction results
+        interaction_coef = cph.params_[f'Adjuvant_Chemo_x_{gene_name}']
+        interaction_p_value = cph.summary.loc[f'Adjuvant_Chemo_x_{gene_name}', 'p']
+        
+        # Check significance at any alpha level
+        is_significant = any(interaction_p_value <= alpha for alpha in alpha_levels)
+        
+        # Create detailed result
+        interaction_result = {
+            'gene': gene_name,
+            'interaction_coef': interaction_coef,
+            'interaction_p_value': interaction_p_value,
+            'interaction_hr': np.exp(interaction_coef),
+            'n_observations': len(model_data),
+            'n_events': model_data['OS_STATUS'].sum(),
+        }
+        
+        # Add significance flags
+        for alpha in alpha_levels:
+            interaction_result[f'significant_at_{alpha:.2f}'] = interaction_p_value <= alpha
+        
+        return gene_idx, gene_name, is_significant, interaction_result
+        
+    except Exception as e:
+        print(f"Error testing gene {gene_name}: {str(e)}")
+        return None
+
+def test_gene_interaction_single_fold(train_fold, gene, alpha_levels):
+    """
+    Test gene interaction for a single CV fold (sequential processing version)
+    """
+    try:
+        # Prepare data for this gene
+        model_data = train_fold[['OS_STATUS', 'OS_MONTHS', 'Adjuvant Chemo', gene]].copy()
+        
+        # Create interaction term
+        model_data[f'Adjuvant_Chemo_x_{gene}'] = (
+            model_data['Adjuvant Chemo'] * model_data[gene]
+        )
+        
+        # Fit Cox model
+        cph = CoxPHFitter()
+        cph.fit(model_data, duration_col='OS_MONTHS', event_col='OS_STATUS', show_progress=False)
+        
+        # Extract results
+        interaction_coef = cph.params_[f'Adjuvant_Chemo_x_{gene}']
+        interaction_p_value = cph.summary.loc[f'Adjuvant_Chemo_x_{gene}', 'p']
+        
+        # Create result
+        result = {
+            'gene': gene,
+            'interaction_coef': interaction_coef,
+            'interaction_p_value': interaction_p_value,
+            'interaction_hr': np.exp(interaction_coef),
+            'n_observations': len(model_data),
+            'n_events': model_data['OS_STATUS'].sum(),
+        }
+        
+        # Add significance flags
+        for alpha in alpha_levels:
+            result[f'significant_at_{alpha:.2f}'] = interaction_p_value <= alpha
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error testing gene {gene}: {str(e)}")
+        return None
+
 def run_interaction_screening(df, genomic_features, alpha_levels=[0.05, 0.10], use_parallel=True, n_jobs=-1):
     """Run interaction screening for all genomic features with parallelization"""
     print("\n" + "="*80)
@@ -420,8 +704,51 @@ def run_interaction_screening(df, genomic_features, alpha_levels=[0.05, 0.10], u
     
     return pd.DataFrame(results), total_time, n_cores
 
+def analyze_cv_screening_results(selection_results, detailed_results, alpha_levels=[0.05, 0.10]):
+    """Analyze and summarize CV-based screening results"""
+    print("\n" + "="*80)
+    print("ANALYZING CV SCREENING RESULTS")
+    print("="*80)
+    
+    # Summary statistics
+    print(f"Total genes tested: {len(selection_results)}")
+    print(f"Genes selected ≥1 time: {len(selection_results[selection_results['total_selections'] >= 1])}")
+    print(f"Genes selected ≥5 times: {len(selection_results[selection_results['total_selections'] >= 5])}")
+    print(f"Genes selected ≥10 times: {len(selection_results[selection_results['total_selections'] >= 10])}")
+    
+    # Show top selected genes
+    print(f"\nTop 20 most frequently selected genes:")
+    top_genes = selection_results.head(20)[['gene', 'total_selections', 'selection_frequency', 'selected_in_trials']].copy()
+    
+    # Format for display
+    top_genes['selection_freq_pct'] = (top_genes['selection_frequency'] * 100).round(1)
+    
+    display_cols = ['gene', 'total_selections', 'selection_freq_pct', 'selected_in_trials']
+    print(top_genes[display_cols].to_string(index=False))
+    
+    # Analyze detailed results if available
+    if detailed_results:
+        print(f"\nDetailed interaction results:")
+        print(f"- Total significant interactions found: {len(detailed_results)}")
+        
+        # Convert to DataFrame for analysis
+        detailed_df = pd.DataFrame(detailed_results)
+        
+        # Show distribution of p-values
+        print(f"- Mean interaction p-value: {detailed_df['interaction_p_value'].mean():.4f}")
+        print(f"- Median interaction p-value: {detailed_df['interaction_p_value'].median():.4f}")
+        
+        # Show top interactions by p-value
+        print(f"\nTop 10 strongest interactions (lowest p-values):")
+        top_interactions = detailed_df.nsmallest(10, 'interaction_p_value')[
+            ['gene', 'interaction_p_value', 'interaction_hr', 'trial', 'fold']
+        ]
+        print(top_interactions.to_string(index=False))
+    
+    return selection_results
+
 def analyze_screening_results(results_df, alpha_levels=[0.05, 0.10]):
-    """Analyze and summarize screening results"""
+    """Analyze and summarize single-analysis screening results"""
     print("\n" + "="*80)
     print("ANALYZING SCREENING RESULTS")
     print("="*80)
@@ -559,6 +886,181 @@ def create_visualizations(results_df, output_dir, alpha_levels=[0.05, 0.10]):
     print(f"- {current_date}_interaction_screening_overview.png")
     print(f"- {current_date}_interaction_volcano_plot.png")
 
+def save_cv_results(selection_results, detailed_results, output_dir, alpha_levels=[0.05, 0.10]):
+    """Save CV-based screening results to files"""
+    print("\n" + "="*80)
+    print("SAVING CV RESULTS")
+    print("="*80)
+    
+    # Save selection frequency results
+    selection_path = os.path.join(output_dir, f"{current_date}_cox_interaction_cv_selection_results.csv")
+    selection_results.to_csv(selection_path, index=False)
+    print(f"Gene selection frequencies saved to: {selection_path}")
+    
+    # Save detailed interaction results
+    if detailed_results:
+        detailed_df = pd.DataFrame(detailed_results)
+        detailed_path = os.path.join(output_dir, f"{current_date}_cox_interaction_cv_detailed_results.csv")
+        detailed_df.to_csv(detailed_path, index=False)
+        print(f"Detailed interaction results saved to: {detailed_path}")
+    
+    # Save filtered results by selection frequency
+    for min_selections in [1, 5, 10, 25, 50]:
+        filtered_genes = selection_results[selection_results['total_selections'] >= min_selections]
+        
+        if len(filtered_genes) > 0:
+            filtered_path = os.path.join(output_dir, f"{current_date}_selected_genes_min_{min_selections}_selections.csv")
+            filtered_genes.to_csv(filtered_path, index=False)
+            print(f"Genes selected ≥{min_selections} times saved to: {filtered_path}")
+            
+            # Create gene list for downstream analysis
+            gene_list_path = os.path.join(output_dir, f"{current_date}_selected_genes_min_{min_selections}_selections_list.txt")
+            with open(gene_list_path, 'w') as f:
+                for gene in filtered_genes['gene']:
+                    f.write(f"{gene}\n")
+            print(f"Gene list (≥{min_selections} selections) saved to: {gene_list_path}")
+
+def create_cv_visualizations(selection_results, detailed_results, output_dir):
+    """Create visualizations for CV-based screening results"""
+    print("\n" + "="*80)
+    print("CREATING CV VISUALIZATIONS")
+    print("="*80)
+    
+    # 1. Selection frequency histogram
+    plt.figure(figsize=(15, 10))
+    
+    plt.subplot(2, 3, 1)
+    plt.hist(selection_results['total_selections'], bins=50, alpha=0.7, color='skyblue', edgecolor='black')
+    plt.xlabel('Number of CV Folds Selected')
+    plt.ylabel('Number of Genes')
+    plt.title('Distribution of Gene Selection Frequencies')
+    plt.axvline(x=selection_results['total_selections'].mean(), color='red', linestyle='--', label='Mean')
+    plt.legend()
+    
+    # 2. Selection frequency vs trial consistency
+    plt.subplot(2, 3, 2)
+    plt.scatter(selection_results['total_selections'], selection_results['selected_in_trials'], 
+                alpha=0.6, s=20)
+    plt.xlabel('Total CV Folds Selected')
+    plt.ylabel('Number of Trials Selected')
+    plt.title('Selection Consistency Across Trials')
+    
+    # 3. Top genes bar plot
+    plt.subplot(2, 3, 3)
+    top_20 = selection_results.head(20)
+    plt.barh(range(len(top_20)), top_20['total_selections'][::-1], color='lightgreen')
+    plt.yticks(range(len(top_20)), top_20['gene'][::-1])
+    plt.xlabel('Number of CV Folds Selected')
+    plt.title('Top 20 Most Selected Genes')
+    
+    # 4. Selection frequency distribution by threshold
+    plt.subplot(2, 3, 4)
+    thresholds = [1, 5, 10, 25, 50, 100]
+    counts = [len(selection_results[selection_results['total_selections'] >= t]) for t in thresholds]
+    plt.bar(range(len(thresholds)), counts, color='orange')
+    plt.xticks(range(len(thresholds)), thresholds)
+    plt.xlabel('Minimum Selection Threshold')
+    plt.ylabel('Number of Genes')
+    plt.title('Genes by Selection Threshold')
+    
+    # 5. P-value distribution (if detailed results available)
+    if detailed_results:
+        plt.subplot(2, 3, 5)
+        detailed_df = pd.DataFrame(detailed_results)
+        plt.hist(detailed_df['interaction_p_value'], bins=50, alpha=0.7, color='pink', edgecolor='black')
+        plt.xlabel('Interaction P-value')
+        plt.ylabel('Frequency')
+        plt.title('Distribution of Significant Interaction P-values')
+        plt.axvline(x=0.05, color='red', linestyle='--', label='α = 0.05')
+        plt.legend()
+        
+        # 6. Effect size distribution
+        plt.subplot(2, 3, 6)
+        plt.hist(np.log(detailed_df['interaction_hr']), bins=50, alpha=0.7, color='lightcoral', edgecolor='black')
+        plt.xlabel('Log(Interaction Hazard Ratio)')
+        plt.ylabel('Frequency')
+        plt.title('Distribution of Interaction Effect Sizes')
+        plt.axvline(x=0, color='red', linestyle='-', label='HR = 1')
+        plt.legend()
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{current_date}_cv_interaction_screening_overview.png"), dpi=300)
+    plt.close()
+    
+    # Create selection frequency heatmap for top genes
+    plt.figure(figsize=(12, 8))
+    top_50 = selection_results.head(50)
+    
+    # Create a simple bar plot showing selection frequency
+    plt.barh(range(len(top_50)), top_50['selection_frequency'][::-1], color='steelblue')
+    plt.yticks(range(len(top_50)), top_50['gene'][::-1])
+    plt.xlabel('Selection Frequency')
+    plt.title('Top 50 Genes - Selection Frequency Across CV Folds')
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, f"{current_date}_cv_top_genes_selection_frequency.png"), dpi=300)
+    plt.close()
+    
+    print("CV visualizations saved:")
+    print(f"- {current_date}_cv_interaction_screening_overview.png")
+    print(f"- {current_date}_cv_top_genes_selection_frequency.png")
+
+def create_cv_summary_report(selection_results, detailed_results, output_dir, n_trials=20, n_folds=10):
+    """Create a summary report for CV-based screening"""
+    print("\n" + "="*80)
+    print("CREATING CV SUMMARY REPORT")
+    print("="*80)
+    
+    report_path = os.path.join(output_dir, f"{current_date}_cox_interaction_cv_screening_summary.txt")
+    
+    with open(report_path, 'w') as f:
+        f.write("COX INTERACTION SCREENING - CROSS-VALIDATION SUMMARY\n")
+        f.write("=" * 60 + "\n\n")
+        f.write(f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Screening method: CV-based treatment-gene interaction testing\n")
+        f.write(f"Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)\n")
+        f.write(f"CV Configuration: {n_trials} trials × {n_folds} folds = {n_trials * n_folds} total CV iterations\n\n")
+        
+        f.write("DATASET SUMMARY:\n")
+        f.write("-" * 20 + "\n")
+        f.write(f"Total genes tested: {len(selection_results)}\n")
+        
+        # Selection frequency summary
+        f.write(f"\nSELECTION FREQUENCY SUMMARY:\n")
+        f.write("-" * 30 + "\n")
+        for min_sel in [1, 5, 10, 25, 50, 100]:
+            count = len(selection_results[selection_results['total_selections'] >= min_sel])
+            pct = (count / len(selection_results)) * 100
+            f.write(f"Genes selected ≥{min_sel:2d} times: {count:4d} ({pct:.1f}%)\n")
+        
+        f.write(f"\nTOP 20 MOST SELECTED GENES:\n")
+        f.write("-" * 30 + "\n")
+        top_20 = selection_results.head(20)
+        for _, row in top_20.iterrows():
+            f.write(f"{row['gene']:<15}: {row['total_selections']:3d}/{n_trials * n_folds} folds "
+                   f"({row['selection_frequency']*100:.1f}%), "
+                   f"in {row['selected_in_trials']:2d}/{n_trials} trials\n")
+        
+        if detailed_results:
+            detailed_df = pd.DataFrame(detailed_results)
+            f.write(f"\nINTERACTION STATISTICS:\n")
+            f.write("-" * 25 + "\n")
+            f.write(f"Total significant interactions: {len(detailed_results)}\n")
+            f.write(f"Mean interaction p-value: {detailed_df['interaction_p_value'].mean():.4f}\n")
+            f.write(f"Median interaction p-value: {detailed_df['interaction_p_value'].median():.4f}\n")
+            f.write(f"Mean interaction HR: {detailed_df['interaction_hr'].mean():.3f}\n")
+            f.write(f"Median interaction HR: {detailed_df['interaction_hr'].median():.3f}\n")
+        
+        f.write(f"\nFILES GENERATED:\n")
+        f.write("-" * 20 + "\n")
+        f.write(f"- {current_date}_cox_interaction_cv_selection_results.csv\n")
+        f.write(f"- {current_date}_cox_interaction_cv_detailed_results.csv\n")
+        f.write(f"- {current_date}_cv_interaction_screening_overview.png\n")
+        f.write(f"- {current_date}_cv_top_genes_selection_frequency.png\n")
+        for min_sel in [1, 5, 10, 25, 50]:
+            f.write(f"- {current_date}_selected_genes_min_{min_sel}_selections.csv\n")
+    
+    print(f"CV summary report saved to: {report_path}")
+
 def save_results(results_df, output_dir, alpha_levels=[0.05, 0.10]):
     """Save screening results to files"""
     print("\n" + "="*80)
@@ -680,14 +1182,21 @@ def main(use_parallel=True, n_jobs=-1, alpha_levels=[0.05, 0.10]):
     # Identify feature types
     genomic_features, clinical_features = identify_feature_types(full_data)
     
-def main(use_parallel=True, n_jobs=-1, alpha_levels=[0.05, 0.10]):
+def main(use_parallel=True, n_jobs=-1, alpha_levels=[0.05, 0.10], use_cv=True, n_trials=20, n_folds=10):
     """Main function to run Cox interaction screening"""
     print("="*80)
     print("COX PROPORTIONAL HAZARDS INTERACTION SCREENING")
     print("="*80)
     print("Prescreening genomic features using treatment-gene interactions")
     print("Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)")
-    print("Selection criteria: Significant interaction term (p < α)")
+    
+    if use_cv:
+        print(f"Method: {n_trials} trials × {n_folds}-fold CV (like RSF approach)")
+        print("Selection criteria: Genes with significant interactions across CV folds")
+    else:
+        print("Method: Single analysis on combined dataset")
+        print("Selection criteria: Significant interaction term (p < α)")
+    
     print("="*80)
     
     # Track overall timing
@@ -699,29 +1208,54 @@ def main(use_parallel=True, n_jobs=-1, alpha_levels=[0.05, 0.10]):
     # Identify feature types
     genomic_features, clinical_features = identify_feature_types(full_data)
     
-    # Run interaction screening with parallelization
-    results_df, screening_time, n_cores_used = run_interaction_screening(
-        full_data, 
-        genomic_features, 
-        alpha_levels,
-        use_parallel=use_parallel,
-        n_jobs=n_jobs
-    )
-    
-    # Report performance metrics
-    report_performance_metrics(screening_time, len(genomic_features), n_cores_used, use_parallel)
-    
-    # Analyze results
-    results_df = analyze_screening_results(results_df, alpha_levels)
-    
-    # Create visualizations
-    create_visualizations(results_df, output_dir, alpha_levels)
-    
-    # Save results
-    save_results(results_df, output_dir, alpha_levels)
-    
-    # Create summary report
-    create_summary_report(results_df, output_dir, alpha_levels)
+    if use_cv:
+        # Use CV-based screening (similar to RSF and R implementation)
+        selection_results, detailed_results, _ = run_interaction_screening_cv(
+            full_data,
+            genomic_features,
+            n_trials=n_trials,
+            n_folds=n_folds,
+            alpha_levels=alpha_levels,
+            use_parallel=use_parallel,
+            n_jobs=n_jobs
+        )
+        
+        # Analyze CV results
+        selection_results = analyze_cv_screening_results(selection_results, detailed_results, alpha_levels)
+        
+        # Create CV visualizations
+        create_cv_visualizations(selection_results, detailed_results, output_dir)
+        
+        # Save CV results
+        save_cv_results(selection_results, detailed_results, output_dir, alpha_levels)
+        
+        # Create CV summary report
+        create_cv_summary_report(selection_results, detailed_results, output_dir, n_trials, n_folds)
+        
+    else:
+        # Use single-analysis screening (original approach)
+        results_df, screening_time, n_cores_used = run_interaction_screening(
+            full_data, 
+            genomic_features, 
+            alpha_levels,
+            use_parallel=use_parallel,
+            n_jobs=n_jobs
+        )
+        
+        # Report performance metrics
+        report_performance_metrics(screening_time, len(genomic_features), n_cores_used, use_parallel)
+        
+        # Analyze results
+        results_df = analyze_screening_results(results_df, alpha_levels)
+        
+        # Create visualizations
+        create_visualizations(results_df, output_dir, alpha_levels)
+        
+        # Save results
+        save_results(results_df, output_dir, alpha_levels)
+        
+        # Create summary report
+        create_summary_report(results_df, output_dir, alpha_levels)
     
     total_time = time.time() - main_start_time
     print("\n" + "="*80)
@@ -740,8 +1274,14 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run with all cores (default)
+  # Run with CV (default) - 20 trials × 10 folds
   python cox-prescreen.py
+  
+  # Run with custom CV configuration
+  python cox-prescreen.py --n-trials 10 --n-folds 5
+  
+  # Run single analysis (no CV)
+  python cox-prescreen.py --no-cv
   
   # Run with 4 cores
   python cox-prescreen.py --n-jobs 4
@@ -772,11 +1312,34 @@ Examples:
         help='Alpha levels for significance testing (default: 0.05 0.10)'
     )
     
+    parser.add_argument(
+        '--no-cv',
+        action='store_true',
+        help='Disable cross-validation (run single analysis on combined dataset)'
+    )
+    
+    parser.add_argument(
+        '--n-trials',
+        type=int,
+        default=20,
+        help='Number of CV trials (default: 20)'
+    )
+    
+    parser.add_argument(
+        '--n-folds',
+        type=int,
+        default=10,
+        help='Number of CV folds per trial (default: 10)'
+    )
+    
     args = parser.parse_args()
     
     # Pass arguments to main function
     main(
         use_parallel=not args.no_parallel,
         n_jobs=args.n_jobs,
-        alpha_levels=args.alpha
+        alpha_levels=args.alpha,
+        use_cv=not args.no_cv,
+        n_trials=args.n_trials,
+        n_folds=args.n_folds
     )
