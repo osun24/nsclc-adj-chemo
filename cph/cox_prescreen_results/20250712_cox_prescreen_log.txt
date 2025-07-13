@@ -25,7 +25,7 @@ Clinical features found: 17
 Clinical features missing: 2
 Genomic features to screen: 13039
 Missing clinical features: ['Stage_IV', 'Stage_Unknown']
-First 10 genomic features: ['IQSEC2', 'LOC105372602', 'LARP4B', 'LRRC31', 'RGS10', 'PHB2', 'EBNA1BP2', 'BAG4', 'NFATC4', 'ZNF668']
+First 10 genomic features: ['PRR15L', 'SELENOF', 'MAP2K3', 'PPL', 'MOBP', 'CLCN4', 'SYCP1', 'ATP5MF', 'BSPRY', 'TNP2']
 
 ================================================================================
 RUNNING CV-BASED TREATMENT-GENE INTERACTION SCREENING
@@ -38,9 +38,338 @@ Configuration:
 - Alpha levels: [0.05, 0.1]
 - Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)
 - Parallelization: Enabled
-- CPU cores: 8
+- CPU cores: 14
 
 Starting 20 trials of 10-fold CV...
 
 [Trial 1/20] Starting...
 [Trial 1, Fold 1] Processing CV fold 1/200
+[Trial 1, Fold 2] Processing CV fold 2/200
+[Trial 1, Fold 3] Processing CV fold 3/200
+[Trial 1, Fold 4] Processing CV fold 4/200
+[Trial 1, Fold 5] Processing CV fold 5/200
+[Trial 1, Fold 6] Processing CV fold 6/200
+[Trial 1, Fold 7] Processing CV fold 7/200
+[Trial 1, Fold 8] Processing CV fold 8/200
+[Trial 1, Fold 9] Processing CV fold 9/200
+[Trial 1, Fold 10] Processing CV fold 10/200
+
+[Trial 2/20] Starting...
+[Trial 2, Fold 1] Processing CV fold 11/200
+[Trial 2, Fold 2] Processing CV fold 12/200
+[Trial 2, Fold 3] Processing CV fold 13/200
+[Trial 2, Fold 4] Processing CV fold 14/200
+[Trial 2, Fold 5] Processing CV fold 15/200
+[Trial 2, Fold 6] Processing CV fold 16/200
+[Trial 2, Fold 7] Processing CV fold 17/200
+[Trial 2, Fold 8] Processing CV fold 18/200
+[Trial 2, Fold 9] Processing CV fold 19/200
+[Trial 2, Fold 10] Processing CV fold 20/200
+[Trial 2] Completed. ETA: 115.2 minutes
+
+[Trial 3/20] Starting...
+[Trial 3, Fold 1] Processing CV fold 21/200
+[Trial 3, Fold 2] Processing CV fold 22/200
+[Trial 3, Fold 3] Processing CV fold 23/200
+[Trial 3, Fold 4] Processing CV fold 24/200
+[Trial 3, Fold 5] Processing CV fold 25/200
+[Trial 3, Fold 6] Processing CV fold 26/200
+[Trial 3, Fold 7] Processing CV fold 27/200
+[Trial 3, Fold 8] Processing CV fold 28/200
+[Trial 3, Fold 9] Processing CV fold 29/200
+[Trial 3, Fold 10] Processing CV fold 30/200
+[Trial 3] Completed. ETA: 108.3 minutes
+
+[Trial 4/20] Starting...
+[Trial 4, Fold 1] Processing CV fold 31/200
+[Trial 4, Fold 2] Processing CV fold 32/200
+[Trial 4, Fold 3] Processing CV fold 33/200
+[Trial 4, Fold 4] Processing CV fold 34/200
+[Trial 4, Fold 5] Processing CV fold 35/200
+[Trial 4, Fold 6] Processing CV fold 36/200
+[Trial 4, Fold 7] Processing CV fold 37/200
+[Trial 4, Fold 8] Processing CV fold 38/200
+[Trial 4, Fold 9] Processing CV fold 39/200
+[Trial 4, Fold 10] Processing CV fold 40/200
+[Trial 4] Completed. ETA: 101.7 minutes
+
+[Trial 5/20] Starting...
+[Trial 5, Fold 1] Processing CV fold 41/200
+[Trial 5, Fold 2] Processing CV fold 42/200
+[Trial 5, Fold 3] Processing CV fold 43/200
+[Trial 5, Fold 4] Processing CV fold 44/200
+[Trial 5, Fold 5] Processing CV fold 45/200
+[Trial 5, Fold 6] Processing CV fold 46/200
+[Trial 5, Fold 7] Processing CV fold 47/200
+[Trial 5, Fold 8] Processing CV fold 48/200
+[Trial 5, Fold 9] Processing CV fold 49/200
+[Trial 5, Fold 10] Processing CV fold 50/200
+[Trial 5] Completed. ETA: 95.2 minutes
+
+[Trial 6/20] Starting...
+[Trial 6, Fold 1] Processing CV fold 51/200
+[Trial 6, Fold 2] Processing CV fold 52/200
+[Trial 6, Fold 3] Processing CV fold 53/200
+[Trial 6, Fold 4] Processing CV fold 54/200
+[Trial 6, Fold 5] Processing CV fold 55/200
+[Trial 6, Fold 6] Processing CV fold 56/200
+[Trial 6, Fold 7] Processing CV fold 57/200
+[Trial 6, Fold 8] Processing CV fold 58/200
+[Trial 6, Fold 9] Processing CV fold 59/200
+[Trial 6, Fold 10] Processing CV fold 60/200
+[Trial 6] Completed. ETA: 88.7 minutes
+
+[Trial 7/20] Starting...
+[Trial 7, Fold 1] Processing CV fold 61/200
+[Trial 7, Fold 2] Processing CV fold 62/200
+[Trial 7, Fold 3] Processing CV fold 63/200
+[Trial 7, Fold 4] Processing CV fold 64/200
+[Trial 7, Fold 5] Processing CV fold 65/200
+[Trial 7, Fold 6] Processing CV fold 66/200
+[Trial 7, Fold 7] Processing CV fold 67/200
+[Trial 7, Fold 8] Processing CV fold 68/200
+[Trial 7, Fold 9] Processing CV fold 69/200
+[Trial 7, Fold 10] Processing CV fold 70/200
+[Trial 7] Completed. ETA: 82.3 minutes
+
+[Trial 8/20] Starting...
+[Trial 8, Fold 1] Processing CV fold 71/200
+[Trial 8, Fold 2] Processing CV fold 72/200
+[Trial 8, Fold 3] Processing CV fold 73/200
+[Trial 8, Fold 4] Processing CV fold 74/200
+[Trial 8, Fold 5] Processing CV fold 75/200
+[Trial 8, Fold 6] Processing CV fold 76/200
+[Trial 8, Fold 7] Processing CV fold 77/200
+[Trial 8, Fold 8] Processing CV fold 78/200
+[Trial 8, Fold 9] Processing CV fold 79/200
+[Trial 8, Fold 10] Processing CV fold 80/200
+[Trial 8] Completed. ETA: 76.0 minutes
+
+[Trial 9/20] Starting...
+[Trial 9, Fold 1] Processing CV fold 81/200
+[Trial 9, Fold 2] Processing CV fold 82/200
+[Trial 9, Fold 3] Processing CV fold 83/200
+[Trial 9, Fold 4] Processing CV fold 84/200
+[Trial 9, Fold 5] Processing CV fold 85/200
+[Trial 9, Fold 6] Processing CV fold 86/200
+[Trial 9, Fold 7] Processing CV fold 87/200
+[Trial 9, Fold 8] Processing CV fold 88/200
+[Trial 9, Fold 9] Processing CV fold 89/200
+[Trial 9, Fold 10] Processing CV fold 90/200
+[Trial 9] Completed. ETA: 69.6 minutes
+
+[Trial 10/20] Starting...
+[Trial 10, Fold 1] Processing CV fold 91/200
+[Trial 10, Fold 2] Processing CV fold 92/200
+[Trial 10, Fold 3] Processing CV fold 93/200
+[Trial 10, Fold 4] Processing CV fold 94/200
+[Trial 10, Fold 5] Processing CV fold 95/200
+[Trial 10, Fold 6] Processing CV fold 96/200
+[Trial 10, Fold 7] Processing CV fold 97/200
+[Trial 10, Fold 8] Processing CV fold 98/200
+[Trial 10, Fold 9] Processing CV fold 99/200
+[Trial 10, Fold 10] Processing CV fold 100/200
+[Trial 10] Completed. ETA: 63.3 minutes
+
+[Trial 11/20] Starting...
+[Trial 11, Fold 1] Processing CV fold 101/200
+[Trial 11, Fold 2] Processing CV fold 102/200
+[Trial 11, Fold 3] Processing CV fold 103/200
+[Trial 11, Fold 4] Processing CV fold 104/200
+[Trial 11, Fold 5] Processing CV fold 105/200
+[Trial 11, Fold 6] Processing CV fold 106/200
+[Trial 11, Fold 7] Processing CV fold 107/200
+[Trial 11, Fold 8] Processing CV fold 108/200
+[Trial 11, Fold 9] Processing CV fold 109/200
+[Trial 11, Fold 10] Processing CV fold 110/200
+[Trial 11] Completed. ETA: 56.9 minutes
+
+[Trial 12/20] Starting...
+[Trial 12, Fold 1] Processing CV fold 111/200
+[Trial 12, Fold 2] Processing CV fold 112/200
+[Trial 12, Fold 3] Processing CV fold 113/200
+[Trial 12, Fold 4] Processing CV fold 114/200
+[Trial 12, Fold 5] Processing CV fold 115/200
+[Trial 12, Fold 6] Processing CV fold 116/200
+[Trial 12, Fold 7] Processing CV fold 117/200
+[Trial 12, Fold 8] Processing CV fold 118/200
+[Trial 12, Fold 9] Processing CV fold 119/200
+[Trial 12, Fold 10] Processing CV fold 120/200
+[Trial 12] Completed. ETA: 50.6 minutes
+
+[Trial 13/20] Starting...
+[Trial 13, Fold 1] Processing CV fold 121/200
+[Trial 13, Fold 2] Processing CV fold 122/200
+[Trial 13, Fold 3] Processing CV fold 123/200
+[Trial 13, Fold 4] Processing CV fold 124/200
+[Trial 13, Fold 5] Processing CV fold 125/200
+[Trial 13, Fold 6] Processing CV fold 126/200
+[Trial 13, Fold 7] Processing CV fold 127/200
+[Trial 13, Fold 8] Processing CV fold 128/200
+[Trial 13, Fold 9] Processing CV fold 129/200
+[Trial 13, Fold 10] Processing CV fold 130/200
+[Trial 13] Completed. ETA: 44.2 minutes
+
+[Trial 14/20] Starting...
+[Trial 14, Fold 1] Processing CV fold 131/200
+[Trial 14, Fold 2] Processing CV fold 132/200
+[Trial 14, Fold 3] Processing CV fold 133/200
+[Trial 14, Fold 4] Processing CV fold 134/200
+[Trial 14, Fold 5] Processing CV fold 135/200
+[Trial 14, Fold 6] Processing CV fold 136/200
+[Trial 14, Fold 7] Processing CV fold 137/200
+[Trial 14, Fold 8] Processing CV fold 138/200
+[Trial 14, Fold 9] Processing CV fold 139/200
+[Trial 14, Fold 10] Processing CV fold 140/200
+[Trial 14] Completed. ETA: 37.9 minutes
+
+[Trial 15/20] Starting...
+[Trial 15, Fold 1] Processing CV fold 141/200
+[Trial 15, Fold 2] Processing CV fold 142/200
+[Trial 15, Fold 3] Processing CV fold 143/200
+[Trial 15, Fold 4] Processing CV fold 144/200
+[Trial 15, Fold 5] Processing CV fold 145/200
+[Trial 15, Fold 6] Processing CV fold 146/200
+[Trial 15, Fold 7] Processing CV fold 147/200
+[Trial 15, Fold 8] Processing CV fold 148/200
+[Trial 15, Fold 9] Processing CV fold 149/200
+[Trial 15, Fold 10] Processing CV fold 150/200
+[Trial 15] Completed. ETA: 31.6 minutes
+
+[Trial 16/20] Starting...
+[Trial 16, Fold 1] Processing CV fold 151/200
+[Trial 16, Fold 2] Processing CV fold 152/200
+[Trial 16, Fold 3] Processing CV fold 153/200
+[Trial 16, Fold 4] Processing CV fold 154/200
+[Trial 16, Fold 5] Processing CV fold 155/200
+[Trial 16, Fold 6] Processing CV fold 156/200
+[Trial 16, Fold 7] Processing CV fold 157/200
+[Trial 16, Fold 8] Processing CV fold 158/200
+[Trial 16, Fold 9] Processing CV fold 159/200
+[Trial 16, Fold 10] Processing CV fold 160/200
+[Trial 16] Completed. ETA: 25.3 minutes
+
+[Trial 17/20] Starting...
+[Trial 17, Fold 1] Processing CV fold 161/200
+[Trial 17, Fold 2] Processing CV fold 162/200
+[Trial 17, Fold 3] Processing CV fold 163/200
+[Trial 17, Fold 4] Processing CV fold 164/200
+[Trial 17, Fold 5] Processing CV fold 165/200
+[Trial 17, Fold 6] Processing CV fold 166/200
+[Trial 17, Fold 7] Processing CV fold 167/200
+[Trial 17, Fold 8] Processing CV fold 168/200
+[Trial 17, Fold 9] Processing CV fold 169/200
+[Trial 17, Fold 10] Processing CV fold 170/200
+[Trial 17] Completed. ETA: 18.9 minutes
+
+[Trial 18/20] Starting...
+[Trial 18, Fold 1] Processing CV fold 171/200
+[Trial 18, Fold 2] Processing CV fold 172/200
+[Trial 18, Fold 3] Processing CV fold 173/200
+[Trial 18, Fold 4] Processing CV fold 174/200
+[Trial 18, Fold 5] Processing CV fold 175/200
+[Trial 18, Fold 6] Processing CV fold 176/200
+[Trial 18, Fold 7] Processing CV fold 177/200
+[Trial 18, Fold 8] Processing CV fold 178/200
+[Trial 18, Fold 9] Processing CV fold 179/200
+[Trial 18, Fold 10] Processing CV fold 180/200
+[Trial 18] Completed. ETA: 12.6 minutes
+
+[Trial 19/20] Starting...
+[Trial 19, Fold 1] Processing CV fold 181/200
+[Trial 19, Fold 2] Processing CV fold 182/200
+[Trial 19, Fold 3] Processing CV fold 183/200
+[Trial 19, Fold 4] Processing CV fold 184/200
+[Trial 19, Fold 5] Processing CV fold 185/200
+[Trial 19, Fold 6] Processing CV fold 186/200
+[Trial 19, Fold 7] Processing CV fold 187/200
+[Trial 19, Fold 8] Processing CV fold 188/200
+[Trial 19, Fold 9] Processing CV fold 189/200
+[Trial 19, Fold 10] Processing CV fold 190/200
+[Trial 19] Completed. ETA: 6.3 minutes
+
+[Trial 20/20] Starting...
+[Trial 20, Fold 1] Processing CV fold 191/200
+[Trial 20, Fold 2] Processing CV fold 192/200
+[Trial 20, Fold 3] Processing CV fold 193/200
+[Trial 20, Fold 4] Processing CV fold 194/200
+[Trial 20, Fold 5] Processing CV fold 195/200
+[Trial 20, Fold 6] Processing CV fold 196/200
+[Trial 20, Fold 7] Processing CV fold 197/200
+[Trial 20, Fold 8] Processing CV fold 198/200
+[Trial 20, Fold 9] Processing CV fold 199/200
+[Trial 20, Fold 10] Processing CV fold 200/200
+[Trial 20] Completed. ETA: 0.0 minutes
+
+CV screening completed in 126.2 minutes
+
+CV Selection Results:
+- Total genes tested: 13039
+- Genes selected ≥1 time: 8056
+- Most selected gene: MRC1 (200/200 folds)
+
+================================================================================
+ANALYZING CV SCREENING RESULTS
+================================================================================
+Total genes tested: 8056
+Genes selected ≥1 time: 8056
+Genes selected ≥5 times: 6434
+Genes selected ≥10 times: 5774
+
+Top 20 most frequently selected genes:
+     gene  total_selections  selection_freq_pct  selected_in_trials
+     MRC1             200.0               100.0                  20
+    SULF1             200.0               100.0                  20
+   SAMSN1             200.0               100.0                  20
+   PRDM16             200.0               100.0                  20
+  GUSBP14             200.0               100.0                  20
+    RAB8A             200.0               100.0                  20
+     MYH2             200.0               100.0                  20
+     MNDA             200.0               100.0                  20
+ TMEM185B             200.0               100.0                  20
+     WNK1             200.0               100.0                  20
+   PHLDA2             200.0               100.0                  20
+ASAP1-IT1             200.0               100.0                  20
+   H2BC10             200.0               100.0                  20
+     TLR1             200.0               100.0                  20
+    SCMH1             200.0               100.0                  20
+    MMP12             200.0               100.0                  20
+    CASZ1             200.0               100.0                  20
+     PER1             200.0               100.0                  20
+    PCMT1             200.0               100.0                  20
+     CKLF             200.0               100.0                  20
+
+Detailed interaction results:
+- Total significant interactions found: 665457
+- Mean interaction p-value: 0.0376
+- Median interaction p-value: 0.0315
+
+Top 10 strongest interactions (lowest p-values):
+         gene  interaction_p_value  interaction_hr  trial  fold
+JMJD7-PLA2G4B         8.543476e-09        5.697568      7    10
+JMJD7-PLA2G4B         1.448960e-08        5.615291     12     8
+         TBX2         2.655832e-08        4.447101     10     4
+JMJD7-PLA2G4B         5.141182e-08        5.377049     16     3
+JMJD7-PLA2G4B         6.735043e-08        5.383938      9     7
+        ITGA7         7.085553e-08        6.587414     13     2
+        MRNIP         9.534575e-08        6.778873     19    10
+JMJD7-PLA2G4B         9.638043e-08        5.105809      2    10
+JMJD7-PLA2G4B         1.303994e-07        5.400100     12     5
+         TBX2         1.381375e-07        4.143714     13     4
+
+================================================================================
+CREATING CV VISUALIZATIONS
+================================================================================
+CV visualizations saved:
+- 20250712_cv_interaction_screening_overview.png
+- 20250712_cv_top_genes_selection_frequency.png
+
+================================================================================
+SAVING CV RESULTS
+================================================================================
+Gene selection frequencies saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250712_cox_interaction_cv_selection_results.csv
+Detailed interaction results saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250712_cox_interaction_cv_detailed_results.csv
+
+================================================================================
+CREATING CV SUMMARY REPORT
+================================================================================

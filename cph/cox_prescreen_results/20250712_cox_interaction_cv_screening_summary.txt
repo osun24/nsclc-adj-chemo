@@ -1,0 +1,23 @@
+COX INTERACTION SCREENING - CROSS-VALIDATION SUMMARY
+============================================================
+
+Date: 2025-07-13 00:03:28
+Screening method: CV-based treatment-gene interaction testing
+Model: Cox(Adjuvant Chemo + Gene + Adjuvant Chemo * Gene)
+CV Configuration: 20 trials × 10 folds = 200 total CV iterations
+
+DATASET SUMMARY:
+--------------------
+Total genes tested: 8056
+
+SELECTION FREQUENCY SUMMARY:
+------------------------------
+Genes selected ≥ 1 times: 8056 (100.0%)
+Genes selected ≥ 5 times: 6434 (79.9%)
+Genes selected ≥10 times: 5774 (71.7%)
+Genes selected ≥25 times: 4877 (60.5%)
+Genes selected ≥50 times: 4149 (51.5%)
+Genes selected ≥100 times: 3145 (39.0%)
+
+TOP 20 MOST SELECTED GENES:
+------------------------------
