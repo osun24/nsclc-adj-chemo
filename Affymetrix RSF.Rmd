@@ -14,6 +14,7 @@ library(ranger)
 library(survival)
 
 # Load datasets
+library(readr)
 affyTrain <- read_csv("affyTrain.csv")
 affyValidation <- read_csv("affyValidation.csv")
 
@@ -556,12 +557,15 @@ for (trial in 1:n_trials) {
     train_data <- shuffled_data[-test_idx, ]
 
     # Convert treatment to numeric: ACT = 1, OBS = 0
-    treat_raw <- train_data$Adjuvant.Chemo
+    treat_raw <- train_data$`Adjuvant Chemo`
     treat <- ifelse(treat_raw == "ACT", 1,
                     ifelse(treat_raw == "OBS", 0, NA))
 
     # Remove rows with NA treatment
-    valid_rows <- !is.na(treat)
+    valid_rows <- which(!is.na(treat))
+
+    if (length(valid_rows) == 0) next  # skip fold if no valid rows
+
     train_data <- train_data[valid_rows, ]
     treat <- treat[valid_rows]
 
@@ -600,6 +604,7 @@ for (trial in 1:n_trials) {
     fold_counter <- fold_counter + 1
   }
 }
+
 
 # Final table
 selection_df <- as.data.frame(selection_matrix)
