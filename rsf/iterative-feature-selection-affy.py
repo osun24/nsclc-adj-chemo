@@ -244,7 +244,7 @@ def main():
     no_improvement_count = 0
     min_genes_to_keep = 3  # Minimum number of selectable (gene) features to keep
     
-    iteration = 1
+    iteration = 10
     
     while len(current_selectable_features) >= min_genes_to_keep:
         # Combine forced features with the current set of selectable features
