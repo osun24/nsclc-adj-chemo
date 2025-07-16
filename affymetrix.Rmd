@@ -523,6 +523,15 @@ pca_df$Batch <- affy.expr.batch
 explained_var <- affy.pca.before$sdev^2 / sum(affy.pca.before$sdev^2)
 percent_var <- round(100 * explained_var[1:2], 1)
 
+pca_df$Platform <- ifelse(pca_df$Batch %in% c("GSE14814", "GSE68465"), "GPL96", "GPL570")
+
+library(dplyr)
+
+# Get convex hull for each Platform group
+hulls <- pca_df %>%
+  group_by(Platform) %>%
+  slice(chull(PC1, PC2))
+
 ggplot(pca_df, aes(x = PC1, y = PC2, color = Batch)) +
   geom_point(alpha = 0.8, size = 2) +
   stat_ellipse(type = "norm", level = 0.95, linetype = "solid") +
@@ -531,8 +540,29 @@ ggplot(pca_df, aes(x = PC1, y = PC2, color = Batch)) +
     title = "PCA: Affymetrix (Before Correction)",
     x = paste0("PC1 (", percent_var[1], "%)"),
     y = paste0("PC2 (", percent_var[2], "%)")
+  ) 
+
+ggplot(pca_df, aes(x = PC1, y = PC2, shape = Batch)) +
+  geom_point(color = "black", size = 2, alpha = 0.8) +
+  stat_ellipse(aes(linetype = Batch), type = "norm", level = 0.95, color = "black") +
+  theme_minimal() +
+  labs(
+    title = "PCA: Affymetrix (Before ComBat Correction)",
+    x = paste0("PC1 (", percent_var[1], "%)"),
+    y = paste0("PC2 (", percent_var[2], "%)")
   ) +
-  coord_cartesian(xlim = range(pca_df$PC1), ylim = range(pca_df$PC2))
+  scale_shape_manual(values = 0:8)
+
+ggplot(pca_df, aes(x = PC1, y = PC2)) +
+  geom_point(aes(shape = Batch), color = "black", size = 2, alpha = 0.8) +
+  stat_ellipse(aes(group = Platform, linetype = Platform), type = "norm", level = 0.95, color = "black", size = 0.6) +
+  theme_minimal() +
+  labs(
+    title = "PCA: Affymetrix (Before ComBat)",
+    x = "PC1",
+    y = "PC2"
+  ) +
+  scale_shape_manual(values = 0:8)
 
 affy.data$Stage <- factor(affy.data$Stage)
 affy.data$Histology <- factor(affy.data$Histology)
@@ -572,8 +602,18 @@ ggplot(pca_after_df, aes(x = PC1, y = PC2, color = Batch)) +
     title = "PCA: Affymetrix (After ComBat Correction)",
     x = paste0("PC1 (", percent_var_after[1], "%)"),
     y = paste0("PC2 (", percent_var_after[2], "%)")
+  )
+
+ggplot(pca_after_df, aes(x = PC1, y = PC2, shape = Batch)) +
+  geom_point(color = "black", size = 2, alpha = 0.8) +
+  stat_ellipse(aes(linetype = Batch), type = "norm", level = 0.95, color = "black") +
+  theme_minimal() +
+  labs(
+    title = "PCA: Affymetrix (After ComBat Correction)",
+    x = paste0("PC1 (", percent_var_after[1], "%)"),
+    y = paste0("PC2 (", percent_var_after[2], "%)")
   ) +
-  coord_cartesian(xlim = range(pca_after_df$PC1), ylim = range(pca_after_df$PC2))
+  scale_shape_manual(values = 0:8)
 
 affy.expr = as.data.frame(affy.pca.corrected)
 
@@ -704,6 +744,140 @@ cat("Race:\n")
 print(table(affy.data$Race))
 ```
 
+#fold 
+```{r}
+# 1. Compute the median expression for each gene (i.e., each column)
+gene_medians <- apply(affy.expr, 2, median, na.rm = TRUE)  # now over columns
+
+# 2. Compute log2 fold changes from gene medians
+logfc_matrix <- log2(affy.expr + 1) - matrix(
+  log2(gene_medians + 1),
+  nrow = nrow(affy.expr),
+  ncol = ncol(affy.expr),
+  byrow = TRUE
+)
+# Same shape as affy.expr: rows = samples, cols = genes
+
+# 3. Calculate M scores for each sample (median absolute deviation from gene medians)
+m_scores <- apply(logfc_matrix, 1, function(x) median(abs(x), na.rm = TRUE))
+
+# 4. Visualize the M scores
+boxplot(m_scores, main = "Sample-wise M scores")
+hist(m_scores, breaks = 30, main = "Histogram of M scores")
+
+# 5. Identify outlier samples (you can adjust the threshold)
+threshold <- median(m_scores) + 3 * mad(m_scores)  # OR set manually like threshold <- 0.4
+outlier_samples <- names(m_scores)[m_scores > threshold]
+
+# Optional: see them
+print(outlier_samples)
+```
+
+#silhoutte
+```{r}
+install.packages("cluster")
+library(cluster)
+
+
+# Get first 2 PCs from before ComBat
+pca_before_matrix <- affy.pca.before$x[, 1:2]
+
+# Compute distances
+dist_before <- dist(pca_before_matrix)
+
+# Convert batch labels to numeric
+batch_labels <- as.numeric(as.factor(affy.expr.batch))
+
+# Compute silhouette scores
+sil_before <- silhouette(batch_labels, dist_before)
+
+# Plot and summary
+plot(sil_before, main = "Silhouette Plot: Before ComBat")
+summary(sil_before)
+mean(sil_before[, "sil_width"])
+
+
+pca_after_matrix <- affy.pca.after$x[, 1:2]
+
+# Compute distances
+dist_after <- dist(pca_after_matrix)
+
+# Compute silhouette scores
+sil_after <- silhouette(batch_labels, dist_after)
+
+# Plot and summary
+plot(sil_after, main = "Silhouette Plot: After ComBat")
+summary(sil_after)
+mean(sil_after[, "sil_width"])
+
+```
+
+#UMAP
+```{r}
+install.packages("uwot")
+library(uwot)
+library(ggplot2)
+
+
+set.seed(123)  
+
+umap_before <- umap(
+  affy.expr.all,
+  n_neighbors = 15,
+  min_dist = 0.1,
+  metric = "euclidean",
+  n_components = 2
+)
+
+
+umap_after <- umap(
+  affy.expr,
+  n_neighbors = 15,
+  min_dist = 0.1,
+  metric = "euclidean",
+  n_components = 2
+)
+
+# Before
+umap_before_df <- data.frame(UMAP1 = umap_before[,1], UMAP2 = umap_before[,2], Batch = affy.expr.batch)
+
+# After
+umap_after_df <- data.frame(UMAP1 = umap_after[,1], UMAP2 = umap_after[,2], Batch = affy.expr.batch)
+
+# Before
+ggplot(umap_before_df, aes(x = UMAP1, y = UMAP2, color = Batch)) +
+  geom_point(alpha = 0.8, size = 2) +
+  theme_minimal() +
+  labs(title = "UMAP: Before ComBat", x = "UMAP 1", y = "UMAP 2")
+
+# After
+ggplot(umap_after_df, aes(x = UMAP1, y = UMAP2, color = Batch)) +
+  geom_point(alpha = 0.8, size = 2) +
+  theme_minimal() +
+  labs(title = "UMAP: After ComBat", x = "UMAP 1", y = "UMAP 2")
+
+# Shapes
+ggplot(umap_before_df, aes(x = UMAP1, y = UMAP2, shape = Batch)) +
+  geom_point(color = "black", size = 2, alpha = 0.8) +
+  theme_minimal() +
+  labs(
+    title = "UMAP: Affymetrix (Before ComBat)",
+    x = "UMAP 1",
+    y = "UMAP 2"
+  ) +
+  scale_shape_manual(values = 0:8)
+
+
+ggplot(umap_after_df, aes(x = UMAP1, y = UMAP2, shape = Batch)) +
+  geom_point(color = "black", size = 2, alpha = 0.8) +
+  theme_minimal() +
+  labs(
+    title = "UMAP: Affymetrix (After ComBat)",
+    x = "UMAP 1",
+    y = "UMAP 2"
+  ) +
+  scale_shape_manual(values = 0:8)
+```
 
 
 
