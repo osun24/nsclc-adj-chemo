@@ -73,8 +73,8 @@ def run_nested_cv_iteration(X_train, y_train, features_to_use, iteration_num):
     # Define parameter grid (fixed: n_estimators=750, min_samples_leaf=70)
     param_grid = {
         "n_estimators": [500, 750], 
-        "min_samples_leaf": [70],  # Fixed
-        "max_features": ["sqrt", "log2", 0.1, 0.2, 0.5],
+        "min_samples_leaf": [70, 90], 
+        "max_features": ["sqrt", 0.1, 0.2, 0.5],
         "max_depth": [3]
     }
     
@@ -206,34 +206,69 @@ def main():
     
     print(f"Total features available: {len(all_features)}")
     
+    # Define the features to force-include in every model iteration
+    forced_features_base = [
+        'Age', 'Stage_IA', 'Stage_IB', 'Stage_II', 'Stage_III', 'Stage_IV', 'Stage_Unknown',
+        'Histology_Adenocarcinoma', 'Histology_Adenosquamous Carcinoma', 
+        'Histology_Large Cell Carcinoma', 'Histology_Squamous Cell Carcinoma',
+        'Race_African American', 'Race_Asian', 'Race_Caucasian', 
+        'Race_Native Hawaiian or Other Pacific Islander', 'Race_Unknown',
+        'Smoked?_No', 'Smoked?_Unknown', 'Smoked?_Yes', "Adjuvant Chemo", "IS_MALE"
+    ]
+    # Ensure forced features actually exist in the dataset
+    forced_features = [f for f in forced_features_base if f in all_features]
+    print(f"\nForcing inclusion of {len(forced_features)} clinical features.")
+
     # Initialize with median-ranked features from previous analysis
     print("\nLoading pre-ranked features from median importance...")
     try:
-        preranked_features = pd.read_csv("rsf/rsf_results_affy/Affy RS_combined_fold_permutation_importance_median_ranked.csv")
-        initial_features = preranked_features['Feature'].tolist()
-        # Filter to only include features that exist in our data
-        initial_features = [f for f in initial_features if f in all_features]
-        print(f"Using {len(initial_features)} pre-ranked features (no recalculation needed)")
+        preranked_features_df = pd.read_csv("cph/cox_prescreen_results/20250713_significant_interactions_p_0.05_selection_results.csv") # 20x 10-fold CV results
+        preranked_features = preranked_features_df['selected_gene'].tolist()
+        
+        # Separate pre-ranked features into clinical (forced) and genomic (selectable)
+        selectable_features = [f for f in preranked_features if f not in forced_features and f in all_features]
+        
+        print(f"Using {len(selectable_features)} pre-ranked selectable (genomic) features.")
+        print(f"The iterative process will operate on these {len(selectable_features)} features.")
+
     except FileNotFoundError:
-        print("Pre-ranked features not found, using all features")
-        initial_features = all_features.copy()
+        print("Pre-ranked features not found, using all non-forced features as selectable.")
+        selectable_features = [f for f in all_features if f not in forced_features]
+    
+    # Calculate features needed for iteration 15 with 288 total features
+    target_total_features = 288
+    starting_iteration = 15
+    target_selectable_features = target_total_features - len(forced_features)
+    
+    print(f"Starting at iteration {starting_iteration} with {target_total_features} total features")
+    print(f"Target selectable features: {target_selectable_features}")
+    
+    # Initialize with all selectable features, then trim if needed
+    current_selectable_features = selectable_features.copy()
+    
+    # If we have more selectable features than needed, take the top ones
+    if len(current_selectable_features) > target_selectable_features:
+        current_selectable_features = current_selectable_features[:target_selectable_features]
+        print(f"Reduced selectable features to {len(current_selectable_features)} for iteration {starting_iteration}")
     
     # Iterative feature selection
-    current_features = initial_features.copy()
     all_iterations = []
     best_score = -np.inf
     best_iteration = 0
-    patience = 5  # Stop if no improvement for 3 iterations (adjustable: 2-5 depending on computational budget)
+    patience = 5  # Stop if no improvement for 5 iterations (adjustable: 2-5 depending on computational budget)
     no_improvement_count = 0
-    min_features = 3  # Minimum number of features to keep
+    min_genes_to_keep = 3  # Minimum number of selectable (gene) features to keep
     
-    iteration = 1
+    iteration = starting_iteration
     
-    while len(current_features) >= min_features:
-        print(f"\nStarting iteration {iteration}...")
+    while len(current_selectable_features) >= min_genes_to_keep:
+        # Combine forced features with the current set of selectable features
+        current_features_for_iteration = forced_features + current_selectable_features
+        
+        print(f"\nStarting iteration {iteration} with {len(current_features_for_iteration)} total features ({len(forced_features)} forced + {len(current_selectable_features)} selectable)...")
         
         # Run nested CV for current feature set
-        results = run_nested_cv_iteration(X_train, y_train, current_features, iteration)
+        results = run_nested_cv_iteration(X_train, y_train, current_features_for_iteration, iteration)
         all_iterations.append(results)
         
         # Check if this is the best performance so far
@@ -252,21 +287,20 @@ def main():
             print(f"\nEarly stopping: No improvement for {patience} iterations")
             break
         
-        # Remove bottom 20% of features based on pre-ranked order
-        n_features_to_remove = max(1, int(len(current_features) * 0.2))
-        n_features_to_keep = len(current_features) - n_features_to_remove
+        # Remove bottom 20% of selectable features based on pre-ranked order
+        n_features_to_remove = max(1, int(len(current_selectable_features) * 0.2))
+        n_features_to_keep = len(current_selectable_features) - n_features_to_remove
         
-        if n_features_to_keep < min_features:
-            print(f"Would reduce to {n_features_to_keep} features, below minimum of {min_features}")
+        if n_features_to_keep < min_genes_to_keep:
+            print(f"Would reduce to {n_features_to_keep} selectable features, below minimum of {min_genes_to_keep}")
             break
         
-        # Keep top features based on pre-ranked order (current_features is already in ranked order)
-        top_features = current_features[:n_features_to_keep]
+        # Keep top selectable features based on pre-ranked order
+        top_selectable_features = current_selectable_features[:n_features_to_keep]
         
-        print(f"Removing {n_features_to_remove} features (keeping top {n_features_to_keep})")
-        print(f"Bottom 5 features being removed: {current_features[-5:]}")
+        print(f"Removing {n_features_to_remove} selectable features (keeping top {n_features_to_keep})")
         
-        current_features = top_features
+        current_selectable_features = top_selectable_features
         iteration += 1
     
     # Summary and final results
