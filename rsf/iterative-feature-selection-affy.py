@@ -235,8 +235,23 @@ def main():
         print("Pre-ranked features not found, using all non-forced features as selectable.")
         selectable_features = [f for f in all_features if f not in forced_features]
     
-    # Iterative feature selection
+    # Calculate features needed for iteration 15 with 288 total features
+    target_total_features = 288
+    starting_iteration = 15
+    target_selectable_features = target_total_features - len(forced_features)
+    
+    print(f"Starting at iteration {starting_iteration} with {target_total_features} total features")
+    print(f"Target selectable features: {target_selectable_features}")
+    
+    # Initialize with all selectable features, then trim if needed
     current_selectable_features = selectable_features.copy()
+    
+    # If we have more selectable features than needed, take the top ones
+    if len(current_selectable_features) > target_selectable_features:
+        current_selectable_features = current_selectable_features[:target_selectable_features]
+        print(f"Reduced selectable features to {len(current_selectable_features)} for iteration {starting_iteration}")
+    
+    # Iterative feature selection
     all_iterations = []
     best_score = -np.inf
     best_iteration = 0
@@ -244,7 +259,7 @@ def main():
     no_improvement_count = 0
     min_genes_to_keep = 3  # Minimum number of selectable (gene) features to keep
     
-    iteration = 10
+    iteration = starting_iteration
     
     while len(current_selectable_features) >= min_genes_to_keep:
         # Combine forced features with the current set of selectable features

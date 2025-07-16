@@ -1,0 +1,265 @@
+================================================================================
+ITERATIVE FEATURE SELECTION WITH NESTED CROSS-VALIDATION
+================================================================================
+Loading training data...
+Combined training data shape: (1088, 13060)
+Number of events: 486
+Number of censored: 602
+Total features available: 13058
+
+Forcing inclusion of 19 clinical features.
+
+Loading pre-ranked features from median importance...
+Using 6092 pre-ranked selectable (genomic) features.
+The iterative process will operate on these 6092 features.
+Starting at iteration 15 with 288 total features
+Target selectable features: 269
+Reduced selectable features to 269 for iteration 15
+
+Starting iteration 15 with 288 total features (19 forced + 269 selectable)...
+
+============================================================
+ITERATION 15: Using 288 features
+============================================================
+Starting Nested Cross-Validation...
+[Fold 1/5] Training samples: 870, Test samples: 218
+[Fold 1/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 1] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 1] Test C-index: 0.5900, Train C-index: 0.7395
+[Fold 2/5] Training samples: 870, Test samples: 218
+[Fold 2/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 2] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 2] Test C-index: 0.6796, Train C-index: 0.7397
+[Fold 3/5] Training samples: 870, Test samples: 218
+[Fold 3/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 3] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 750}
+[Fold 3] Test C-index: 0.6674, Train C-index: 0.7260
+[Fold 4/5] Training samples: 871, Test samples: 217
+[Fold 4/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 4] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 750}
+[Fold 4] Test C-index: 0.6581, Train C-index: 0.7200
+[Fold 5/5] Training samples: 871, Test samples: 217
+[Fold 5/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 5] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 5] Test C-index: 0.5907, Train C-index: 0.7366
+
+Iteration 15 Results:
+Test C-index: 0.6371 ± 0.0388
+Train C-index: 0.7324 ± 0.0080
+*** NEW BEST PERFORMANCE: 0.6371 ***
+Removing 53 selectable features (keeping top 216)
+
+Starting iteration 16 with 235 total features (19 forced + 216 selectable)...
+
+============================================================
+ITERATION 16: Using 235 features
+============================================================
+Starting Nested Cross-Validation...
+[Fold 1/5] Training samples: 870, Test samples: 218
+[Fold 1/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 1] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 1] Test C-index: 0.5842, Train C-index: 0.7369
+[Fold 2/5] Training samples: 870, Test samples: 218
+[Fold 2/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 2] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 2] Test C-index: 0.6927, Train C-index: 0.7373
+[Fold 3/5] Training samples: 870, Test samples: 218
+[Fold 3/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 3] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 750}
+[Fold 3] Test C-index: 0.6669, Train C-index: 0.7218
+[Fold 4/5] Training samples: 871, Test samples: 217
+[Fold 4/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 4] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 4] Test C-index: 0.6646, Train C-index: 0.7325
+[Fold 5/5] Training samples: 871, Test samples: 217
+[Fold 5/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 5] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 5] Test C-index: 0.5971, Train C-index: 0.7336
+
+Iteration 16 Results:
+Test C-index: 0.6411 ± 0.0425
+Train C-index: 0.7324 ± 0.0056
+*** NEW BEST PERFORMANCE: 0.6411 ***
+Removing 43 selectable features (keeping top 173)
+
+Starting iteration 17 with 192 total features (19 forced + 173 selectable)...
+
+============================================================
+ITERATION 17: Using 192 features
+============================================================
+Starting Nested Cross-Validation...
+[Fold 1/5] Training samples: 870, Test samples: 218
+[Fold 1/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 1] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 750}
+[Fold 1] Test C-index: 0.5810, Train C-index: 0.7156
+[Fold 2/5] Training samples: 870, Test samples: 218
+[Fold 2/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 2] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 2] Test C-index: 0.6687, Train C-index: 0.7394
+[Fold 3/5] Training samples: 870, Test samples: 218
+[Fold 3/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 3] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 3] Test C-index: 0.6849, Train C-index: 0.7290
+[Fold 4/5] Training samples: 871, Test samples: 217
+[Fold 4/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 4] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 4] Test C-index: 0.6657, Train C-index: 0.7315
+[Fold 5/5] Training samples: 871, Test samples: 217
+[Fold 5/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 5] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 5] Test C-index: 0.5933, Train C-index: 0.7288
+
+Iteration 17 Results:
+Test C-index: 0.6387 ± 0.0428
+Train C-index: 0.7289 ± 0.0077
+No improvement for 1 iterations
+Removing 34 selectable features (keeping top 139)
+
+Starting iteration 18 with 158 total features (19 forced + 139 selectable)...
+
+============================================================
+ITERATION 18: Using 158 features
+============================================================
+Starting Nested Cross-Validation...
+[Fold 1/5] Training samples: 870, Test samples: 218
+[Fold 1/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 1] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 750}
+[Fold 1] Test C-index: 0.5958, Train C-index: 0.7064
+[Fold 2/5] Training samples: 870, Test samples: 218
+[Fold 2/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 2] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 2] Test C-index: 0.6698, Train C-index: 0.7389
+[Fold 3/5] Training samples: 870, Test samples: 218
+[Fold 3/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 3] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 3] Test C-index: 0.6788, Train C-index: 0.7204
+[Fold 4/5] Training samples: 871, Test samples: 217
+[Fold 4/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 4] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 4] Test C-index: 0.6520, Train C-index: 0.7284
+[Fold 5/5] Training samples: 871, Test samples: 217
+[Fold 5/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 5] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 5] Test C-index: 0.5930, Train C-index: 0.7195
+
+Iteration 18 Results:
+Test C-index: 0.6379 ± 0.0365
+Train C-index: 0.7227 ± 0.0107
+No improvement for 2 iterations
+Removing 27 selectable features (keeping top 112)
+
+Starting iteration 19 with 131 total features (19 forced + 112 selectable)...
+
+============================================================
+ITERATION 19: Using 131 features
+============================================================
+Starting Nested Cross-Validation...
+[Fold 1/5] Training samples: 870, Test samples: 218
+[Fold 1/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 1] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 1] Test C-index: 0.6076, Train C-index: 0.7227
+[Fold 2/5] Training samples: 870, Test samples: 218
+[Fold 2/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 2] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 2] Test C-index: 0.6516, Train C-index: 0.7313
+[Fold 3/5] Training samples: 870, Test samples: 218
+[Fold 3/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 3] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 3] Test C-index: 0.6830, Train C-index: 0.7210
+[Fold 4/5] Training samples: 871, Test samples: 217
+[Fold 4/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 4] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 500}
+[Fold 4] Test C-index: 0.6413, Train C-index: 0.7063
+[Fold 5/5] Training samples: 871, Test samples: 217
+[Fold 5/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 5] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 750}
+[Fold 5] Test C-index: 0.5849, Train C-index: 0.7197
+
+Iteration 19 Results:
+Test C-index: 0.6337 ± 0.0343
+Train C-index: 0.7202 ± 0.0081
+No improvement for 3 iterations
+Removing 22 selectable features (keeping top 90)
+
+Starting iteration 20 with 109 total features (19 forced + 90 selectable)...
+
+============================================================
+ITERATION 20: Using 109 features
+============================================================
+Starting Nested Cross-Validation...
+[Fold 1/5] Training samples: 870, Test samples: 218
+[Fold 1/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 1] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 1] Test C-index: 0.6028, Train C-index: 0.7187
+[Fold 2/5] Training samples: 870, Test samples: 218
+[Fold 2/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 2] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 2] Test C-index: 0.6621, Train C-index: 0.7268
+[Fold 3/5] Training samples: 870, Test samples: 218
+[Fold 3/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 3] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 500}
+[Fold 3] Test C-index: 0.6803, Train C-index: 0.7087
+[Fold 4/5] Training samples: 871, Test samples: 217
+[Fold 4/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 4] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 4] Test C-index: 0.6466, Train C-index: 0.7177
+[Fold 5/5] Training samples: 871, Test samples: 217
+[Fold 5/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 5] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 750}
+[Fold 5] Test C-index: 0.5818, Train C-index: 0.7036
+
+Iteration 20 Results:
+Test C-index: 0.6347 ± 0.0368
+Train C-index: 0.7151 ± 0.0081
+No improvement for 4 iterations
+Removing 18 selectable features (keeping top 72)
+
+Starting iteration 21 with 91 total features (19 forced + 72 selectable)...
+
+============================================================
+ITERATION 21: Using 91 features
+============================================================
+Starting Nested Cross-Validation...
+[Fold 1/5] Training samples: 870, Test samples: 218
+[Fold 1/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 1] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 500}
+[Fold 1] Test C-index: 0.6312, Train C-index: 0.7033
+[Fold 2/5] Training samples: 870, Test samples: 218
+[Fold 2/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 2] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 2] Test C-index: 0.6529, Train C-index: 0.7219
+[Fold 3/5] Training samples: 870, Test samples: 218
+[Fold 3/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 3] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 70, 'n_estimators': 500}
+[Fold 3] Test C-index: 0.6811, Train C-index: 0.7198
+[Fold 4/5] Training samples: 871, Test samples: 217
+[Fold 4/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 4] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 750}
+[Fold 4] Test C-index: 0.6410, Train C-index: 0.6947
+[Fold 5/5] Training samples: 871, Test samples: 217
+[Fold 5/5] Model fits: 81 (80 inner CV + 1 final)
+[Fold 5] Best params: {'max_depth': 3, 'max_features': 0.5, 'min_samples_leaf': 90, 'n_estimators': 750}
+[Fold 5] Test C-index: 0.5844, Train C-index: 0.7040
+
+Iteration 21 Results:
+Test C-index: 0.6381 ± 0.0316
+Train C-index: 0.7087 ± 0.0104
+No improvement for 5 iterations
+
+Early stopping: No improvement for 5 iterations
+
+================================================================================
+ITERATIVE FEATURE SELECTION COMPLETE
+================================================================================
+
+Iteration Summary:
+ Iteration  N_Features  Mean_Test_C_Index  Std_Test_C_Index  Mean_Train_C_Index  Std_Train_C_Index
+        15         288           0.637147          0.038793            0.732361           0.007963
+        16         235           0.641120          0.042543            0.732416           0.005627
+        17         192           0.638704          0.042780            0.728864           0.007681
+        18         158           0.637895          0.036530            0.722712           0.010749
+        19         131           0.633655          0.034272            0.720178           0.008052
+        20         109           0.634700          0.036830            0.715099           0.008091
+        21          91           0.638103          0.031650            0.708745           0.010431
+
+Best performance: 0.6411 at iteration 16
