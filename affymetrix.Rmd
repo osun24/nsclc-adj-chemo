@@ -978,24 +978,20 @@ gse31908_matrix <- exprs(gse31908_calls)
 
 gpl570_results$call_matrices[["GSE31908"]] <- gse31908_matrix
 
-compute_percent_p_m <- function(call_matrix) {
+compute_percent_a <- function(call_matrix) {
   if (!is.matrix(call_matrix)) return(NULL)
 
-  percent_p <- colMeans(call_matrix == "P") * 100
-  percent_m <- colMeans(call_matrix == "M") * 100
+  percent_a <- colMeans(call_matrix == "A") * 100
 
-  # Combine into a data frame
   df <- data.frame(
     Sample = colnames(call_matrix),
-    Percent_P = percent_p,
-    Percent_M = percent_m,
-    Percent_PM = percent_p + percent_m
+    Percent_A = percent_a
   )
   return(df)
 }
 
-gpl570_pm_list <- lapply(gpl570_results$call_matrices, compute_percent_p_m)
-gpl96_pm_list  <- lapply(gpl96_results$call_matrices,  compute_percent_p_m)
+gpl570_a_list <- lapply(gpl570_results$call_matrices, compute_percent_a)
+gpl96_a_list  <- lapply(gpl96_results$call_matrices,  compute_percent_a)
 
 
 ```
@@ -1003,36 +999,31 @@ gpl96_pm_list  <- lapply(gpl96_results$call_matrices,  compute_percent_p_m)
 ```{r}
 library(ggplot2)
 
-gpl570_df <- do.call(rbind, Map(function(df, name) {
+gpl570_a_df <- do.call(rbind, Map(function(df, name) {
   if (!is.null(df)) {
     df$Dataset <- name
     df$Platform <- "GPL570"
     return(df)
   }
-}, gpl570_pm_list, names(gpl570_pm_list)))
+}, gpl570_a_list, names(gpl570_a_list)))
 
-gpl96_df <- do.call(rbind, Map(function(df, name) {
+gpl96_a_df <- do.call(rbind, Map(function(df, name) {
   if (!is.null(df)) {
     df$Dataset <- name
     df$Platform <- "GPL96"
     return(df)
   }
-}, gpl96_pm_list, names(gpl96_pm_list)))
+}, gpl96_a_list, names(gpl96_a_list)))
 
-combined_pm_df <- rbind(gpl570_df, gpl96_df)
+combined_a_df <- rbind(gpl570_a_df, gpl96_a_df)
 
-ggplot(combined_pm_df, aes(x = Percent_PM, fill = Platform)) +
-  geom_histogram(
-    position = "identity",
-    bins = 30,
-    alpha = 0.7,
-    color = "black"
-  ) +
+ggplot(combined_a_df, aes(x = Percent_A, fill = Platform)) +
+  geom_histogram(position = "identity", bins = 30, alpha = 0.7, color = "black") +
   scale_fill_manual(values = c("GPL570" = "gray40", "GPL96" = "white")) +
-  geom_vline(xintercept = 90, linetype = "dashed", color = "red") +
+  geom_vline(xintercept = 10, color = "red", linetype = "dashed") +
   labs(
-    title = "Present + Marginal Call Rate per Array",
-    x = "% Present + Marginal Calls",
+    title = "Absent Call Rate per Array",
+    x = "% Absent Calls",
     y = "Number of Arrays",
     fill = "Platform"
   ) +
