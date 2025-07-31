@@ -604,19 +604,7 @@ ggplot(pca_after_df, aes(x = PC1, y = PC2, color = Batch)) +
     y = paste0("PC2 (", percent_var_after[2], "%)")
   )
 
-ggplot(pca_after_df, aes(x = PC1, y = PC2, shape = Batch)) +
-  geom_point(color = "black", size = 2, alpha = 0.8) +
-  stat_ellipse(aes(linetype = Batch), type = "norm", level = 0.95, color = "black") +
-  theme_minimal() +
-  labs(
-    title = "PCA: Affymetrix (After ComBat Correction)",
-    x = paste0("PC1 (", percent_var_after[1], "%)"),
-    y = paste0("PC2 (", percent_var_after[2], "%)")
-  ) +
-  scale_shape_manual(values = 0:8)
-
 affy.expr = as.data.frame(affy.pca.corrected)
-
 write.csv(affy.expr, 
           "affymetrix.expr.csv",
           row.names = F)
@@ -626,13 +614,9 @@ affy.data <- affy.data %>%
     `Adjuvant Chemo` == 1 ~ "ACT",
     `Adjuvant Chemo` == 0 ~ "OBS"
   ))
-
 affy.data$`Adjuvant Chemo` <- factor(affy.data$`Adjuvant Chemo`)
-
 affy.data$`Adjuvant Chemo` <- relevel(affy.data$`Adjuvant Chemo`, ref = "OBS")
-
 levels(affy.data$`Adjuvant Chemo`)
-
 write.csv(affy.data,
           "affymetrix.data.csv",
           row.names = F)
@@ -642,70 +626,6 @@ write.csv(affy.merged,
           "affymetrix.merged.csv",
           row.names = F)
 ```
-
-#testing out ComBat
-```{r}
-fviz_pca_ind(affy.pca.after,
-             geom = "point",
-             col.ind = affy.data$`Adjuvant Chemo`,
-             addEllipses = TRUE,
-             legend.title = "Treatment Group")
-
-fviz_pca_ind(affy.pca.after,
-             geom = "point",
-             col.ind = affy.data$Stage,
-             addEllipses = F,
-             legend.title = "Clinical Stage")
-
-pca_df <- data.frame(
-  PC1 = pca.after$x[, 1],
-  PC2 = pca.after$x[, 2],
-  Batch = affy.expr.batch,  # or whatever your batch vector is
-  AdjuvantChemo = affy.data$`Adjuvant Chemo`,
-  Stage = affy.data$Stage
-)
-
-# Plot PCA colored by batch
-library(ggplot2)
-ggplot(pca_df, aes(x = PC1, y = PC2, color = Batch)) +
-  geom_point(size = 2) +
-  ggtitle("PCA After ComBat - Colored by Batch")
-
-ggplot(pca_df, aes(x = PC1, y = PC2, color = AdjuvantChemo)) +
-  geom_point(size = 2) +
-  ggtitle("PCA After ComBat - Colored by Adjuvant Chemo")
-
-summary(lm(PC1 ~ Batch, data = pca_df))
-summary(lm(PC2 ~ Batch, data = pca_df))
-
-summary(lm(PC1 ~ AdjuvantChemo + Stage, data = pca_df))
-summary(lm(PC2 ~ AdjuvantChemo + Stage, data = pca_df))
-
-table(affy.data$`Adjuvant Chemo`, affy.expr.batch)
-table(affy.data$Stage, affy.expr.batch)
-
-library(ggplot2)
-
-fviz_pca_ind(affy.pca.after,
-             geom = "point",
-             col.ind = affy.data$Stage,
-             addEllipses = TRUE,
-             legend.title = "Affymetrix (Corrected)")
-
-fviz_pca_ind(affy.pca.after,
-             geom = "point",
-             col.ind = ifelse(affy.data$IS_MALE == 1, "Male", "Female"),
-             addEllipses = TRUE,
-             legend.title = "Sex")
-
-fviz_pca_ind(affy.pca.after,
-             geom = "point",
-             col.ind = cut(affy.data$Age, breaks = c(-Inf, 60, 70, Inf),
-                           labels = c("<60", "60–70", ">70")),
-             addEllipses = TRUE,
-             legend.title = "Age Group")
-```
-
 
 # Variables
 ```{r}
@@ -771,6 +691,87 @@ outlier_samples <- names(m_scores)[m_scores > threshold]
 
 # Optional: see them
 print(outlier_samples)
+
+hist(m_scores, breaks = 30, main = "Histogram of M scores",
+     xlab = "M Score", col = "grey", xlim = c(min(m_scores), max(m_scores)))
+
+# Add lines for 2-fold above and below median
+med_m <- median(m_scores, na.rm = TRUE)
+
+abline(v = med_m, col = "blue", lwd = 2, lty = 2)  # Median
+abline(v = med_m * 2, col = "red", lwd = 2, lty = 3)      # 2x above
+abline(v = med_m * 0.5, col = "red", lwd = 2, lty = 3)      # 2x below
+
+legend("topright", legend = c("Median", "2-fold thresholds"),
+       col = c("blue", "red"), lty = c(2, 3), bty = "n", lwd = 2)
+
+med_m <- median(m_scores, na.rm = TRUE)
+print(med_m)
+
+upper_threshold <- med_m * 2
+lower_threshold <- med_m * 0.5
+
+upper_outliers <- names(m_scores)[m_scores > upper_threshold]
+lower_outliers <- names(m_scores)[m_scores < lower_threshold]
+
+# Print counts
+cat("Number of samples > 2x median:", length(upper_outliers), "\n")
+cat("Number of samples < 0.5x median:", length(lower_outliers), "\n")
+
+print(upper_outliers)
+
+names(affy.expr.batch) <- rownames(affy.expr)
+
+# Match outlier samples to their batches
+outlier_batches <- affy.expr.batch[upper_outliers]
+
+# View which batches the outliers came from
+table(outlier_batches)
+affy.expr.filtered <- affy.expr[!(rownames(affy.expr) %in% upper_outliers), ]
+affy.expr.batch.filtered <- affy.expr.batch[!(names(affy.expr.batch) %in% upper_outliers)]
+affy.data.filtered <- affy.data[rownames(affy.data) %in% rownames(affy.expr.filtered), ]
+affy_merged_filtered <- cbind(affy.data.filtered, affy.expr.filtered)
+
+kept_samples <- rownames(affy.expr.filtered)
+
+# Subset PCA coordinates for these samples
+pca_after_df <- as.data.frame(affy.pca.after$x)
+pca_after_df <- pca_after_df[kept_samples, ]
+pca_after_df$SampleID <- rownames(pca_after_df)
+
+# Subset the batch info to match
+pca_after_df$Batch <- affy.expr.batch[kept_samples]
+
+# Recalculate percent variance explained (optional if unchanged)
+explained_var_after <- affy.pca.after$sdev^2 / sum(affy.pca.after$sdev^2)
+percent_var_after <- round(100 * explained_var_after[1:2], 1)
+
+# Plot
+library(ggplot2)
+ggplot(pca_after_df, aes(x = PC1, y = PC2, color = Batch)) +
+  geom_point(alpha = 0.8, size = 2) +
+  stat_ellipse(type = "norm", level = 0.95, linetype = "solid") +
+  theme_minimal() +
+  labs(
+    title = "PCA: Affymetrix",
+    x = paste0("PC1 (", percent_var_after[1], "%)"),
+    y = paste0("PC2 (", percent_var_after[2], "%)")
+  )
+```
+
+#writing csv
+```{r}
+write.csv(affy_merged_filtered,
+          "affymetrix.merged.csv",
+          row.names = F)
+
+write.csv(affy.expr.filtered, 
+          "affymetrix.expr.csv",
+          row.names = F)
+
+write.csv(affy.data.filtered,
+          "affymetrix.data.csv",
+          row.names = F)
 ```
 
 #silhoutte
@@ -993,10 +994,6 @@ compute_percent_a <- function(call_matrix) {
 gpl570_a_list <- lapply(gpl570_results$call_matrices, compute_percent_a)
 gpl96_a_list  <- lapply(gpl96_results$call_matrices,  compute_percent_a)
 
-
-```
-
-```{r}
 library(ggplot2)
 
 gpl570_a_df <- do.call(rbind, Map(function(df, name) {
@@ -1028,5 +1025,139 @@ ggplot(combined_a_df, aes(x = Percent_A, fill = Platform)) +
     fill = "Platform"
   ) +
   theme_minimal()
+```
+
+#mas5calls on top 80%
+```{r}
+library(affy)
+library(ggplot2)
+
+# Define your datasets and base directory
+gpl570_gses <- c("GSE157010", "GSE29013", "GSE31210", "GSE31908", "GSE37745", "GSE50081")
+base_dir <- "~/GitHub/nsclc-adj-chemo"
+
+# Step 1: Collect all CEL file paths
+all_cel_files <- c()
+
+for (gse in gpl570_gses) {
+  cel_path <- file.path(base_dir, gse, "CEL")
+  cel_files <- list.files(cel_path, pattern = ".CEL.gz", full.names = TRUE)
+  
+  # GSE31908 has 2 platforms, use only the first 17 (GPL570)
+  if (gse == "GSE31908") {
+    cel_files <- cel_files[1:17]
+  }
+  
+  all_cel_files <- c(all_cel_files, cel_files)
+}
+
+# Read all CEL files into a single AffyBatch object
+gpl570_affy <- ReadAffy(filenames = all_cel_files)
+
+# 1a. MAS5 expression for intensity ranking
+eset_full  <- mas5(gpl570_affy)          
+exprs_mat  <- exprs(eset_full)
+mean_int   <- rowMeans(exprs_mat)
+
+# 1b. Define top‑80% cutoff
+cutoff     <- quantile(mean_int, .20)
+keep_probe <- mean_int > cutoff
+
+# 2. Get all calls 
+calls_full <- mas5calls(gpl570_affy)     
+
+# 3. Subset to just the top‑80% probes
+calls_top80 <- calls_full[keep_probe, ]  
+
+# sanity check
+dim(exprs(calls_top80))
+
+# 1. Extract the PMA call matrix (probes × samples)
+calls_mat <- exprs(calls_top80)
+
+# 2. Compute % Absent per sample
+pctA <- colSums(calls_mat == "A") / nrow(calls_mat) * 100
+
+# 3. Build a data frame for plotting
+df_pctA <- data.frame(
+  Sample = factor(colnames(calls_mat), levels = colnames(calls_mat)), 
+  pctA   = pctA
+)
+
+# 4. Plot with ggplot2
+ggplot(df_pctA, aes(x = pctA)) +
+  geom_histogram(position = "identity", bins = 30, alpha = 0.7, color = "black") +
+  scale_fill_manual(values = c("GPL570" = "gray40")) +
+  geom_vline(xintercept = 10, color = "red", linetype = "dashed") +
+  labs(
+    title = "Absent Call Rate per Array",
+    x = "% Absent Calls",
+    y = "Number of Arrays",
+    fill = "Platform"
+  ) +
+  theme_minimal()
+```
+
+#PCA leverage
+```{r}
+X <- affy.pca.after$x[, 1:2]
+
+XtX_inv <- solve(t(X) %*% X)
+H <- X %*% XtX_inv %*% t(X)
+
+leverage <- diag(H)
+
+q99 <- quantile(leverage, 0.995)
+
+outliers_99 <- which(leverage > q99)
+
+leverage_df <- data.frame(
+  Sample = rownames(affy.pca.after$x),
+  Leverage = leverage
+)
+
+outlier_samples_99 <- leverage_df[leverage_df$Leverage > q99, ]
+
+ggplot(leverage_df, aes(x = Leverage)) +
+  geom_histogram(bins = 30, fill = "steelblue", color = "black", alpha = 0.8) +
+  geom_vline(xintercept = q99, color = "red", linetype = "dotted", size = 1) +
+  theme_minimal() +
+  labs(
+    title = "PCA Leverage Distribution (After ComBat Correction)",
+    x = "PCA Leverage",
+    y = "Frequency"
+  )
+
+leverage_mean <- mean(leverage)
+leverage_sd   <- sd(leverage)
+leverage_summary <- summary(leverage)
+cat("Leverage Mean:", leverage_mean, "\n")
+cat("Leverage SD:", leverage_sd, "\n")
+print(leverage_summary)
+
+top10 = sort(leverage, decreasing = T)[1:10]
+
+quantile_9973 <- quantile(leverage, probs = 0.995)
+print(quantile_9973)
+
+cutoff_3sd <- leverage_mean + (3 * leverage_sd)
+outliers_3sd <- leverage_df[leverage_df$Leverage > cutoff_3sd, ]
+print(outliers_3sd)
+
+# 1. Pull out the sample IDs
+outlier_ids <- outlier_samples_99$Sample
+
+# 2. Filter your main objects by dropping those samples
+# — expression matrix (rows = samples)
+affy.expr.filtered <- affy.expr.filtered[!rownames(affy.expr.filtered) %in% outlier_ids, ]
+
+# — batch vector (named by sample)
+affy.expr.batch.filtered <- affy.expr.batch.filtered[!names(affy.expr.batch.filtered) %in% outlier_ids]
+
+# — phenotype/clinical data (rows = samples)
+affy.data.filtered <- affy.data.filtered[!rownames(affy.data.filtered) %in% outlier_ids, ]
+
+# — combined data
+affy_merged_filtered <- cbind(affy.data.filtered, affy.expr.filtered)
 ```
 
