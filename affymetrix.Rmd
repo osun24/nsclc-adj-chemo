@@ -27,7 +27,7 @@ library(limma)
 options(timeout = 10000)
 
 # List of GSE numbers
-GSE_numbers_partial <- c("GSE29013", "GSE37745", "GSE31210", "GSE50081", "GSE68465", "GSE14814")  
+GSE_numbers_partial <- c("GSE29013", "GSE37745", "GSE31210", "GSE50081", "GSE157010", "GSE68465", "GSE14814")  
 
 # Loop through each GSE number
 for (GSE in GSE_numbers_partial) {
@@ -84,13 +84,13 @@ library(AnnotationDbi)
 BiocManager::install("hgu133plus2.db")
 library(hgu133plus2.db)
 
-GPL570_numbers = c("GSE29013", "GSE37745", "GSE31908", "GSE31210", "GSE50081")  
+GPL570_numbers = c("GSE29013", "GSE37745", "GSE31908", "GSE31210", "GSE50081", "GSE157010")  
 for (GSE in GPL570_numbers) {
   # Get the probe list
   probes <- get(paste0(GSE, ".probes"))
 
   # Map probe IDs to gene symbols using hgu133plus2.db
-  annotation <- select(hgu133plus2.db,
+  annotation <- AnnotationDbi::select(hgu133plus2.db,
                        keys = probes,
                        columns = c("SYMBOL", "GENENAME"),
                        keytype = "PROBEID")
@@ -144,7 +144,7 @@ for (GSE in GPL96_numbers) {
   probes <- get(paste0(GSE, ".probes"))
 
   # Map probe IDs to gene symbols using hgu133plus2.db
-  annotation <- select(hgu133a.db,
+  annotation <- AnnotationDbi::select(hgu133a.db,
                      keys = probesGSE68465,
                      columns = c("SYMBOL", "GENENAME"),
                      keytype = "PROBEID")
@@ -190,7 +190,13 @@ for (GSE in GPL96_numbers) {
 library(dplyr)
 library(tibble)
 
-GSE_numbers = c("GSE29013", "GSE37745", "GSE31908", "GSE31210", "GSE50081", "GSE68465", "GSE14814")  
+select   <- dplyr::select
+mutate   <- dplyr::mutate
+recode   <- dplyr::recode
+case_when<- dplyr::case_when
+coalesce <- dplyr::coalesce
+
+GSE_numbers = c("GSE29013", "GSE37745", "GSE31908", "GSE31210", "GSE50081", "GSE157010", "GSE68465", "GSE14814")  
 
 for (GSE in GSE_numbers) {
   # Load GEO dataset
@@ -217,12 +223,6 @@ for (GSE in GSE_numbers) {
 
     pdata <- pdata %>%
       mutate(
-        `Adjuvant Chemo` = case_when(
-          `Adjuvant Chemo` == "yes" ~ 1,
-          `Adjuvant Chemo` == "no" ~ 0,
-          `Adjuvant Chemo` == "not known" ~ NA_real_,
-          TRUE ~ NA_real_
-        ),
         OS_STATUS = ifelse(OS_STATUS == "yes", 1, 0),
         Age = as.numeric(Age),
         IS_MALE = ifelse(Sex == "male", 1, 0),
@@ -250,7 +250,6 @@ for (GSE in GSE_numbers) {
       mutate(
         Age = as.numeric(Age),
         IS_MALE = ifelse(Sex == "M", 1, 0),
-        `Adjuvant Chemo` = ifelse(`Adjuvant Chemo` == "Yes", 1, 0),
         OS_STATUS = as.numeric(OS_STATUS),
         OS_MONTHS = as.numeric(OS_MONTHS) * 12,
         PFS_MONTHS = as.numeric(PFS_MONTHS) * 12,
@@ -271,7 +270,6 @@ for (GSE in GSE_numbers) {
 
     pdata <- pdata %>%
       mutate(
-        `Adjuvant Chemo` = ifelse(`Adjuvant Chemo` == "Yes", 1, 0),
         `Smoked?` = ifelse(`Smoked?` == "Smoked in the past", "Yes", "No"),
         OS_STATUS = ifelse(OS_STATUS == "Dead", 1, 0),
         OS_STATUS = as.numeric(OS_STATUS),
@@ -296,21 +294,25 @@ for (GSE in GSE_numbers) {
     pdata$`age (years):ch1` <- coalesce(pdata$`age (years):ch1`, pdata$`age:ch1`)
     pdata$OS_MONTHS <- round(as.numeric(pdata$`days before death/censor:ch1`) / 30.44, 2)
     pdata$Histology <- "Adenocarcinoma"
-    pdata <- pdata[, c(1, 7, 9, 12, 15, 18, 20, 21)]
-    colnames(pdata) <- c("Age", "OS_STATUS", "Sex", "RFS_MONTHS", "Stage", "Smoked?", "OS_MONTHS", "Histology")
- 
-    pdata <- pdata %>%
-      mutate(
-        OS_STATUS = ifelse(OS_STATUS == "dead", 1, 0),
-        Age = as.numeric(Age),
-        IS_MALE = ifelse(Sex == "male", 1, 0),
-        `Smoked?` = ifelse(`Smoked?` == "Never-smoker", "No", "Yes"),
-        `Adjuvant Chemo` = 0,
-        Race = "Unknown",
-        RFS_MONTHS = sapply(strsplit(as.character(RFS_MONTHS), ";"), function(x) round(as.numeric(x[1]), 2))
-      ) %>%
-    select(-Sex)
-  }
+    pdata <- pdata[, c(1, 7, 8, 9, 12, 15, 18, 20, 21)]
+      colnames(pdata) <- c("Age", "OS_STATUS", "Adjuvant Chemo", "Sex", "RFS_MONTHS",
+                       "Stage", "Smoked?", "OS_MONTHS", "Histology")
+  
+      pdata <- pdata %>%
+        mutate(
+          OS_STATUS = ifelse(OS_STATUS == "dead", 1, 0),
+          Age = as.numeric(Age),
+          IS_MALE = ifelse(Sex == "male", 1, 0),
+          `Smoked?` = ifelse(`Smoked?` == "Never-smoker", "No", "Yes"),
+          Race = "Unknown",
+          RFS_MONTHS = sapply(strsplit(as.character(RFS_MONTHS), ";"),
+                          function(x) round(as.numeric(x[1]), 2)),
+          `Adjuvant Chemo` = ifelse(
+            tolower(trimws(`Adjuvant Chemo`)) == "none", 0, `Adjuvant Chemo`
+          )
+        ) %>%
+        select(-Sex)
+    }
 
   if (GSE == "GSE50081") {
     pdata <- pdata %>%
@@ -351,20 +353,19 @@ for (GSE in GSE_numbers) {
   colnames(pdata) <- c("Age", "Adjuvant Chemo", "Stage", "Histology", "PFS_MONTHS", "OS_MONTHS", "Race", "Sex", "Smoked?", "OS_STATUS")
 
   convert_stage <- function(tnm) {
-    if (tnm %in% c("pN0pT1")) {
-      return("IA")
-    } else if (tnm %in% c("pN0pT2")) {
-      return("IB")
-    } else if (tnm %in% c("pN0pT3", "pN1pT1", "pN1pT2")) {
-      return("II")
-    } else if (tnm %in% c("pN2pT1", "pN2pT2", "pN1pT3", "pN0pT4", "pN1pT4")) {
-      return("III")
-    } else if (tnm %in% c("pN2pT3", "pN2pT4")) {
-      return("IV")
-    } else {
-      return("Unknown")
-    }
+  if (tnm %in% "pN0pT1") {
+    return("IA")
+  } else if (tnm %in%  "pN0pT2") {
+    return("IB")
+  } else if (tnm %in% c("pN0pT3", "pN1pT1", "pN1pT2")) {
+    return("II")
+  } else if (tnm %in% c("pN0pT4", "pN1pT3", "pN1pT4", 
+                        "pN2pT1", "pN2pT2", "pN2pT3", "pN2pT4")) {
+    return("III")
+  } else {
+    return("Unknown")  # Handles pp, pNXpT1, NA, etc.
   }
+}
 
   pdata <- pdata %>%
     mutate(
@@ -372,7 +373,6 @@ for (GSE in GSE_numbers) {
       PFS_MONTHS = as.numeric(PFS_MONTHS),
       OS_MONTHS = as.numeric(OS_MONTHS),
       OS_STATUS = ifelse(OS_STATUS == "Dead", 1, 0),
-      `Adjuvant Chemo` = ifelse(`Adjuvant Chemo` == "Yes", 1, 0),
       IS_MALE = ifelse(Sex == "Male", 1, 0),
       `Smoked?` = case_when(
         `Smoked?` %in% c("Smoked in the past", "Currently smoking") ~ "Yes",
@@ -409,6 +409,37 @@ for (GSE in GSE_numbers) {
       ) %>%
       select(-Sex)
   }
+  
+    if (GSE == "GSE157010") {
+    pdata <- as_tibble(gset@phenoData@data) %>%
+      dplyr::select(-(title:data_row_count))
+
+    # Keep the 6 relevant columns in order, then standardize names
+    pdata <- pdata[, c(1, 2, 3, 4, 5, 6)]
+    colnames(pdata) <- c("Age", "Histology", "OS_STATUS", "OS_MONTHS", "Sex", "Stage")
+
+    # Harmonize types and values
+    pdata <- pdata %>%
+      mutate(
+        OS_STATUS = as.numeric(OS_STATUS),
+        OS_MONTHS = as.numeric(OS_MONTHS),
+        Age = as.numeric(Age),
+        IS_MALE = ifelse(Sex %in% c("Male", "male", "M"), 1, 0),
+        Histology = recode(Histology,
+                           "Squamous Cell Carcinoma of Lung" = "Squamous Cell Carcinoma"),
+        Stage = recode(Stage,
+                       "T1a" = "IA",
+                       "T1b" = "IA",
+                       "T2a" = "IB",
+                       "T2b" = "II",
+                       "T3"  = "III"),
+        `Smoked?` = "Unknown",
+        Race = "Unknown",
+        `Adjuvant Chemo` = 0
+      ) %>%
+      mutate(Stage = ifelse(is.na(Stage), "Unknown", Stage)) %>%
+      select(-Sex)
+  }
 
   # Assign cleaned data
   assign(paste0(GSE, ".data"), pdata)
@@ -436,12 +467,25 @@ for (GSE in GSE_numbers) {
 for (GSE in GSE_numbers) {
   # Combine clinical and expression data
   merged <- cbind(get(paste0(GSE, ".data")), get(paste0(GSE, ".expr")))
+  merged <- subset(
+    merged,
+    (!is.na(OS_STATUS)) &
+    (!is.na(OS_MONTHS)) &
+    (tolower(as.character(`Adjuvant Chemo`)) %in% c("yes", "no", "0", "1")) &
+    !(Stage %in% c("IV", "NA", "Unknown"))
+  )
 
-  # Remove rows with NA in Adjuvant Chemo or OS_STATUS
-  merged <- subset(merged, !is.na(`Adjuvant Chemo`) & !is.na(OS_STATUS))
+  # Recode Adjuvant Chemo → numeric 1/0
+  merged$`Adjuvant Chemo` <- ifelse(
+    tolower(as.character(merged$`Adjuvant Chemo`)) == "yes", 1,
+    ifelse(tolower(as.character(merged$`Adjuvant Chemo`)) == "no", 0,
+           as.numeric(as.character(merged$`Adjuvant Chemo`))) # keep 0/1 as-is
+  )
 
   # Split clinical and expression data
-  clinical_cols <- c("Adjuvant Chemo", "Age", "OS_STATUS", "Stage", "Histology", "Race", "Smoked?", "IS_MALE", "OS_MONTHS", "PFS_MONTHS", "RFS_MONTHS")
+  clinical_cols <- c("Adjuvant Chemo", "Age", "OS_STATUS", "Stage", "Histology", 
+                     "Race", "Smoked?", "IS_MALE", "OS_MONTHS", 
+                     "PFS_MONTHS", "RFS_MONTHS")
   clinical_cols <- clinical_cols[clinical_cols %in% colnames(merged)]  # only keep existing ones
 
   clinical_data <- merged[, clinical_cols, drop = FALSE]
@@ -529,40 +573,28 @@ library(dplyr)
 
 # Get convex hull for each Platform group
 hulls <- pca_df %>%
-  group_by(Platform) %>%
-  slice(chull(PC1, PC2))
+  dplyr::group_by(Platform) %>%
+  dplyr::slice(chull(PC1, PC2)) %>%
+  dplyr::ungroup()
+
+centroids <- pca_df %>%
+  dplyr::group_by(Batch) %>%
+  dplyr::summarize(
+    PC1 = median(PC1),
+    PC2 = median(PC2)
+  )
 
 ggplot(pca_df, aes(x = PC1, y = PC2, color = Batch)) +
   geom_point(alpha = 0.8, size = 2) +
-  stat_ellipse(type = "norm", level = 0.95, linetype = "solid") +
-  theme_minimal() +
-  labs(
-    title = "PCA: Affymetrix (Before Correction)",
-    x = paste0("PC1 (", percent_var[1], "%)"),
-    y = paste0("PC2 (", percent_var[2], "%)")
-  ) 
-
-ggplot(pca_df, aes(x = PC1, y = PC2, shape = Batch)) +
-  geom_point(color = "black", size = 2, alpha = 0.8) +
-  stat_ellipse(aes(linetype = Batch), type = "norm", level = 0.95, color = "black") +
-  theme_minimal() +
-  labs(
-    title = "PCA: Affymetrix (Before ComBat Correction)",
-    x = paste0("PC1 (", percent_var[1], "%)"),
-    y = paste0("PC2 (", percent_var[2], "%)")
-  ) +
-  scale_shape_manual(values = 0:8)
-
-ggplot(pca_df, aes(x = PC1, y = PC2)) +
-  geom_point(aes(shape = Batch), color = "black", size = 2, alpha = 0.8) +
+  geom_text(data = centroids, aes(label = Batch), color = "black",  show.legend = FALSE) +
   stat_ellipse(aes(group = Platform, linetype = Platform), type = "norm", level = 0.95, color = "black", size = 0.6) +
   theme_minimal() +
   labs(
-    title = "PCA: Affymetrix (Before ComBat)",
-    x = "PC1",
-    y = "PC2"
+    title = "PCA: Affymetrix (After ComBat Correction)",
+    x = paste0("PC1 (", percent_var[1], "%)"),
+    y = paste0("PC2 (", percent_var[2], "%)")
   ) +
-  scale_shape_manual(values = 0:8)
+  guides(color = "none")
 
 affy.data$Stage <- factor(affy.data$Stage)
 affy.data$Histology <- factor(affy.data$Histology)
@@ -630,187 +662,38 @@ write.csv(affy.merged,
 # Variables
 ```{r}
 # Total number of patients
-cat("Total patients:", nrow(affy.data), "\n")
+cat("Total patients:", nrow(affy.data.filtered), "\n")
 
 # ACT vs OBS
 cat("Adjuvant Chemotherapy:\n")
-print(table(affy.data$`Adjuvant Chemo`))
+print(table(affy.data.filtered$`Adjuvant Chemo`))
 
 # Sex (from IS_MALE)
 cat("Sex:\n")
-cat("Male:", sum(affy.data$IS_MALE == 1, na.rm = TRUE), "\n")
-cat("Female:", sum(affy.data$IS_MALE == 0, na.rm = TRUE), "\n")
+cat("Male:", sum(affy.data.filtered$IS_MALE == 1, na.rm = TRUE), "\n")
+cat("Female:", sum(affy.data.filtered$IS_MALE == 0, na.rm = TRUE), "\n")
 
 # Age summary
 cat("Age:\n")
-cat("Mean age:", round(mean(affy.data$Age, na.rm = TRUE), 1), "\n")
-cat("Median age:", round(median(affy.data$Age, na.rm = TRUE), 1), "\n")
-cat("Range:", paste(range(affy.data$Age, na.rm = T), collapse = " - "), "\n")
+cat("Mean age:", round(mean(affy.data.filtered$Age, na.rm = TRUE), 1), "\n")
+cat("Median age:", round(median(affy.data.filtered$Age, na.rm = TRUE), 1), "\n")
+cat("Range:", paste(range(affy.data.filtered$Age, na.rm = T), collapse = " - "), "\n")
 
 # Stage breakdown
 cat("Stage distribution:\n")
-print(table(affy.data$Stage))
+print(table(affy.data.filtered$Stage))
 
 # Histology breakdown
 cat("Histology:\n")
-print(table(affy.data$Histology))
+print(table(affy.data.filtered$Histology))
 
 # Smoking status
 cat("Smoking History:\n")
-print(table(affy.data$`Smoked?`))
+print(table(affy.data.filtered$`Smoked?`))
 
 # Race
 cat("Race:\n")
-print(table(affy.data$Race))
-```
-
-#fold 
-```{r}
-# 1. Compute the median expression for each gene (i.e., each column)
-gene_medians <- apply(affy.expr, 2, median, na.rm = TRUE)  # now over columns
-
-# 2. Compute log2 fold changes from gene medians
-logfc_matrix <- log2(affy.expr + 1) - matrix(
-  log2(gene_medians + 1),
-  nrow = nrow(affy.expr),
-  ncol = ncol(affy.expr),
-  byrow = TRUE
-)
-# Same shape as affy.expr: rows = samples, cols = genes
-
-# 3. Calculate M scores for each sample (median absolute deviation from gene medians)
-m_scores <- apply(logfc_matrix, 1, function(x) median(abs(x), na.rm = TRUE))
-
-# 4. Visualize the M scores
-boxplot(m_scores, main = "Sample-wise M scores")
-hist(m_scores, breaks = 30, main = "Histogram of M scores")
-
-# 5. Identify outlier samples (you can adjust the threshold)
-threshold <- median(m_scores) + 3 * mad(m_scores)  # OR set manually like threshold <- 0.4
-outlier_samples <- names(m_scores)[m_scores > threshold]
-
-# Optional: see them
-print(outlier_samples)
-
-hist(m_scores, breaks = 30, main = "Histogram of M scores",
-     xlab = "M Score", col = "grey", xlim = c(min(m_scores), max(m_scores)))
-
-# Add lines for 2-fold above and below median
-med_m <- median(m_scores, na.rm = TRUE)
-
-abline(v = med_m, col = "blue", lwd = 2, lty = 2)  # Median
-abline(v = med_m * 2, col = "red", lwd = 2, lty = 3)      # 2x above
-abline(v = med_m * 0.5, col = "red", lwd = 2, lty = 3)      # 2x below
-
-legend("topright", legend = c("Median", "2-fold thresholds"),
-       col = c("blue", "red"), lty = c(2, 3), bty = "n", lwd = 2)
-
-med_m <- median(m_scores, na.rm = TRUE)
-print(med_m)
-
-upper_threshold <- med_m * 2
-lower_threshold <- med_m * 0.5
-
-upper_outliers <- names(m_scores)[m_scores > upper_threshold]
-lower_outliers <- names(m_scores)[m_scores < lower_threshold]
-
-# Print counts
-cat("Number of samples > 2x median:", length(upper_outliers), "\n")
-cat("Number of samples < 0.5x median:", length(lower_outliers), "\n")
-
-print(upper_outliers)
-
-names(affy.expr.batch) <- rownames(affy.expr)
-
-# Match outlier samples to their batches
-outlier_batches <- affy.expr.batch[upper_outliers]
-
-# View which batches the outliers came from
-table(outlier_batches)
-affy.expr.filtered <- affy.expr[!(rownames(affy.expr) %in% upper_outliers), ]
-affy.expr.batch.filtered <- affy.expr.batch[!(names(affy.expr.batch) %in% upper_outliers)]
-affy.data.filtered <- affy.data[rownames(affy.data) %in% rownames(affy.expr.filtered), ]
-affy_merged_filtered <- cbind(affy.data.filtered, affy.expr.filtered)
-
-kept_samples <- rownames(affy.expr.filtered)
-
-# Subset PCA coordinates for these samples
-pca_after_df <- as.data.frame(affy.pca.after$x)
-pca_after_df <- pca_after_df[kept_samples, ]
-pca_after_df$SampleID <- rownames(pca_after_df)
-
-# Subset the batch info to match
-pca_after_df$Batch <- affy.expr.batch[kept_samples]
-
-# Recalculate percent variance explained (optional if unchanged)
-explained_var_after <- affy.pca.after$sdev^2 / sum(affy.pca.after$sdev^2)
-percent_var_after <- round(100 * explained_var_after[1:2], 1)
-
-# Plot
-library(ggplot2)
-ggplot(pca_after_df, aes(x = PC1, y = PC2, color = Batch)) +
-  geom_point(alpha = 0.8, size = 2) +
-  stat_ellipse(type = "norm", level = 0.95, linetype = "solid") +
-  theme_minimal() +
-  labs(
-    title = "PCA: Affymetrix",
-    x = paste0("PC1 (", percent_var_after[1], "%)"),
-    y = paste0("PC2 (", percent_var_after[2], "%)")
-  )
-```
-
-#writing csv
-```{r}
-write.csv(affy_merged_filtered,
-          "affymetrix.merged.csv",
-          row.names = F)
-
-write.csv(affy.expr.filtered, 
-          "affymetrix.expr.csv",
-          row.names = F)
-
-write.csv(affy.data.filtered,
-          "affymetrix.data.csv",
-          row.names = F)
-```
-
-#silhoutte
-```{r}
-install.packages("cluster")
-library(cluster)
-
-
-# Get first 2 PCs from before ComBat
-pca_before_matrix <- affy.pca.before$x[, 1:2]
-
-# Compute distances
-dist_before <- dist(pca_before_matrix)
-
-# Convert batch labels to numeric
-batch_labels <- as.numeric(as.factor(affy.expr.batch))
-
-# Compute silhouette scores
-sil_before <- silhouette(batch_labels, dist_before)
-
-# Plot and summary
-plot(sil_before, main = "Silhouette Plot: Before ComBat")
-summary(sil_before)
-mean(sil_before[, "sil_width"])
-
-
-pca_after_matrix <- affy.pca.after$x[, 1:2]
-
-# Compute distances
-dist_after <- dist(pca_after_matrix)
-
-# Compute silhouette scores
-sil_after <- silhouette(batch_labels, dist_after)
-
-# Plot and summary
-plot(sil_after, main = "Silhouette Plot: After ComBat")
-summary(sil_after)
-mean(sil_after[, "sil_width"])
-
+print(table(affy.data.filtered$Race))
 ```
 
 #UMAP
@@ -842,14 +725,24 @@ umap_after <- umap(
 # Before
 umap_before_df <- data.frame(UMAP1 = umap_before[,1], UMAP2 = umap_before[,2], Batch = affy.expr.batch)
 
+umap_before_df$Platform <- ifelse(umap_before_df$Batch %in% c("GSE14814", "GSE68465"), 
+                                  "GPL96", "GPL570")
+
+umap_before_centroids <- umap_before_df %>%
+  group_by(Batch) %>%
+  summarise(UMAP1 = mean(UMAP1), UMAP2 = mean(UMAP2), .groups = "drop")
+
 # After
 umap_after_df <- data.frame(UMAP1 = umap_after[,1], UMAP2 = umap_after[,2], Batch = affy.expr.batch)
 
 # Before
 ggplot(umap_before_df, aes(x = UMAP1, y = UMAP2, color = Batch)) +
   geom_point(alpha = 0.8, size = 2) +
+  geom_text(data = umap_before_centroids, aes(label = Batch), color = "black",  show.legend = FALSE) +
+  stat_ellipse(aes(group = Platform, linetype = Platform), level = 0.95, color = "black") +
   theme_minimal() +
-  labs(title = "UMAP: Before ComBat", x = "UMAP 1", y = "UMAP 2")
+  labs(title = "UMAP: Before ComBat", x = "UMAP 1", y = "UMAP 2") +
+  guides(color = "none")
 
 # After
 ggplot(umap_after_df, aes(x = UMAP1, y = UMAP2, color = Batch)) +
@@ -857,249 +750,107 @@ ggplot(umap_after_df, aes(x = UMAP1, y = UMAP2, color = Batch)) +
   theme_minimal() +
   labs(title = "UMAP: After ComBat", x = "UMAP 1", y = "UMAP 2")
 
-# Shapes
-ggplot(umap_before_df, aes(x = UMAP1, y = UMAP2, shape = Batch)) +
-  geom_point(color = "black", size = 2, alpha = 0.8) +
-  theme_minimal() +
-  labs(
-    title = "UMAP: Affymetrix (Before ComBat)",
-    x = "UMAP 1",
-    y = "UMAP 2"
-  ) +
-  scale_shape_manual(values = 0:8)
-
-
-ggplot(umap_after_df, aes(x = UMAP1, y = UMAP2, shape = Batch)) +
-  geom_point(color = "black", size = 2, alpha = 0.8) +
-  theme_minimal() +
-  labs(
-    title = "UMAP: Affymetrix (After ComBat)",
-    x = "UMAP 1",
-    y = "UMAP 2"
-  ) +
-  scale_shape_manual(values = 0:8)
 ```
 
-#Before plots
+#silhoutte
 ```{r}
-install.packages("ggrepel")  # only once
-library(ggrepel)
+install.packages("cluster")
+library(cluster)
 
-library(dplyr)
+#Silhouette before
+pca_before_matrix <- affy.pca.before$x[, 1:2]
 
-pca_df$Platform <- ifelse(pca_df$Batch %in% c("GSE14814", "GSE68465"), "GPL96", "GPL570")
+dist_before <- dist(pca_before_matrix)
 
-label_df <- pca_df %>%
-  group_by(Batch) %>%
-  summarize(PC1 = median(PC1), PC2 = median(PC2), .groups = "drop")
+batch_labels <- as.numeric(as.factor(affy.expr.batch))
 
-# Plot with centered, regular text labels
-ggplot(pca_df, aes(x = PC1, y = PC2)) +
-  geom_point(aes(color = Batch), alpha = 0.8, size = 2, show.legend = FALSE) +  # hide Batch legend
-  stat_ellipse(aes(linetype = Platform), type = "norm", level = 0.95, color = "black", size = 0.8) +
-  geom_text(data = label_df, aes(label = Batch), color = "black", size = 4) +
-  theme_minimal() +
-  labs(
-    title = "PCA: Affymetrix (Before Correction)",
-    x = paste0("PC1 (", percent_var[1], "%)"),
-    y = paste0("PC2 (", percent_var[2], "%)"),
-    linetype = "Platform"
-  ) +
-  theme(
-    legend.title = element_text(size = 10),
-    legend.text = element_text(size = 9)
-  )
+sil_before <- silhouette(batch_labels, dist_before)
 
+summary(sil_before)
+mean(sil_before[, "sil_width"])
 
-umap_before_df$Platform <- ifelse(umap_before_df$Batch %in% c("GSE14814", "GSE68465"), "GPL96", "GPL570")
+#Silhouette after
+pca_after_matrix <- affy.pca.after$x[, 1:2]
 
-# Calculate cluster label positions (center of each dataset)
-label_df <- umap_before_df %>%
-  group_by(Batch) %>%
-  summarize(UMAP1 = median(UMAP1), UMAP2 = median(UMAP2), .groups = "drop")
+dist_after <- dist(pca_after_matrix)
 
-# Plot
-ggplot(umap_before_df, aes(x = UMAP1, y = UMAP2)) +
-  geom_point(aes(color = Batch), alpha = 0.8, size = 2, show.legend = FALSE) +
-  stat_ellipse(aes(linetype = Platform), type = "norm", level = 0.95, color = "black", size = 0.8) +
-  geom_text(data = label_df, aes(label = Batch), color = "black", size = 4) +
-  theme_minimal() +
-  labs(
-    title = "UMAP: Before ComBat",
-    x = "UMAP 1",
-    y = "UMAP 2",
-    linetype = "Platform"
-  ) +
-  theme(
-    legend.title = element_text(size = 10),
-    legend.text = element_text(size = 9)
-  )
+sil_after <- silhouette(batch_labels, dist_after)
+
+summary(sil_after)
+mean(sil_after[, "sil_width"])
+
 ```
 
-#mas5calls
+#M-Scores
 ```{r}
-library(affy)
+gene_medians <- apply(affy.expr, 2, median, na.rm = TRUE) 
 
-gpl570_gses <- c("GSE157010", "GSE29013", "GSE31210", "GSE37745", "GSE50081")
-gpl96_gses  <- c("GSE14814", "GSE68465")
-
-base_dir <- "~/GitHub/nsclc-adj-chemo"
-
-process_mas5 <- function(gse_list, base_dir) {
-  call_matrices <- list()
-  
-  for (gse in gse_list) {
-    cat("Processing", gse, "\n")
-    cel_path <- file.path(base_dir, gse, "CEL")
-    
-    try({
-      gse_affy <- ReadAffy(celfile.path = cel_path)
-      gse_calls <- mas5calls(gse_affy)
-      gse_matrix <- exprs(gse_calls)
-      
-      call_matrices[[gse]] <- gse_matrix
-    }, silent = FALSE)
-  }
-  
-  return(list(call_matrices = call_matrices))
-}
-
-gpl570_results <- process_mas5(gpl570_gses, base_dir)
-gpl96_results  <- process_mas5(gpl96_gses,  base_dir)
-
-#GSE31908
-celfiles_all <- list.files("GSE31908/CEL", pattern = ".CEL.gz", full.names = TRUE)
-
-gpl570_celfiles <- celfiles_all[1:17]
-
-gse31908_affy <- ReadAffy(filenames = gpl570_celfiles)
-
-gse31908_calls <- mas5calls(gse31908_affy)
-gse31908_matrix <- exprs(gse31908_calls)
-
-gpl570_results$call_matrices[["GSE31908"]] <- gse31908_matrix
-
-compute_percent_a <- function(call_matrix) {
-  if (!is.matrix(call_matrix)) return(NULL)
-
-  percent_a <- colMeans(call_matrix == "A") * 100
-
-  df <- data.frame(
-    Sample = colnames(call_matrix),
-    Percent_A = percent_a
-  )
-  return(df)
-}
-
-gpl570_a_list <- lapply(gpl570_results$call_matrices, compute_percent_a)
-gpl96_a_list  <- lapply(gpl96_results$call_matrices,  compute_percent_a)
-
-library(ggplot2)
-
-gpl570_a_df <- do.call(rbind, Map(function(df, name) {
-  if (!is.null(df)) {
-    df$Dataset <- name
-    df$Platform <- "GPL570"
-    return(df)
-  }
-}, gpl570_a_list, names(gpl570_a_list)))
-
-gpl96_a_df <- do.call(rbind, Map(function(df, name) {
-  if (!is.null(df)) {
-    df$Dataset <- name
-    df$Platform <- "GPL96"
-    return(df)
-  }
-}, gpl96_a_list, names(gpl96_a_list)))
-
-combined_a_df <- rbind(gpl570_a_df, gpl96_a_df)
-
-ggplot(combined_a_df, aes(x = Percent_A, fill = Platform)) +
-  geom_histogram(position = "identity", bins = 30, alpha = 0.7, color = "black") +
-  scale_fill_manual(values = c("GPL570" = "gray40", "GPL96" = "white")) +
-  geom_vline(xintercept = 10, color = "red", linetype = "dashed") +
-  labs(
-    title = "Absent Call Rate per Array",
-    x = "% Absent Calls",
-    y = "Number of Arrays",
-    fill = "Platform"
-  ) +
-  theme_minimal()
-```
-
-#mas5calls on top 80%
-```{r}
-library(affy)
-library(ggplot2)
-
-# Define your datasets and base directory
-gpl570_gses <- c("GSE157010", "GSE29013", "GSE31210", "GSE31908", "GSE37745", "GSE50081")
-base_dir <- "~/GitHub/nsclc-adj-chemo"
-
-# Step 1: Collect all CEL file paths
-all_cel_files <- c()
-
-for (gse in gpl570_gses) {
-  cel_path <- file.path(base_dir, gse, "CEL")
-  cel_files <- list.files(cel_path, pattern = ".CEL.gz", full.names = TRUE)
-  
-  # GSE31908 has 2 platforms, use only the first 17 (GPL570)
-  if (gse == "GSE31908") {
-    cel_files <- cel_files[1:17]
-  }
-  
-  all_cel_files <- c(all_cel_files, cel_files)
-}
-
-# Read all CEL files into a single AffyBatch object
-gpl570_affy <- ReadAffy(filenames = all_cel_files)
-
-# 1a. MAS5 expression for intensity ranking
-eset_full  <- mas5(gpl570_affy)          
-exprs_mat  <- exprs(eset_full)
-mean_int   <- rowMeans(exprs_mat)
-
-# 1b. Define top‑80% cutoff
-cutoff     <- quantile(mean_int, .20)
-keep_probe <- mean_int > cutoff
-
-# 2. Get all calls 
-calls_full <- mas5calls(gpl570_affy)     
-
-# 3. Subset to just the top‑80% probes
-calls_top80 <- calls_full[keep_probe, ]  
-
-# sanity check
-dim(exprs(calls_top80))
-
-# 1. Extract the PMA call matrix (probes × samples)
-calls_mat <- exprs(calls_top80)
-
-# 2. Compute % Absent per sample
-pctA <- colSums(calls_mat == "A") / nrow(calls_mat) * 100
-
-# 3. Build a data frame for plotting
-df_pctA <- data.frame(
-  Sample = factor(colnames(calls_mat), levels = colnames(calls_mat)), 
-  pctA   = pctA
+logfc_matrix <- log2(affy.expr + 1) - matrix(
+  log2(gene_medians + 1),
+  nrow = nrow(affy.expr),
+  ncol = ncol(affy.expr),
+  byrow = TRUE
 )
 
-# 4. Plot with ggplot2
-ggplot(df_pctA, aes(x = pctA)) +
-  geom_histogram(position = "identity", bins = 30, alpha = 0.7, color = "black") +
-  scale_fill_manual(values = c("GPL570" = "gray40")) +
-  geom_vline(xintercept = 10, color = "red", linetype = "dashed") +
-  labs(
-    title = "Absent Call Rate per Array",
-    x = "% Absent Calls",
-    y = "Number of Arrays",
-    fill = "Platform"
-  ) +
-  theme_minimal()
+m_scores <- apply(logfc_matrix, 1, function(x) median(abs(x), na.rm = TRUE))
+
+boxplot(m_scores, main = "Sample-wise M scores")
+hist(m_scores, breaks = 30, main = "Histogram of M scores")
+
+threshold <- median(m_scores) + 3 * mad(m_scores)  # OR set manually like threshold <- 0.4
+outlier_samples <- names(m_scores)[m_scores > threshold]
+
+print(outlier_samples)
+
+hist(m_scores, breaks = 30, main = "Histogram of M scores",
+     xlab = "M Score", col = "grey", xlim = c(min(m_scores), max(m_scores)))
+
+med_m <- median(m_scores, na.rm = TRUE)
+
+abline(v = med_m, col = "blue", lwd = 2, lty = 2)  # Median
+abline(v = med_m * 2, col = "red", lwd = 2, lty = 3)      # 2x above
+abline(v = med_m * 0.5, col = "red", lwd = 2, lty = 3)      # 2x below
+
+legend("topright", legend = c("Median", "2-fold thresholds"),
+       col = c("blue", "red"), lty = c(2, 3), bty = "n", lwd = 2)
+
+med_m <- median(m_scores, na.rm = TRUE)
+print(med_m)
+
+upper_threshold <- med_m * 2
+lower_threshold <- med_m * 0.5
+
+upper_outliers <- names(m_scores)[m_scores > upper_threshold]
+lower_outliers <- names(m_scores)[m_scores < lower_threshold]
+
+cat("Number of samples > 2x median:", length(upper_outliers), "\n")
+cat("Number of samples < 0.5x median:", length(lower_outliers), "\n")
+
+print(upper_outliers)
+
+names(affy.expr.batch) <- rownames(affy.expr)
+
+outlier_batches <- affy.expr.batch[upper_outliers]
+
+#Taking out outliers
+affy.expr.filtered <- affy.expr[!(rownames(affy.expr) %in% upper_outliers), ]
+affy.expr.batch.filtered <- affy.expr.batch[!(names(affy.expr.batch) %in% upper_outliers)]
+affy.data.filtered <- affy.data[rownames(affy.data) %in% rownames(affy.expr.filtered), ]
+affy_merged_filtered <- cbind(affy.data.filtered, affy.expr.filtered)
+
+kept_samples <- rownames(affy.expr.filtered)
+
+pca_after_df <- as.data.frame(affy.pca.after$x)
+pca_after_df <- pca_after_df[kept_samples, ]
+pca_after_df$SampleID <- rownames(pca_after_df)
+
+pca_after_df$Batch <- affy.expr.batch[kept_samples]
 ```
 
 #PCA leverage
 ```{r}
+library(ggplot2)
+
 X <- affy.pca.after$x[, 1:2]
 
 XtX_inv <- solve(t(X) %*% X)
@@ -1118,9 +869,34 @@ leverage_df <- data.frame(
 
 outlier_samples_99 <- leverage_df[leverage_df$Leverage > q99, ]
 
+leverage_mean <- mean(leverage)
+leverage_sd   <- sd(leverage)
+leverage_summary <- summary(leverage)
+leverage_median <- median(leverage)
+leverage_iqr <- IQR(leverage)
+
+cat("Leverage Mean:", leverage_mean, "\n")
+cat("Leverage SD:", leverage_sd, "\n")
+print(leverage_summary)
+print(leverage_median)
+print(leverage_iqr)
+
+quantile_99 <- quantile(leverage, probs = 0.995)
+print(quantile_99)
+
+cutoff_3sd <- leverage_mean + (3 * leverage_sd)
+outliers_3sd <- leverage_df[leverage_df$Leverage > cutoff_3sd, ]
+print(outliers_3sd)
+
+outlier_ids <- outlier_samples_99$Sample
+print(outlier_ids)
+
 ggplot(leverage_df, aes(x = Leverage)) +
-  geom_histogram(bins = 30, fill = "steelblue", color = "black", alpha = 0.8) +
-  geom_vline(xintercept = q99, color = "red", linetype = "dotted", size = 1) +
+  geom_histogram(bins = 30, fill = "grey", color = "black", alpha = 0.8) +
+  geom_vline(xintercept = quantile_99, color = "red", linetype = "dotted", linewidth = 1) +
+  scale_x_continuous(
+    breaks = sort(unique(c(scales::pretty_breaks()(leverage), round(quantile_99, 6))))
+  ) +
   theme_minimal() +
   labs(
     title = "PCA Leverage Distribution (After ComBat Correction)",
@@ -1128,36 +904,25 @@ ggplot(leverage_df, aes(x = Leverage)) +
     y = "Frequency"
   )
 
-leverage_mean <- mean(leverage)
-leverage_sd   <- sd(leverage)
-leverage_summary <- summary(leverage)
-cat("Leverage Mean:", leverage_mean, "\n")
-cat("Leverage SD:", leverage_sd, "\n")
-print(leverage_summary)
-
-top10 = sort(leverage, decreasing = T)[1:10]
-
-quantile_9973 <- quantile(leverage, probs = 0.995)
-print(quantile_9973)
-
-cutoff_3sd <- leverage_mean + (3 * leverage_sd)
-outliers_3sd <- leverage_df[leverage_df$Leverage > cutoff_3sd, ]
-print(outliers_3sd)
-
-# 1. Pull out the sample IDs
-outlier_ids <- outlier_samples_99$Sample
-
-# 2. Filter your main objects by dropping those samples
-# — expression matrix (rows = samples)
 affy.expr.filtered <- affy.expr.filtered[!rownames(affy.expr.filtered) %in% outlier_ids, ]
-
-# — batch vector (named by sample)
 affy.expr.batch.filtered <- affy.expr.batch.filtered[!names(affy.expr.batch.filtered) %in% outlier_ids]
-
-# — phenotype/clinical data (rows = samples)
 affy.data.filtered <- affy.data.filtered[!rownames(affy.data.filtered) %in% outlier_ids, ]
-
-# — combined data
 affy_merged_filtered <- cbind(affy.data.filtered, affy.expr.filtered)
 ```
+
+#writing csv
+```{r}
+write.csv(affy_merged_filtered,
+          "affymetrix.merged.csv",
+          row.names = F)
+
+write.csv(affy.expr.filtered, 
+          "affymetrix.expr.csv",
+          row.names = F)
+
+write.csv(affy.data.filtered,
+          "affymetrix.data.csv",
+          row.names = F)
+```
+
 
