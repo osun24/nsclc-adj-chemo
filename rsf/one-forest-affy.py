@@ -51,14 +51,14 @@ current_date = datetime.datetime.now().strftime("%Y%m%d")  # Added current date 
 log_file = open(os.path.join(output_dir, f"{current_date}_LOG-rsf-feature-search.txt"), "w")
 sys.stdout = Tee(sys.stdout, log_file)
 
-print("Loading train data from: affyTrain.csv")
-train_orig = pd.read_csv("affyTrain.csv")
+print("Loading train data from: affyFilteredTrain.csv")
+train_orig = pd.read_csv("affyFilteredTrain.csv")
 
 print(f"Number of events in original training set: {train_orig['OS_STATUS'].sum()} | Censored cases: {train_orig.shape[0] - train_orig['OS_STATUS'].sum()}")
 print("Original train data shape:", train_orig.shape)
 
-print("Loading validation data from: affyValidation.csv")
-valid_orig = pd.read_csv("affyValidation.csv")
+print("Loading validation data from: affyFilteredValidation.csv")
+valid_orig = pd.read_csv("affyFilteredValidation.csv")
 
 print(f"Number of events in validation set: {valid_orig['OS_STATUS'].sum()} | Censored cases: {valid_orig.shape[0] - valid_orig['OS_STATUS'].sum()}")
 print("Validation data shape:", valid_orig.shape)
@@ -80,15 +80,15 @@ y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train)
 
 X_train = train.drop(columns=['OS_STATUS', 'OS_MONTHS'])
 
-num_of_cov = 31
+#num_of_cov = 31
 
 # {'max_depth': 10, 'max_features': 500, 'min_samples_leaf': 60, 'n_estimators': 750} 
 # num_of_cov = 675; # n_estimators = 750; max_depth = 3; min_samples_leaf = 70; max_features = 0.5 (6-15-25)
 rsf = RandomSurvivalForest(
     n_estimators=750,
-    max_depth=3,
-    min_samples_leaf=70,
-    max_features=0.01,  # 0.5 * 13062 = 6531
+    max_depth=5,
+    min_samples_leaf=50,
+    max_features=0.5,  # 0.5 * 13062 = 6531
     random_state=42,
     n_jobs=-1
 )
@@ -161,16 +161,16 @@ param_grid = {
 
 # set covariates (Affy RS_rsf_all_fold_results_20250615.csv)
 # take the top 50 features from the pre-selection
-covariates = pd.read_csv("rsf/rsf_results_affy/Affy_top_features_median_ranked.csv")
+#covariates = pd.read_csv("rsf/rsf_results_affy/Affy_top_features_median_ranked.csv")
 # Affy RS_combined_fold_permutation_importance_median_ranked.csv
 
-covariates = covariates['Feature'].tolist()[:num_of_cov]  # Take top 50 features
+#covariates = covariates['Feature'].tolist()[:num_of_cov]  # Take top 50 features
 
 # Add 'Adjuvant Chemo' to covariates
-covariates.append('Adjuvant Chemo')
+#covariates.append('Adjuvant Chemo')
 
 # Filter X_train to only include the covariates
-X_train = X_train[covariates]
+#X_train = X_train[covariates]
 
 # Fit the model
 print("Fitting Random Survival Forest model...")
@@ -183,12 +183,9 @@ train_c_index = rsf_concordance_metric(y_train, rsf.predict(X_train))
 print(f"Training C-index (train + validation combined): {train_c_index:.4f}")
 
 # TEST 
-print("Loading test data from: affyTest.csv")
-test = pd.read_csv("affyTest.csv")
+print("Loading test data from: affyFilteredTest.csv")
+test = pd.read_csv("affyFilteredTest.csv")
 test['Adjuvant Chemo'] = test['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
-
-# keep only the covariates used in training
-test = test[covariates + ['OS_STATUS', 'OS_MONTHS']]
 
 print(f"Number of events in test set: {test['OS_STATUS'].sum()} | Censored cases: {test.shape[0] - test['OS_STATUS'].sum()}")
 print("Test data shape:", test.shape)
@@ -206,9 +203,9 @@ print(f"Actual max depth: {rsf.max_depth}")
 print(f"Number of trees in the forest: {len(rsf.estimators_)}")
 
 # Save the fitted model
-model_file = os.path.join(output_dir, f"{current_date}_rsf_model-{len(rsf.estimators_)}-trees-maxdepth-{rsf.max_depth}-{num_of_cov}-features.pkl")
-joblib.dump(rsf, model_file)
-print(f"Model saved to {model_file}")
+#model_file = os.path.join(output_dir, f"{current_date}_rsf_model-{len(rsf.estimators_)}-trees-maxdepth-{rsf.max_depth}-{num_of_cov}-features.pkl")
+#joblib.dump(rsf, model_file)
+#print(f"Model saved to {model_file}")
 
 def forest_analysis(rsf, X_train, y_train):
     # Statistics for leaf nodes per tree
@@ -314,10 +311,8 @@ def forest_analysis(rsf, X_train, y_train):
 
 
 # Save model spec, performance to md
-with open(os.path.join(output_dir, f"{current_date}_rsf_model_spec-{len(rsf.estimators_)}-trees-maxdepth-{rsf.max_depth}-{num_of_cov}-features.md"), "w") as f:
+with open(os.path.join(output_dir, f"{current_date}_rsf_model_spec-{len(rsf.estimators_)}-trees-maxdepth-{rsf.max_depth}-features.md"), "w") as f:
     f.write(f"# RSF Model Specification:\n")
-    f.write(f"Model file: {model_file}\n")
-    f.write(f"Number of covariates: {num_of_cov}\n")
     f.write(f"Number of trees: {len(rsf.estimators_)}\n")
     f.write(f"Max depth: {rsf.max_depth}\n")
     f.write(f"min_samples_leaf: {rsf.min_samples_leaf}\n")
@@ -335,10 +330,6 @@ with open(os.path.join(output_dir, f"{current_date}_rsf_model_spec-{len(rsf.esti
     f.write(f"# Performance Metrics:\n")
     f.write(f"Training C-index (train + validation combined): {train_c_index:.4f}\n")
     f.write(f"Test C-index: {test_c_index:.4f}\n")
-    
-    f.write(f"Covariates \n")
-    for cov in covariates:
-        f.write(f"- {cov}\n")
         
     f.write(f"\n ## A Walk through the Forest:\n")
     f.write(forest_analysis(rsf, X_train, y_train))

@@ -3,8 +3,11 @@ from sklearn.model_selection import train_test_split
 import os
 
 # Load CSV file
-data_file = "affymetrix.merged.csv"  # adjust path if needed
+data_file = "affymetrix.merged.filtered.csv"  # adjust path if needed
 df = pd.read_csv(data_file)
+
+# Drop batch
+df = df.drop(columns=['Batch'])
 
 # Print unique values for non-numeric columns before any processing
 non_numeric_cols = df.select_dtypes(include=['object']).columns
@@ -51,9 +54,9 @@ smoked_columns = df.columns[df.columns.str.contains("Smoked")]
 print(f"Columns with 'Smoked' in the name: {len(smoked_columns)}")
 
 # Save outputs to CSV files
-train.to_csv("affyTrain.csv", index=False)
-test.to_csv("affyTest.csv", index=False)
-validation.to_csv("affyValidation.csv", index=False)
+train.to_csv("affyFilteredTrain.csv", index=False)
+test.to_csv("affyFilteredTest.csv", index=False)
+validation.to_csv("affyFilteredValidation.csv", index=False)
 
 print(f"Training set: {len(train)} samples (OS_STATUS: {train['OS_STATUS'].value_counts().to_dict()} | Adjuvant Chemo: {train['Adjuvant Chemo'].value_counts().to_dict()})")
 print(f"Testing set: {len(test)} samples (OS_STATUS: {test['OS_STATUS'].value_counts().to_dict()} | Adjuvant Chemo: {test['Adjuvant Chemo'].value_counts().to_dict()})")
