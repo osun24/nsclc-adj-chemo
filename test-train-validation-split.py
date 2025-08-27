@@ -87,15 +87,14 @@ Unique items in column 'Smoked?':
 ['Yes' 'No' 'Unknown']
 Number of NA values in OS_MONTHS: 0
 Columns with NA values: []
-Shape before dropping NA (1353, 13060)
-Data shape: (1353, 13060)
-Stratifying by OS_STATUS and Adjuvant Chemo: {'0_OBS': 654, '1_OBS': 476, '1_ACT': 128, '0_ACT': 95}
+Shape before dropping NA (1340, 13060)
+Data shape: (1340, 13060)
+Stratifying by OS_STATUS and Adjuvant Chemo: {'0_OBS': 651, '1_OBS': 466, '1_ACT': 128, '0_ACT': 95}
 Columns with 'Smoked' in the name: 3
-Training set: 811 samples (OS_STATUS: {0: 449, 1: 362} | Adjuvant Chemo: {'OBS': 677, 'ACT': 134})
-Testing set: 271 samples (OS_STATUS: {0: 150, 1: 121} | Adjuvant Chemo: {'OBS': 227, 'ACT': 44})
-Validation set: 271 samples (OS_STATUS: {0: 150, 1: 121} | Adjuvant Chemo: {'OBS': 226, 'ACT': 45})
+Training set: 804 samples (OS_STATUS: {0: 447, 1: 357} | Adjuvant Chemo: {'OBS': 670, 'ACT': 134})
+Testing set: 268 samples (OS_STATUS: {0: 149, 1: 119} | Adjuvant Chemo: {'OBS': 223, 'ACT': 45})
+Validation set: 268 samples (OS_STATUS: {0: 150, 1: 118} | Adjuvant Chemo: {'OBS': 224, 'ACT': 44})
 Non-numeric columns in train set: ['Adjuvant Chemo']
 Non-numeric columns in test set: ['Adjuvant Chemo']
 Non-numeric columns in validation set: ['Adjuvant Chemo']
-Unique values in 'Adjuvant Chemo' before processing: ['ACT' 'OBS']
-"""
+Unique values in 'Adjuvant Chemo' before processing: ['ACT' 'OBS']"""
