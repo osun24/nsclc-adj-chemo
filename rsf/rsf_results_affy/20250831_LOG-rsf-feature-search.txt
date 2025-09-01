@@ -1,0 +1,19 @@
+Loading train data from: affyTrain.csv
+Number of events in original training set: 357 | Censored cases: 447
+Original train data shape: (804, 13060)
+Loading validation data from: affyValidation.csv
+Number of events in validation set: 118 | Censored cases: 150
+Validation data shape: (268, 13060)
+Combining train and validation datasets...
+Number of events in combined training set: 475 | Censored cases: 597
+Combined training data shape: (1072, 13060)
+Fitting Random Survival Forest model...
+Training C-index (train + validation combined): 0.6953
+Loading test data from: affyTest.csv
+Number of events in test set: 119 | Censored cases: 149
+Test data shape: (268, 21)
+Test C-index: 0.6904
+Actual max depth: 20
+Number of trees in the forest: 750
+Model saved to rsf/rsf_results_affy/20250831_rsf_model-750-trees-maxdepth-20-19-features.pkl
+Model specification saved to rsf/rsf_results_affy/20250831_rsf_model_spec-750-trees-maxdepth-20.md
