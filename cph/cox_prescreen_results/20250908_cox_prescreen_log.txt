@@ -1,0 +1,26 @@
+================================================================================
+COX PROPORTIONAL HAZARDS LOOCV INTERACTION PRESCREEN
+================================================================================
+Train file: train_merged.csv
+Alpha: 0.05
+Parallel: True | n_jobs: -1
+Output: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results
+================================================================================
+================================================================================
+LOADING TRAINING DATA ONLY (LOOCV will use this dataset)
+================================================================================
+Initial train shape: (122, 21368)
+Dropped other survival columns: ['PFS_MONTHS', 'RFS_MONTHS']
+Train shape after dropping columns: (122, 21366)
+Events: 72 | Censored: 50
+
+================================================================================
+IDENTIFIED FEATURE SETS
+================================================================================
+Genomic features (candidate probe sets): 21358
+Clinical/demographic variables to append: ['Adjuvant Chemo', 'Age', 'Histology', 'IS_MALE', 'Stage', 'Stage_IA', 'Stage_IB', 'Stage_II', 'Stage_III']
+
+================================================================================
+RUNNING LOOCV TREATMENT×GENE INTERACTION SCREENING (α = 0.05)
+================================================================================
+- Parallelization: Enabled on 14 cores
