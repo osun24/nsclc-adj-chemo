@@ -161,8 +161,26 @@ def forest_analysis(rsf, X_train, y_train, output_dir, current_date):
 
 def main():
     """Main function to run the RSF analysis."""
+    # --- Configuration ---
+    # Set this boolean to True to use the pre-selected gene list, or False to use all genes.
+    USE_SELECTED_GENES = True 
+
+    # File paths
+    TRAIN_PATH = 'train_merged.csv'
+    TEST_PATH = 'test_merged.csv'
+    SELECTED_GENES_PATH = 'cph/cox_prescreen_results/20250908_loocv_selected_genes_alpha_0.05.csv'
+    OUTPUT_DIR = 'rsf/rsf_results_merged'
+
+    # Model Hyperparameters
+    N_ESTIMATORS = 5000
+    MAX_DEPTH = 3
+    MIN_SAMPLES_LEAF = 35
+    MAX_FEATURES = 0.01
+    RANDOM_STATE = 42
+    N_JOBS = -1
+
     # --- Setup ---
-    output_dir = "rsf/rsf_results_merged"
+    output_dir = OUTPUT_DIR
     os.makedirs(output_dir, exist_ok=True)
 
     current_date = datetime.datetime.now().strftime("%Y%m%d")
@@ -174,18 +192,54 @@ def main():
     # --- Data Loading and Cleaning ---
     print("--- Loading and Cleaning Data ---")
     try:
-        train = pd.read_csv("train_merged.csv")
-        test = pd.read_csv("test_merged.csv")
+        train = pd.read_csv(TRAIN_PATH)
+        test = pd.read_csv(TEST_PATH)
         print("Original train data shape:", train.shape)
         print("Original test data shape:", test.shape)
     except FileNotFoundError as e:
-        print(f"Error: {e}. Make sure 'train_merged.csv' and 'test_merged.csv' are in the correct directory.")
+        print(f"Error: {e}. Make sure train/test file paths are correct.")
         sys.exit(1)
 
     train = clean_data(train)
     test = clean_data(test)
     print("Cleaned train data shape:", train.shape)
     print("Cleaned test data shape:", test.shape)
+
+    # --- Feature Selection ---
+    if USE_SELECTED_GENES:
+        print(f"\n--- Filtering to Selected Genes from {SELECTED_GENES_PATH} ---")
+        try:
+            selected_genes_df = pd.read_csv(SELECTED_GENES_PATH)
+            selected_genes = list(selected_genes_df['gene'])
+            
+            # Identify clinical columns to keep
+            clinical_cols = ['Adjuvant Chemo', 'Age', 'IS_MALE', 'Stage', 'Histology']
+            survival_cols = ['OS_MONTHS', 'OS_STATUS']
+            
+            # Filter clinical columns that are actually present
+            present_clinical = [col for col in clinical_cols if col in train.columns]
+            
+            # Ensure all selected genes are in the dataframe
+            present_genes = [g for g in selected_genes if g in train.columns]
+            print(f"Found {len(present_genes)} of {len(selected_genes)} selected genes in the training data.")
+
+            # Define the final set of columns to keep
+            cols_to_keep = survival_cols + present_clinical + present_genes
+            
+            # Filter both dataframes
+            train = train[cols_to_keep]
+            test = test[[col for col in cols_to_keep if col in test.columns]] # Test might not have survival info
+            
+            print(f"Train shape after filtering for selected genes: {train.shape}")
+            print(f"Test shape after filtering for selected genes: {test.shape}")
+
+        except FileNotFoundError:
+            print(f"Error: Selected genes file not found at {SELECTED_GENES_PATH}. Exiting.")
+            sys.exit(1)
+        except KeyError:
+            print(f"Error: The file {SELECTED_GENES_PATH} must contain a 'gene' column. Exiting.")
+            sys.exit(1)
+
 
     # --- Preprocessing ---
     print("\n--- Preprocessing Data ---")
@@ -230,12 +284,12 @@ def main():
     # --- Model Training ---
     print("\n--- Model Training ---")
     rsf = RandomSurvivalForest(
-        n_estimators=750,
-        max_depth=5,
-        min_samples_leaf=50,
-        max_features=0.5,
-        random_state=42,
-        n_jobs=-1
+        n_estimators=N_ESTIMATORS,
+        max_depth=MAX_DEPTH,
+        min_samples_leaf=MIN_SAMPLES_LEAF,
+        max_features=MAX_FEATURES,
+        random_state=RANDOM_STATE,
+        n_jobs=N_JOBS
     )
 
     print("Fitting Random Survival Forest model...")
@@ -252,7 +306,11 @@ def main():
     # --- Save Artifacts ---
     print("\n--- Saving Artifacts ---")
     num_features = X_train.shape[1]
-    model_file = os.path.join(output_dir, f"{current_date}_rsf_model-{len(rsf.estimators_)}-trees-maxdepth-{rsf.max_depth}-{num_features}-features.pkl")
+    
+    # Add a tag for selected genes if used
+    model_tag = "selected-genes" if USE_SELECTED_GENES else f"{num_features}-features"
+    
+    model_file = os.path.join(output_dir, f"{current_date}_rsf_model-{len(rsf.estimators_)}-trees-maxdepth-{rsf.max_depth}-{model_tag}.pkl")
     joblib.dump(rsf, model_file)
     print(f"Model saved to {model_file}")
 
@@ -260,17 +318,23 @@ def main():
     print("\n--- Forest Analysis ---")
     analysis_summary = forest_analysis(rsf, X_train, y_train, output_dir, current_date)
 
-    spec_file = os.path.join(output_dir, f"{current_date}_rsf_model_spec-{len(rsf.estimators_)}-trees-maxdepth-{rsf.max_depth}-{num_features}-features.md")
+    spec_file = os.path.join(output_dir, f"{current_date}_rsf_model_spec-{len(rsf.estimators_)}-trees-maxdepth-{rsf.max_depth}-{model_tag}.md")
     with open(spec_file, "w") as f:
         f.write(f"# RSF Model Specification:\n")
         f.write(f"Model file: {os.path.basename(model_file)}\n")
         f.write(f"Number of features: {num_features}\n")
         f.write(f"Number of trees: {len(rsf.estimators_)}\n")
-        f.write(f"Max depth: {rsf.max_depth}\n")
-        f.write(f"min_samples_leaf: {rsf.min_samples_leaf}\n")
-        f.write(f"max_features: {rsf.max_features}\n")
-        f.write(f"Random state: {rsf.random_state}\n\n")
+        f.write(f"Max depth: {MAX_DEPTH}\n")
+        f.write(f"min_samples_leaf: {MIN_SAMPLES_LEAF}\n")
+        f.write(f"max_features: {MAX_FEATURES}\n")
+        f.write(f"Random state: {RANDOM_STATE}\n\n")
         
+        f.write(f"## Input Data:\n")
+        f.write(f"- Training data: `{TRAIN_PATH}`\n")
+        f.write(f"- Testing data: `{TEST_PATH}`\n")
+        if USE_SELECTED_GENES:
+            f.write(f"- Selected genes file: `{SELECTED_GENES_PATH}`\n\n")
+
         f.write(f"# Performance Metrics:\n")
         f.write(f"Training C-index: {train_c_index:.4f}\n")
         f.write(f"Test C-index: {test_c_index:.4f}\n\n")

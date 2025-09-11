@@ -1,0 +1,32 @@
+COX LOOCV INTERACTION SCREENING (TRAIN ONLY)
+============================================================
+Date: 2025-09-08 23:07:10
+Alpha: 0.05
+Train shape: (122, 21370)
+Events: 72; Censored: 50
+Genomic features evaluated: 21358
+Genes retained (median p ≤ α): 450
+Clinical/demographic appended: ['Age', 'IS_MALE', 'Adjuvant Chemo', 'Stage_IA', 'Stage_IB', 'Stage_II', 'Stage_III']
+
+Top 20 retained genes:
+     gene  median_p  prop_significant_folds
+    CIART  0.001235                1.000000
+   ACTR3B  0.001261                1.000000
+    KRT80  0.001851                1.000000
+   MAGEC2  0.001883                1.000000
+   PROKR1  0.002477                1.000000
+     KLK5  0.002596                1.000000
+     GM2A  0.002604                1.000000
+  PIK3C2G  0.002658                1.000000
+  CHORDC1  0.002798                1.000000
+      SF1  0.003157                1.000000
+     USP1  0.003606                1.000000
+LOC389765  0.003627                1.000000
+  GPR137C  0.004026                1.000000
+FAM120AOS  0.004054                0.647541
+     AFDN  0.004446                1.000000
+   SAC3D1  0.005606                1.000000
+RAB11FIP3  0.005674                0.991803
+   COL6A6  0.005685                1.000000
+    PAGE5  0.005757                0.991803
+    TUBG2  0.005872                1.000000

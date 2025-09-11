@@ -24,3 +24,30 @@ Clinical/demographic variables to append: ['Adjuvant Chemo', 'Age', 'Histology',
 RUNNING LOOCV TREATMENT×GENE INTERACTION SCREENING (α = 0.05)
 ================================================================================
 - Parallelization: Enabled on 14 cores
+
+Selection (α=0.05): kept 450 / 21358 probe sets (2.1%).
+Top 10 by median p:
+   gene  median_p  prop_significant_folds
+  CIART  0.001235                     1.0
+ ACTR3B  0.001261                     1.0
+  KRT80  0.001851                     1.0
+ MAGEC2  0.001883                     1.0
+ PROKR1  0.002477                     1.0
+   KLK5  0.002596                     1.0
+   GM2A  0.002604                     1.0
+PIK3C2G  0.002658                     1.0
+CHORDC1  0.002798                     1.0
+    SF1  0.003157                     1.0
+
+Saved:
+- Selected genes: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250908_loocv_selected_genes_alpha_0.05.csv
+- LOOCV summary: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250908_loocv_summary_alpha_0.05.csv
+- LOOCV p-matrix: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250908_loocv_pvals_alpha_0.05.npy
+- Final screened features (genes + Age/Sex/Treatment/Stage): /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250908_final_screened_features_for_models.csv
+- Summary report: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results/20250908_loocv_screening_summary.txt
+
+================================================================================
+LOOCV PRESCREEN COMPLETE
+================================================================================
+Elapsed: 57.3 min
+Results saved to: /Users/owensun/Downloads/code/nsclc-adj-chemo/cph/cox_prescreen_results

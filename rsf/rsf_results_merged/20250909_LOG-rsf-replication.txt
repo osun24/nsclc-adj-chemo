@@ -1,0 +1,32 @@
+--- Loading and Cleaning Data ---
+Original train data shape: (122, 21369)
+Original test data shape: (32, 21369)
+Dropping columns: ['Batch', 'PFS_MONTHS', 'RFS_MONTHS', 'LERFS', 'UQCRFS1', 'Unnamed: 0', 'AFMID', 'AIDA', 'ARID1A', 'ARID1B', 'ARID2', 'ARID3A', 'ARID3B', 'ARID4A', 'ARID4B', 'ARID5A', 'ARID5B', 'ATRAID', 'BID', 'BLID', 'CHID1', 'CIDEA', 'CIDEB', 'CIDEC', 'CIDECP1', 'DIDO1', 'EID1', 'EID2', 'EID2B', 'EID3', 'EMID1', 'GID4', 'GID8', 'GLIDR', 'GRID1', 'GRID1-AS1', 'GRID2', 'HID1', 'ID1', 'ID2', 'ID2-AS1', 'ID2B', 'ID3', 'ID4', 'IDE', 'IDH1', 'IDH1-AS1', 'IDH2', 'IDH3A', 'IDH3B', 'IDH3G', 'IDI1', 'IDI2', 'IDI2-AS1', 'IDNK', 'IDO1', 'IDO2', 'IDS', 'IDUA', 'ITPRID1', 'ITPRID2', 'JARID2', 'JARID2-AS1', 'KIDINS220', 'MID1', 'MID1IP1', 'MID2', 'MIDEAS', 'MIDEAS-AS1', 'MIDN', 'MYOSLID-AS1', 'NFKBID', 'NID1', 'NID2', 'PCID2', 'PID1', 'PIDD1', 'PPID', 'PRELID1', 'PRELID2', 'PRELID3A', 'PRELID3B', 'RIDA', 'SIDT1', 'SIDT2', 'SKIDA1', 'SPIDR']
+Dropping columns: ['Batch', 'PFS_MONTHS', 'RFS_MONTHS', 'LERFS', 'UQCRFS1', 'Unnamed: 0', 'AFMID', 'AIDA', 'ARID1A', 'ARID1B', 'ARID2', 'ARID3A', 'ARID3B', 'ARID4A', 'ARID4B', 'ARID5A', 'ARID5B', 'ATRAID', 'BID', 'BLID', 'CHID1', 'CIDEA', 'CIDEB', 'CIDEC', 'CIDECP1', 'DIDO1', 'EID1', 'EID2', 'EID2B', 'EID3', 'EMID1', 'GID4', 'GID8', 'GLIDR', 'GRID1', 'GRID1-AS1', 'GRID2', 'HID1', 'ID1', 'ID2', 'ID2-AS1', 'ID2B', 'ID3', 'ID4', 'IDE', 'IDH1', 'IDH1-AS1', 'IDH2', 'IDH3A', 'IDH3B', 'IDH3G', 'IDI1', 'IDI2', 'IDI2-AS1', 'IDNK', 'IDO1', 'IDO2', 'IDS', 'IDUA', 'ITPRID1', 'ITPRID2', 'JARID2', 'JARID2-AS1', 'KIDINS220', 'MID1', 'MID1IP1', 'MID2', 'MIDEAS', 'MIDEAS-AS1', 'MIDN', 'MYOSLID-AS1', 'NFKBID', 'NID1', 'NID2', 'PCID2', 'PID1', 'PIDD1', 'PPID', 'PRELID1', 'PRELID2', 'PRELID3A', 'PRELID3B', 'RIDA', 'SIDT1', 'SIDT2', 'SKIDA1', 'SPIDR']
+Cleaned train data shape: (122, 21282)
+Cleaned test data shape: (32, 21282)
+
+--- Filtering to Selected Genes from cph/cox_prescreen_results/20250908_loocv_selected_genes_alpha_0.05.csv ---
+Found 448 of 450 selected genes in the training data.
+Train shape after filtering for selected genes: (122, 455)
+Test shape after filtering for selected genes: (32, 455)
+
+--- Preprocessing Data ---
+One-hot encoding categorical columns: ['Adjuvant Chemo', 'Stage', 'Histology']
+Training set features: 459
+Test set features: 459
+
+--- Model Training ---
+Fitting Random Survival Forest model...
+
+--- Model Evaluation ---
+Training C-index: 0.8097
+Test C-index: 0.7099
+
+--- Saving Artifacts ---
+Model saved to rsf/rsf_results_merged/20250909_rsf_model-5000-trees-maxdepth-3-selected-genes.pkl
+
+--- Forest Analysis ---
+Model specification saved to 20250909_rsf_model_spec-5000-trees-maxdepth-3-selected-genes.md
+
+Script finished in 4.10 seconds.
