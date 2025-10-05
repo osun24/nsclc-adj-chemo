@@ -51,24 +51,24 @@ current_date = datetime.datetime.now().strftime("%Y%m%d")  # Added current date 
 log_file = open(os.path.join(output_dir, f"{current_date}_LOG-rsf-feature-search.txt"), "w")
 sys.stdout = Tee(sys.stdout, log_file)
 
-print("Loading train data from: affyTrain.csv")
-train_orig = pd.read_csv("affyTrain.csv")
+print("Loading train data from: affyfRMATrain-IA-thru-II.csv")
+train_orig = pd.read_csv("affyfRMATrain-IA-thru-II.csv")
 
 print(f"Number of events in original training set: {train_orig['OS_STATUS'].sum()} | Censored cases: {train_orig.shape[0] - train_orig['OS_STATUS'].sum()}")
 print("Original train data shape:", train_orig.shape)
 
-print("Loading validation data from: affyValidation.csv")
-valid_orig = pd.read_csv("affyValidation.csv")
+print("Loading validation data from: affyfRMAValidation-IA-thru-II.csv")
+valid_orig = pd.read_csv("affyfRMAValidation-IA-thru-II.csv")
 
 print(f"Number of events in validation set: {valid_orig['OS_STATUS'].sum()} | Censored cases: {valid_orig.shape[0] - valid_orig['OS_STATUS'].sum()}")
 print("Validation data shape:", valid_orig.shape)
 
-# Combine train and validation datasets into one training set
-print("Combining train and validation datasets...")
-train = pd.concat([train_orig, valid_orig], axis=0, ignore_index=True)
+# Use training set only for fitting; validation will be evaluated separately
+print("Using training set only for model fitting; validation will be evaluated separately")
+train = train_orig.copy()
 
-print(f"Number of events in combined training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
-print("Combined training data shape:", train.shape)
+print(f"Number of events in training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
+print("Training data shape:", train.shape)
 
 start = time.time()
 
@@ -79,8 +79,9 @@ train['Adjuvant Chemo'] = train['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
 y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train)
 
 # Use only clinical covariates specified by user
+# "Stage_IA", "Stage_III",   
 covariates = [
-    'Adjuvant Chemo','Age','OS_STATUS','IS_MALE','OS_MONTHS','Stage_IA','Stage_IB','Stage_II','Stage_III',
+    'Adjuvant Chemo','Age','OS_STATUS','IS_MALE','OS_MONTHS','Stage_IB','Stage_II', 
     'Histology_Adenocarcinoma','Histology_Adenosquamous Carcinoma','Histology_Large Cell Carcinoma','Histology_Squamous Cell Carcinoma',
     'Race_African American','Race_Asian','Race_Caucasian','Race_Native Hawaiian or Other Pacific Islander','Race_Unknown',
     'Smoked?_No','Smoked?_Unknown','Smoked?_Yes'
@@ -185,30 +186,46 @@ param_grid = {
 print("Fitting Random Survival Forest model...")
 rsf.fit(X_train, y_train)
 
-
-# Print C-index on combined training data and test data
+# Print C-index on training data
 train_c_index = rsf_concordance_metric(y_train, rsf.predict(X_train))
+print(f"Training C-index: {train_c_index:.4f}")
 
-print(f"Training C-index (train + validation combined): {train_c_index:.4f}")
+# Evaluate on validation set (separate)
+print("Evaluating on validation set (affyfRMAValidation-IA-thru-II.csv)")
+valid = valid_orig.copy()
+valid['Adjuvant Chemo'] = valid['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
 
-# TEST 
-print("Loading test data from: affyTest.csv")
-test = pd.read_csv("affyTest.csv")
-test['Adjuvant Chemo'] = test['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
+# Align validation features with training features
+valid_common_cols = [c for c in feature_cols if c in valid.columns]
+if len(valid_common_cols) != len(feature_cols):
+    missing = [c for c in feature_cols if c not in valid.columns]
+    print(f"Warning: {len(missing)} training covariates missing in validation and will be dropped: {missing[:5]}{'...' if len(missing)>5 else ''}")
 
-# keep only the covariates used in training
-test = test[feature_cols + ['OS_STATUS', 'OS_MONTHS']]
+X_valid = valid[valid_common_cols]
+y_valid = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', valid)
+validation_c_index = rsf_concordance_metric(y_valid, rsf.predict(X_valid))
+print(f"Validation C-index: {validation_c_index:.4f}")
 
-print(f"Number of events in test set: {test['OS_STATUS'].sum()} | Censored cases: {test.shape[0] - test['OS_STATUS'].sum()}")
-print("Test data shape:", test.shape)
-
-# Create structured arrays for test data
-y_test = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', test)
-X_test = test.drop(columns=['OS_STATUS', 'OS_MONTHS'])
-
-# Evaluate C-index on test data
-test_c_index = rsf_concordance_metric(y_test, rsf.predict(X_test))
-print(f"Test C-index: {test_c_index:.4f}")
+# Evaluate on test set (if present)
+test_c_index = None
+test_path = 'affyfRMATest-IA-thru-II.csv'
+if os.path.exists(test_path):
+    print("Loading test data from: affyfRMATest-IA-thru-II.csv")
+    test = pd.read_csv(test_path)
+    test['Adjuvant Chemo'] = test['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
+    test_common_cols = [c for c in feature_cols if c in test.columns]
+    if len(test_common_cols) != len(feature_cols):
+        missing_test = [c for c in feature_cols if c not in test.columns]
+        print(f"Warning: {len(missing_test)} training covariates missing in test and will be dropped: {missing_test[:5]}{'...' if len(missing_test)>5 else ''}")
+    test_sel = test[test_common_cols + ['OS_STATUS', 'OS_MONTHS']]
+    print(f"Number of events in test set: {test_sel['OS_STATUS'].sum()} | Censored cases: {test_sel.shape[0] - test_sel['OS_STATUS'].sum()}")
+    print("Test data shape:", test_sel.shape)
+    y_test = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', test_sel)
+    X_test = test_sel.drop(columns=['OS_STATUS', 'OS_MONTHS'])
+    test_c_index = rsf_concordance_metric(y_test, rsf.predict(X_test))
+    print(f"Test C-index: {test_c_index:.4f}")
+else:
+    print("Test file not found; skipping test evaluation")
 
 # Print actual max depth and number of trees
 print(f"Actual max depth: {rsf.max_depth}")
