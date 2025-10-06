@@ -26,8 +26,8 @@ if 'Adjuvant Chemo' in df.columns and 'Stage' in df.columns:
     print(pd.crosstab(df['Stage'], df['Adjuvant Chemo']))
     
 # Try with Stage II & IB only for discovery to limit heterogeneit from stage - drop rest of the patients
-df = df[df['Stage'].isin(["IA", 'II', 'IB'])]
-print("Data shape after filtering for Stage IA & II & IB:", df.shape)
+#df = df[df['Stage'].isin(["IA", 'II', 'IB'])]
+#print("Data shape after filtering for Stage IA & II & IB:", df.shape)
 
 # One-hot encode categorical variables (smoked has unknown)
 df = pd.get_dummies(df, columns=["Histology", "Race", "Smoked?"])
@@ -75,9 +75,9 @@ print("Stage counts in validation set:")
 print(validation[['Stage_IB', 'Stage_II', 'Stage_IA']].sum())
 
 # Save outputs to CSV files
-train.to_csv("affyfRMATrain-IA-thru-II.csv", index=False)
-test.to_csv("affyfRMATest-IA-thru-II.csv", index=False)
-validation.to_csv("affyfRMAValidation-IA-thru-II.csv", index=False)
+train.to_csv("affyfRMATrain.csv", index=False)
+test.to_csv("affyfRMATest.csv", index=False)
+validation.to_csv("affyfRMAValidation.csv", index=False)
 
 print(f"Training set: {len(train)} samples (OS_STATUS: {train['OS_STATUS'].value_counts().to_dict()} | Adjuvant Chemo: {train['Adjuvant Chemo'].value_counts().to_dict()})")
 print(f"Testing set: {len(test)} samples (OS_STATUS: {test['OS_STATUS'].value_counts().to_dict()} | Adjuvant Chemo: {test['Adjuvant Chemo'].value_counts().to_dict()})")
