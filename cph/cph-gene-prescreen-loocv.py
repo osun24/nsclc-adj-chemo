@@ -9,7 +9,7 @@ from sklearn.model_selection import LeaveOneOut
 from sklearn.preprocessing import StandardScaler
 from joblib import Parallel, delayed
 from lifelines import CoxPHFitter
-import warnings
+import warnings, time
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -17,8 +17,8 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 # --------------------
 # Load & base preprocessing
 # --------------------
-train_df = pd.read_csv("affyfRMATrain.csv")
-valid_df = pd.read_csv("affyfRMAValidation.csv")
+train_df = pd.read_csv("affyTrain_z.csv")
+valid_df = pd.read_csv("affyValidation_z.csv")
 
 for df in (train_df, valid_df):
     if 'Adjuvant Chemo' in df.columns:
@@ -32,6 +32,12 @@ for col in binary_columns:
         valid_df[col] = valid_df[col].astype(int)
 
 survival_cols = ['OS_STATUS', 'OS_MONTHS']
+
+# Print counts
+print("Train df:")
+print(pd.crosstab(train_df["OS_STATUS"], train_df["Adjuvant Chemo"]))
+print("Validation df:")
+print(pd.crosstab(valid_df["OS_STATUS"], valid_df["Adjuvant Chemo"]))
 
 # --------------------
 # Combine train + validation
@@ -72,6 +78,7 @@ splits = list(loo.split(np.arange(n_samples)))  # (train_idx, test_idx)
 # Per-gene LOOCV significance of the interaction term
 # --------------------
 def loocv_significance_for_gene(gene_name, alpha=0.05):
+    start = time.perf_counter()
     sig_flags = np.full(len(splits), np.nan, dtype=float)  # NaN means fold not evaluable / fit failed
     col_dur, col_evt, col_trt = 'OS_MONTHS', 'OS_STATUS', 'Adjuvant Chemo'
 
@@ -104,7 +111,9 @@ def loocv_significance_for_gene(gene_name, alpha=0.05):
         except Exception:
             # leave as NaN
             pass
-
+    
+    elapsed = time.perf_counter() - start
+    print(f"Finished {gene_name} in {elapsed:.2f}s", flush=True)
     return gene_name, sig_flags
 
 # --------------------
