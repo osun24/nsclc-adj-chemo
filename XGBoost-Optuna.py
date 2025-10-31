@@ -203,7 +203,7 @@ def xgb_cindex_eval(predt, dtrain):
 
 def train_xgb_cox(dtrain, dvalid, params, num_boost_round, early_stopping_rounds):
     evals_result = {}
-    with xgb.config_context(verbosity=2):
+    with xgb.config_context(verbosity=1):
         booster = xgb.train(
             params=params,
             dtrain=dtrain,
@@ -291,7 +291,7 @@ def objective(trial):
     booster, evr = train_xgb_cox(dtr, dva, params, num_boost_round, esr)
 
     # Best iteration
-    best_ntree = booster.best_ntree_limit or (booster.best_iteration + 1 if booster.best_iteration is not None else num_boost_round)
+    best_ntree = booster.best_iteration + 1 if booster.best_iteration is not None else num_boost_round
     tr_pred = booster.predict(dtr, iteration_range=(0, best_ntree), output_margin=True)
     va_pred = booster.predict(dva, iteration_range=(0, best_ntree), output_margin=True)
 
@@ -394,7 +394,7 @@ d_va_es = xgb.DMatrix(X_trv[va_idx], label=y_trv[va_idx], weight=w_trv[va_idx], 
 
 booster_final, evr_final = train_xgb_cox(d_tr_es, d_va_es, params_fin,
                                          num_boost_round_fin, early_stopping_rounds_fin)
-best_ntree_final = booster_final.best_ntree_limit or (booster_final.best_iteration + 1 if booster_final.best_iteration is not None else num_boost_round_fin)
+best_ntree_final = booster_final.best_iteration + 1 if booster_final.best_iteration is not None else num_boost_round_fin
 
 # Evaluate Train+Val and Test at the best iteration
 pred_trv = booster_final.predict(d_trv, iteration_range=(0, best_ntree_final), output_margin=True)
