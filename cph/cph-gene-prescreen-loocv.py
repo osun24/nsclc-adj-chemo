@@ -23,6 +23,9 @@ valid_df = pd.read_csv("affyValidation_z.csv")
 for df in (train_df, valid_df):
     if 'Adjuvant Chemo' in df.columns:
         df['Adjuvant Chemo'] = df['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
+    elif "Adjuvant.Chemo" in df.columns:
+        df['Adjuvant Chemo'] = df['Adjuvant.Chemo'].replace({'OBS': 0, 'ACT': 1})
+        
 
 binary_columns = ['Adjuvant Chemo', 'IS_MALE']
 for col in binary_columns:
@@ -135,7 +138,7 @@ for gene_name, flags in results:
 out['n_significant'] = np.nansum(out.values == 1.0, axis=1).astype(int)
 
 # Save CSV
-out_path = "interaction_loocv_fRMA_10-5-25.csv"
+out_path = "interaction_loocv_fRMA_11-17-25.csv"
 out.to_csv(out_path, index_label="gene")
 print(f"Saved: {out_path}")
 

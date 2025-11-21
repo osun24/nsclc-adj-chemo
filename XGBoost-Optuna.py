@@ -63,14 +63,6 @@ def load_genes_list(genes_csv):
     print(f"[Genes] Selected {len(genes)} genes with Prop == 1")
     return genes
 
-def coerce_survival_cols(df):
-    if df["OS_STATUS"].dtype == object:
-        df["OS_STATUS"] = df["OS_STATUS"].replace({"DECEASED":1,"LIVING":0,"Dead":1,"Alive":0}).astype(int)
-    else:
-        df["OS_STATUS"] = pd.to_numeric(df["OS_STATUS"], errors="coerce").fillna(0).astype(int)
-    df["OS_MONTHS"] = pd.to_numeric(df["OS_MONTHS"], errors="coerce").fillna(0.0).astype(float)
-    return df
-
 def preprocess_split(df, clinical_vars, gene_names):
     # Avoid pandas FutureWarning by mapping (we coerce to numeric right after)
     if "Adjuvant Chemo" in df.columns:
@@ -78,7 +70,6 @@ def preprocess_split(df, clinical_vars, gene_names):
     for col in ["Adjuvant Chemo","IS_MALE"]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
-    df = coerce_survival_cols(df)
     keep_cols = [c for c in clinical_vars if c in df.columns] + [g for g in gene_names if g in df.columns]
     cols = ["OS_STATUS","OS_MONTHS"] + keep_cols
     return df[cols].copy()
@@ -159,6 +150,22 @@ train_raw = pd.read_csv(TRAIN_CSV)
 valid_raw = pd.read_csv(VALID_CSV)
 test_raw  = pd.read_csv(TEST_CSV)
 
+# Print number of censored and non-censored in each split and adjuivant chemotherapy status in each
+print("Train OS_STATUS value counts:")
+print(train_raw["OS_STATUS"].value_counts())
+print("Train Adjuvant Chemo value counts:")
+print(train_raw["Adjuvant Chemo"].value_counts())
+
+print("Valid OS_STATUS value counts:")
+print(valid_raw["OS_STATUS"].value_counts())
+print("Valid Adjuvant Chemo value counts:")
+print(valid_raw["Adjuvant Chemo"].value_counts())
+
+print("Test OS_STATUS value counts:")
+print(test_raw["OS_STATUS"].value_counts())
+print("Test Adjuvant Chemo value counts:")
+print(test_raw["Adjuvant Chemo"].value_counts())
+
 GENE_LIST = load_genes_list(GENES_CSV)
 
 train_df = preprocess_split(train_raw, CLINICAL_VARS, GENE_LIST)
@@ -237,14 +244,14 @@ def suggest_hparams(trial):
     k_int  = int(min(top_k_inter_raw, k_main, max_nonclin - k_main))
 
     # Optional duplication of interaction columns (1 = off)
-    dup_inter = trial.suggest_int("dup_inter", 1, 3)
+    dup_inter = 1 #trial.suggest_int("dup_inter", 1, 3)
 
     # XGBoost params (CPU)
     params = {
         "objective": "survival:cox",
         "booster": "gbtree",
         "tree_method": "hist",                  # CPU histogram
-        "disable_default_eval_metric": True,    # we'll use custom_metric only
+        "disable_default_eval_metric": True,    # c-index
         "eta": trial.suggest_float("eta", 0.01, 0.12, log=True),
         "max_depth": trial.suggest_int("max_depth", 3, 6),
         "min_child_weight": trial.suggest_float("min_child_weight", 2.0, 30.0, log=True),
