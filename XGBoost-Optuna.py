@@ -33,13 +33,13 @@ TRAIN_CSV = "affyfRMATrain.csv"
 VALID_CSV = "affyfRMAValidation.csv"
 TEST_CSV  = "affyfRMATest.csv"
 
-GENES_CSV = "/mnt/data/Genes.csv"
+GENES_CSV = "/mnt/data/LOOCV_Genes2.csv"
 if not os.path.exists(GENES_CSV):
-    if os.path.exists("/content/Genes.csv"):
-        GENES_CSV = "/content/Genes.csv"
-    elif os.path.exists("Genes.csv"):
-        GENES_CSV = "Genes.csv"
-print("Genes.csv path:", GENES_CSV)
+    if os.path.exists("/content/LOOCV_Genes2.csv"):
+        GENES_CSV = "/content/LOOCV_Genes2.csv"
+    elif os.path.exists("LOOCV_Genes2.csv"):
+        GENES_CSV = "LOOCV_Genes2.csv"
+print("LOOCV_Genes2.csv path:", GENES_CSV)
 
 # ---------- Clinical columns ----------
 CLINICAL_VARS = [
@@ -57,7 +57,7 @@ CLIN_FEATS_PRETX = [c for c in CLINICAL_VARS if c != "Adjuvant Chemo"]  # for IP
 def load_genes_list(genes_csv):
     g = pd.read_csv(genes_csv)
     if "Prop" not in g.columns or "Gene" not in g.columns:
-        raise ValueError("Genes.csv must have columns 'Gene' and 'Prop'.")
+        raise ValueError("LOOCV_Genes2.csv must have columns 'Gene' and 'Prop'.")
     g["Prop"] = pd.to_numeric(g["Prop"], errors="coerce").fillna(0)
     genes = g.loc[g["Prop"] == 1, "Gene"].astype(str).tolist()
     print(f"[Genes] Selected {len(genes)} genes with Prop == 1")
@@ -322,7 +322,7 @@ def objective(trial):
 
 # ---- Run study ----
 storage = "sqlite:///xgb_cox_optuna.db"
-study_name = "xgb_cox_mo_gap_bounded_interactions_emphasis"
+study_name = "xgb_cox_nov_22"
 sampler = NSGAIISampler(seed=42, population_size=24)
 study = optuna.create_study(
     directions=["maximize", "minimize"],
@@ -427,8 +427,10 @@ def ci_by_arm(pred, t, e, arm):
 print("[Train+Val] CI by arm:", ci_by_arm(pred_trv, t_trv, e_trv, act_trv))
 print("[Test]      CI by arm:", ci_by_arm(pred_te,  t_te,  e_te,  act_te))
 
+date = "11-22"
+
 # Save artifacts
-OUT_DIR = "xgb_cox_interactions_iptw_bounded"
+OUT_DIR = f"xgb_cox_interactions_iptw_bounded-{date}"
 os.makedirs(OUT_DIR, exist_ok=True)
 booster_final.save_model(os.path.join(OUT_DIR, "xgb_cox_final.json"))
 with open(os.path.join(OUT_DIR, "chosen_params.txt"), "w") as f:
