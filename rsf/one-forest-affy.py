@@ -51,29 +51,66 @@ current_date = datetime.datetime.now().strftime("%Y%m%d")  # Added current date 
 log_file = open(os.path.join(output_dir, f"{current_date}_LOG-rsf-feature-search.txt"), "w")
 sys.stdout = Tee(sys.stdout, log_file)
 
-print("Loading train data from: affyFilteredTrain.csv")
-train_orig = pd.read_csv("affyFilteredTrain.csv")
+print("Loading train data from: affyfRMATrain.csv")
+train_orig = pd.read_csv("affyfRMATrain.csv")
 
 print(f"Number of events in original training set: {train_orig['OS_STATUS'].sum()} | Censored cases: {train_orig.shape[0] - train_orig['OS_STATUS'].sum()}")
 print("Original train data shape:", train_orig.shape)
 
-print("Loading validation data from: affyFilteredValidation.csv")
-valid_orig = pd.read_csv("affyFilteredValidation.csv")
+print("Loading validation data from: affyfRMAValidation.csv")
+valid_orig = pd.read_csv("affyfRMAValidation.csv")
 
-print(f"Number of events in validation set: {valid_orig['OS_STATUS'].sum()} | Censored cases: {valid_orig.shape[0] - valid_orig['OS_STATUS'].sum()}")
-print("Validation data shape:", valid_orig.shape)
+CLINICAL_VARS = [
+    "Adjuvant Chemo","Age","IS_MALE",
+    "Stage_IA","Stage_IB","Stage_II","Stage_III",
+    "Histology_Adenocarcinoma","Histology_Large Cell Carcinoma","Histology_Squamous Cell Carcinoma",
+    "Race_African American","Race_Asian","Race_Caucasian","Race_Native Hawaiian or Other Pacific Islander","Race_Unknown",
+    "Smoked?_No","Smoked?_Unknown","Smoked?_Yes"
+]
+
+GENES_CSV = "/mnt/data/LOOCV_Genes2.csv"
+if not os.path.exists(GENES_CSV):
+    if os.path.exists("/content/LOOCV_Genes2.csv"):
+        GENES_CSV = "/content/LOOCV_Genes2.csv"
+    elif os.path.exists("LOOCV_Genes2.csv"):
+        GENES_CSV = "LOOCV_Genes2.csv"
+print("LOOCV_Genes2.csv path:", GENES_CSV)
+
+def load_genes_list(genes_csv):
+    g = pd.read_csv(genes_csv)
+    if "Prop" not in g.columns or "Gene" not in g.columns:
+        raise ValueError("LOOCV_Genes2.csv must have columns 'Gene' and 'Prop'.")
+    g["Prop"] = pd.to_numeric(g["Prop"], errors="coerce").fillna(0)
+    genes = g.loc[g["Prop"] == 1, "Gene"].astype(str).tolist()
+    print(f"[Genes] Selected {len(genes)} genes with Prop == 1")
+    return genes
+
+def preprocess_split(df, clinical_vars, gene_names):
+    # Avoid pandas FutureWarning by mapping (we coerce to numeric right after)
+    if "Adjuvant Chemo" in df.columns:
+        df["Adjuvant Chemo"] = df["Adjuvant Chemo"].map({"OBS": 0, "ACT": 1})
+    for col in ["Adjuvant Chemo","IS_MALE"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
+    keep_cols = [c for c in clinical_vars if c in df.columns] + [g for g in gene_names if g in df.columns]
+    cols = ["OS_STATUS","OS_MONTHS"] + keep_cols
+    return df[cols].copy()
+
+gene_names = load_genes_list(GENES_CSV)
+train = preprocess_split(train_orig, CLINICAL_VARS, gene_names)
+valid = preprocess_split(valid_orig, CLINICAL_VARS, gene_names)
+
+print(f"Number of events in validation set: {valid['OS_STATUS'].sum()} | Censored cases: {valid.shape[0] - valid['OS_STATUS'].sum()}")
+print("Validation data shape:", valid.shape)
 
 # Combine train and validation datasets into one training set
 print("Combining train and validation datasets...")
-train = pd.concat([train_orig, valid_orig], axis=0, ignore_index=True)
+train = pd.concat([train, valid], axis=0, ignore_index=True)
 
 print(f"Number of events in combined training set: {train['OS_STATUS'].sum()} | Censored cases: {train.shape[0] - train['OS_STATUS'].sum()}")
 print("Combined training data shape:", train.shape)
 
 start = time.time()
-
-# Set Adjuvant Chemo's 'ACT' to 1 and 'OBS' to 0
-train['Adjuvant Chemo'] = train['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
 
 # Create structured arrays for survival analysis
 y_train = Surv.from_dataframe('OS_STATUS', 'OS_MONTHS', train)
@@ -183,9 +220,10 @@ train_c_index = rsf_concordance_metric(y_train, rsf.predict(X_train))
 print(f"Training C-index (train + validation combined): {train_c_index:.4f}")
 
 # TEST 
-print("Loading test data from: affyFilteredTest.csv")
-test = pd.read_csv("affyFilteredTest.csv")
-test['Adjuvant Chemo'] = test['Adjuvant Chemo'].map({'ACT': 1, 'OBS': 0})
+print("Loading test data from: affyfRMATest.csv")
+test = pd.read_csv("affyfRMATest.csv")
+
+test = preprocess_split(test, CLINICAL_VARS, gene_names)
 
 print(f"Number of events in test set: {test['OS_STATUS'].sum()} | Censored cases: {test.shape[0] - test['OS_STATUS'].sum()}")
 print("Test data shape:", test.shape)
@@ -203,9 +241,9 @@ print(f"Actual max depth: {rsf.max_depth}")
 print(f"Number of trees in the forest: {len(rsf.estimators_)}")
 
 # Save the fitted model
-#model_file = os.path.join(output_dir, f"{current_date}_rsf_model-{len(rsf.estimators_)}-trees-maxdepth-{rsf.max_depth}-{num_of_cov}-features.pkl")
-#joblib.dump(rsf, model_file)
-#print(f"Model saved to {model_file}")
+model_file = os.path.join(output_dir, f"rsf-demo.pkl")
+joblib.dump(rsf, model_file)
+print(f"Model saved to {model_file}")
 
 def forest_analysis(rsf, X_train, y_train):
     # Statistics for leaf nodes per tree
