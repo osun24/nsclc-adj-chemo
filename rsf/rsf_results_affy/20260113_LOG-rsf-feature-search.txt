@@ -1,0 +1,21 @@
+Loading train data from: affyfRMATrain.csv
+Number of events in original training set: 348 | Censored cases: 427
+Original train data shape: (775, 13061)
+Loading validation data from: affyfRMAValidation.csv
+LOOCV_Genes2.csv path: LOOCV_Genes2.csv
+[Genes] Selected 2261 genes with Prop == 1
+Number of events in validation set: 117 | Censored cases: 142
+Validation data shape: (259, 2238)
+Combining train and validation datasets...
+Number of events in combined training set: 465 | Censored cases: 569
+Combined training data shape: (1034, 2238)
+Fitting Random Survival Forest model...
+Training C-index (train + validation combined): 0.7769
+Loading test data from: affyfRMATest.csv
+Number of events in test set: 115 | Censored cases: 143
+Test data shape: (258, 2238)
+Test C-index: 0.6206
+Actual max depth: 5
+Number of trees in the forest: 750
+Model saved to rsf/rsf_results_affy/rsf-demo.pkl
+Model specification saved to rsf/rsf_results_affy/20260113_rsf_model_spec-750-trees-maxdepth-5.md

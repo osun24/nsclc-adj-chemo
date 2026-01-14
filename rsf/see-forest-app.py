@@ -54,33 +54,61 @@ st.set_page_config(
 )
 
 # Load RSF model (best model from iterative feature selection - 19 features, iteration 31)
-rsf = joblib.load('rsf/rsf_results_affy/iterative_feature_selection/20250628_best_rsf_model_iter_31_19_features.pkl')
+rsf = joblib.load('rsf/rsf_results_affy/rsf-demo.pkl')
 
 # Data preprocessing to match iterative-feature-selection-affy.py
 # Load and combine train + validation data as done in iterative feature selection
-train_orig = pd.read_csv("affyTrain.csv")
-valid_orig = pd.read_csv("affyValidation.csv")
-train = pd.concat([train_orig, valid_orig], axis=0, ignore_index=True)
+print("Loading train data from: affyfRMATrain.csv")
+train_orig = pd.read_csv("affyfRMATrain.csv")
 
-# Apply same preprocessing as iterative feature selection
-train['Adjuvant Chemo'] = train['Adjuvant Chemo'].replace({'OBS': 0, 'ACT': 1})
+print(f"Number of events in original training set: {train_orig['OS_STATUS'].sum()} | Censored cases: {train_orig.shape[0] - train_orig['OS_STATUS'].sum()}")
+print("Original train data shape:", train_orig.shape)
 
-# Load the best 19 features from iteration 31
-try:
-    best_features_df = pd.read_csv("rsf/rsf_results_affy/iterative_feature_selection/20250628_best_features_iteration_31.csv")
-    covariates = best_features_df['Feature'].tolist()
-    print(f"✅ Loaded {len(covariates)} best features from iteration 31")
-except FileNotFoundError:
-    # Fallback to hardcoded features if file not found
-    covariates = [
-        'Stage_IA', 'FAM117A', 'CCNB1', 'PURA', 'PFKP', 'PARM1', 
-        'ADGRF5', 'GUCY1A1', 'SLC1A4', 'TENT5C', 'Age', 'HILPDA', 
-        'ETV5', 'STIM1', 'KDM5C', 'NCAPG2', 'ZFR2', 'SETBP1', 'RTCA'
-    ]
-    print(f"⚠️ Using hardcoded 19 features (best features file not found)")
+print("Loading validation data from: affyfRMAValidation.csv")
+valid_orig = pd.read_csv("affyfRMAValidation.csv")
+
+CLINICAL_VARS = [
+    "Adjuvant Chemo","Age","IS_MALE",
+    "Stage_IA","Stage_IB","Stage_II","Stage_III",
+    "Histology_Adenocarcinoma","Histology_Large Cell Carcinoma","Histology_Squamous Cell Carcinoma",
+    "Race_African American","Race_Asian","Race_Caucasian","Race_Native Hawaiian or Other Pacific Islander","Race_Unknown",
+    "Smoked?_No","Smoked?_Unknown","Smoked?_Yes"
+]
+
+GENES_CSV = "/mnt/data/LOOCV_Genes2.csv"
+if not os.path.exists(GENES_CSV):
+    if os.path.exists("/content/LOOCV_Genes2.csv"):
+        GENES_CSV = "/content/LOOCV_Genes2.csv"
+    elif os.path.exists("LOOCV_Genes2.csv"):
+        GENES_CSV = "LOOCV_Genes2.csv"
+print("LOOCV_Genes2.csv path:", GENES_CSV)
+
+def load_genes_list(genes_csv):
+    g = pd.read_csv(genes_csv)
+    if "Prop" not in g.columns or "Gene" not in g.columns:
+        raise ValueError("LOOCV_Genes2.csv must have columns 'Gene' and 'Prop'.")
+    g["Prop"] = pd.to_numeric(g["Prop"], errors="coerce").fillna(0)
+    genes = g.loc[g["Prop"] == 1, "Gene"].astype(str).tolist()
+    print(f"[Genes] Selected {len(genes)} genes with Prop == 1")
+    return genes
+
+def preprocess_split(df, clinical_vars, gene_names):
+    # Avoid pandas FutureWarning by mapping (we coerce to numeric right after)
+    if "Adjuvant Chemo" in df.columns:
+        df["Adjuvant Chemo"] = df["Adjuvant Chemo"].map({"OBS": 0, "ACT": 1})
+    for col in ["Adjuvant Chemo","IS_MALE"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
+    keep_cols = [c for c in clinical_vars if c in df.columns] + [g for g in gene_names if g in df.columns]
+    cols = ["OS_STATUS","OS_MONTHS"] + keep_cols
+    return df[cols].copy()
+
+gene_names = load_genes_list(GENES_CSV)
+train = preprocess_split(train_orig, CLINICAL_VARS, gene_names)
+valid = preprocess_split(valid_orig, CLINICAL_VARS, gene_names)
 
 # Filter to only include features that exist in the data
-covariates = [c for c in covariates if c in train.columns]
+covariates = [f for f in rsf.feature_names_in_ if f in train.columns]
 df = train[['OS_STATUS', 'OS_MONTHS'] + covariates]
 covariates = df.columns[2:]
 
@@ -483,12 +511,13 @@ def get_feature_description_llm(feature_name):
     try:
         system_message = """"You are an expert in cancer genomics and bioinformatics, specializing in non-small cell lung cancer (NSCLC) survival analysis. You analyze genomic features and their clinical significance in cancer research. Be aware that some features provided may not be linked at all with NSCLC - if there is no known association, please state that clearly."""
         
-        user_message = f"""Use the web, if necessary to provide a concise, clinical description (1-2 sentences) of the feature "{feature_name}" relevant to oncologists and researchers in the context of NSCLC survival analysis. Think step by step through these key ideas:
+        user_message = f"""Search the literature, if necessary to provide a concise, clinical description (1-2 sentences) of the feature "{feature_name}" relevant to oncologists and researchers in the context of NSCLC survival analysis. Think step by step through these key ideas:
 
-1. What this feature represents (gene, pathway, clinical variable, etc.)
-2. The strength of evidence in the liteature supporting its role in NSCLC prognosis or treatment, if ANY
-3. Its known role or significance in NSCLC prognosis or treatment, if ANY
-4. How it might influence patient survival outcomes, if KNOWN"""
+1. What does this feature represent (gene, pathway, clinical variable, etc.)?
+2. What is its function?
+3. Is it relevant to NSCLC prognosis or treatment? Or not?
+4. What is the strength of the evidence supporting its role in NSCLC, if any?
+"""
 
         print(f"📝 [LLM REQUEST] Preparing API call to GPT-4.1-mini")
         print(f"🎯 [LLM REQUEST] Target feature: '{feature_name}'")
@@ -501,11 +530,12 @@ def get_feature_description_llm(feature_name):
         start_time = time.time()
         
         completion = client.chat.completions.create(
-            model="gpt-4.1-mini",
+            model="gpt-5.2-mini",
             messages=[
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message}
             ],
+            tool_choice="auto",
             temperature=0,
             max_tokens=200  # Reduced from 200 to enforce brevity
         )

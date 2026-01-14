@@ -124,8 +124,8 @@ X_train = train.drop(columns=['OS_STATUS', 'OS_MONTHS'])
 rsf = RandomSurvivalForest(
     n_estimators=750,
     max_depth=5,
-    min_samples_leaf=50,
-    max_features=0.5,  # 0.5 * 13062 = 6531
+    min_samples_leaf=80,
+    max_features=0.2,  # 0.5 * 13062 = 6531
     random_state=42,
     n_jobs=-1
 )
