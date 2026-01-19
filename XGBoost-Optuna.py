@@ -194,14 +194,7 @@ def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, du
         label="Not aligned with XGB recommendation"
     )
     kmf_not_aligned.plot(ax=ax, ci_show=True)
-
-    plt.title("Kaplan-Meier Survival Curves by Treatment Alignment")
-    plt.xlabel("Time")
-    plt.ylabel("Survival Probability")
-    add_at_risk_counts(kmf_aligned, kmf_not_aligned)
-    plt.tight_layout()
-    plt.show()
-
+    
     results = logrank_test(
         df.loc[mask_aligned, time_col],
         df.loc[mask_not_aligned, time_col],
@@ -209,6 +202,15 @@ def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, du
         event_observed_B=df.loc[mask_not_aligned, event_col]
     )
     print("Log-rank test p-value:", results.p_value)
+
+    plt.title("Kaplan-Meier Survival Curves by Treatment Alignment")
+    plt.xlabel("Time")
+    plt.ylabel("Survival Probability")
+    add_at_risk_counts(kmf_aligned, kmf_not_aligned)
+    plt.text(0.1,0.1, f"Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
+    plt.tight_layout()
+    plt.savefig("km_alignment_xgb_recommendation.png", dpi=600)
+    plt.show()
 
 # ============================================================
 # Load data, rank genes (TRAIN only), set budgets
@@ -373,7 +375,7 @@ def objective(trial):
     yva_signed = dva.get_label(); tva = np.abs(yva_signed); eva = (yva_signed > 0).astype(int)
 
     tr_ci = cindex(tr_pred, ttr, etr)
-    va_ci = cindex(va_pred, tva, eva)
+    va_ci, va_ci_se = cindex_bootstrap(va_pred, tva, eva) # Get C-index and SE
     gap = max(0.0, tr_ci - va_ci)
 
     trial.set_user_attr("n_features", int(len(dtr.feature_names)))
@@ -381,35 +383,74 @@ def objective(trial):
     trial.set_user_attr("k_int", int(k_int))
     trial.set_user_attr("dup_inter", int(dup_inter))
     trial.set_user_attr("best_ntree", int(best_ntree))
+    trial.set_user_attr("val_ci_se", va_ci_se) # Store standard error
 
-    print(f"[Trial {trial.number:03d}] Val CI={va_ci:.4f}, Gap={gap:.4f}, N_feats={len(dtr.feature_names)}, "
+    print(f"[Trial {trial.number:03d}] Val CI={va_ci:.4f} (SE={va_ci_se:.4f}), Gap={gap:.4f}, N_feats={len(dtr.feature_names)}, "
           f"K_main={k_main}, K_int={k_int}, Dup={dup_inter}, N_tree={best_ntree}")
 
-    return va_ci, gap
+    # For single-objective, return just the value.
+    # For multi-objective, you would return a tuple, e.g., (va_ci, gap).
+    return va_ci
+
+def cindex_bootstrap(pred, time, event, n_bootstraps=100, seed=42):
+    """Computes C-index and its bootstrap standard error."""
+    rng = np.random.RandomState(seed)
+    n_samples = len(time)
+    cis = []
+    for _ in range(n_bootstraps):
+        indices = rng.choice(np.arange(n_samples), size=n_samples, replace=True)
+        if len(np.unique(event[indices])) < 2: continue # Need both events and non-events
+        try:
+            ci = cindex(pred[indices], time[indices], event[indices])
+            cis.append(ci)
+        except Exception:
+            continue # In case of convergence errors on small bootstrap samples
+    
+    if not cis: return 0.5, 0.5 # Should be rare
+    return np.mean(cis), np.std(cis)
 
 # ---- Run study ----
 storage = "sqlite:///xgb_cox_optuna.db"
-study_name = "xgb_cox_nov_22"
-sampler = NSGAIISampler(seed=42, population_size=24)
+study_name = "xgb_cox_jan_19_1se"
+# For multi-objective, use NSGAIISampler and directions.
+# sampler = NSGAIISampler(seed=42, population_size=24)
 study = optuna.create_study(
-    directions=["maximize", "minimize"],
-    study_name=study_name, storage=storage, load_if_exists=True, sampler=sampler
+    direction="maximize",  # Single-objective
+    # directions=["maximize", "minimize"], # For multi-objective
+    study_name=study_name, storage=storage, load_if_exists=True, #sampler=sampler
 )
 N_TRIALS = 100  # adjust as needed
-print(f"Starting multi-objective optimization: {N_TRIALS} trials")
+print(f"Starting optimization: {N_TRIALS} trials")
 study.optimize(objective, n_trials=N_TRIALS, gc_after_trial=True)
 
-# ---- Choose a robust solution from Pareto front (conservative) ----
-pareto = study.best_trials
-best_val = max(tr.values[0] for tr in pareto)
-TOL = 0.015  # within 1.5pp absolute C-index of best
-cands = [tr for tr in pareto if (best_val - tr.values[0]) <= TOL]
-# prefer smaller gap, then fewer features
-cands.sort(key=lambda tr: (tr.values[1], tr.user_attrs.get("n_features", 10**9)))
-chosen = cands[0]
+# ---- Choose the best trial using the 1-Standard-Error (1-SE) rule ----
+# Find the best trial (highest validation C-index)
+best_trial = study.best_trial
+best_ci = best_trial.value
+best_ci_se = best_trial.user_attrs.get("val_ci_se", 0.0)
 
-print("\n[Chosen Pareto] Val CI=%.4f | Gap=%.4f | n_features=%d" %
-      (chosen.values[0], chosen.values[1], chosen.user_attrs.get("n_features", -1)))
+# 1-SE threshold: performance within one standard error of the best
+one_se_threshold = best_ci - best_ci_se
+print(f"\n[1-SE Rule] Best Val CI: {best_ci:.4f} (SE: {best_ci_se:.4f})")
+print(f"[1-SE Rule] Threshold: {one_se_threshold:.4f}")
+
+# Find candidate trials above the 1-SE threshold
+candidates = [
+    t for t in study.trials 
+    if t.state == optuna.trial.TrialState.COMPLETE and t.value >= one_se_threshold
+]
+
+if not candidates:
+    # Fallback to the best trial if no candidates are found (unlikely)
+    chosen = best_trial
+    print("[1-SE Rule] No candidates found above threshold, falling back to best trial.")
+else:
+    # From candidates, choose the one with the fewest features (most parsimonious)
+    candidates.sort(key=lambda t: t.user_attrs.get("n_features", float('inf')))
+    chosen = candidates[0]
+    print(f"[1-SE Rule] Found {len(candidates)} candidates. Chose trial #{chosen.number} with {chosen.user_attrs.get('n_features')} features.")
+
+print("\n[Chosen Trial] #", chosen.number, "Val CI:", chosen.values[0])
 print("[Chosen Params]", chosen.params)
 print("[Chosen Attrs] k_main=%s k_int=%s dup_inter=%s best_ntree=%s" %
       (str(chosen.user_attrs.get("k_main")), str(chosen.user_attrs.get("k_int")),
@@ -497,7 +538,7 @@ print("[Test]      CI by arm:", ci_by_arm(pred_te,  t_te,  e_te,  act_te))
 date = "11-22"
 
 # Save artifacts
-OUT_DIR = f"xgb_cox_interactions_iptw_bounded-{date}"
+OUT_DIR = f"xgb_cox_interactions_iptw_bounded-{date}-1SE"
 os.makedirs(OUT_DIR, exist_ok=True)
 booster_final.save_model(os.path.join(OUT_DIR, "xgb_cox_final.json"))
 with open(os.path.join(OUT_DIR, "chosen_params.txt"), "w") as f:
