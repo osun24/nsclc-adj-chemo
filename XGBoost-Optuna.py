@@ -9,6 +9,7 @@
 import os, math, gc, time, random, warnings
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import xgboost as xgb
 from sklearn.preprocessing import StandardScaler
@@ -18,6 +19,9 @@ from sklearn.model_selection import train_test_split
 from sksurv.metrics import concordance_index_censored
 from sksurv.util import Surv
 from sksurv.linear_model import CoxPHSurvivalAnalysis
+from lifelines import KaplanMeierFitter
+from lifelines.statistics import logrank_test
+from lifelines.plotting import add_at_risk_counts
 
 import optuna
 from optuna.samplers import NSGAIISampler
@@ -142,6 +146,69 @@ def pack_cox_labels(time, event):
 
 def cindex(pred, time, event):
     return float(concordance_index_censored(event.astype(bool), time.astype(float), pred)[0])
+
+
+def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, dup_inter,
+                                        feature_names, best_ntree, time_col="OS_MONTHS", event_col="OS_STATUS"):
+    """KM comparison for alignment with model's treatment recommendation on provided data."""
+    df = df.copy()
+    df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
+
+    # Counterfactual feature matrices with ACT forced to 1 vs 0
+    df_treated = df.copy(); df_treated["Adjuvant Chemo"] = 1
+    df_untreated = df.copy(); df_untreated["Adjuvant Chemo"] = 0
+
+    X_treated, _ = build_features_with_interactions(df_treated, genes_main, genes_inter, dup_inter=dup_inter)
+    X_untreated, _ = build_features_with_interactions(df_untreated, genes_main, genes_inter, dup_inter=dup_inter)
+
+    dm_treated = xgb.DMatrix(X_treated.astype(np.float32), feature_names=feature_names)
+    dm_untreated = xgb.DMatrix(X_untreated.astype(np.float32), feature_names=feature_names)
+
+    risk_treated = booster.predict(dm_treated, iteration_range=(0, best_ntree), output_margin=True)
+    risk_untreated = booster.predict(dm_untreated, iteration_range=(0, best_ntree), output_margin=True)
+
+    model_rec = np.where(risk_treated < risk_untreated, 1, 0)
+    actual = df["Adjuvant Chemo"].to_numpy(int)
+    alignment = actual == model_rec
+
+    df["model_rec"] = model_rec
+    df["alignment"] = alignment
+
+    mask_aligned = df["alignment"]
+    mask_not_aligned = ~df["alignment"]
+
+    kmf_aligned = KaplanMeierFitter()
+    kmf_not_aligned = KaplanMeierFitter()
+
+    plt.figure(figsize=(10, 6))
+    kmf_aligned.fit(
+        durations=df.loc[mask_aligned, time_col],
+        event_observed=df.loc[mask_aligned, event_col],
+        label="Aligned with XGB recommendation"
+    )
+    ax = kmf_aligned.plot(ci_show=True)
+
+    kmf_not_aligned.fit(
+        durations=df.loc[mask_not_aligned, time_col],
+        event_observed=df.loc[mask_not_aligned, event_col],
+        label="Not aligned with XGB recommendation"
+    )
+    kmf_not_aligned.plot(ax=ax, ci_show=True)
+
+    plt.title("Kaplan-Meier Survival Curves by Treatment Alignment")
+    plt.xlabel("Time")
+    plt.ylabel("Survival Probability")
+    add_at_risk_counts(kmf_aligned, kmf_not_aligned)
+    plt.tight_layout()
+    plt.show()
+
+    results = logrank_test(
+        df.loc[mask_aligned, time_col],
+        df.loc[mask_not_aligned, time_col],
+        event_observed_A=df.loc[mask_aligned, event_col],
+        event_observed_B=df.loc[mask_not_aligned, event_col]
+    )
+    print("Log-rank test p-value:", results.p_value)
 
 # ============================================================
 # Load data, rank genes (TRAIN only), set budgets
@@ -438,3 +505,15 @@ with open(os.path.join(OUT_DIR, "chosen_params.txt"), "w") as f:
 with open(os.path.join(OUT_DIR, "features_used.txt"), "w") as f:
     f.write("\n".join(feat_names))
 print("Saved final model and parameters to:", OUT_DIR)
+
+# Kaplan-Meier alignment on test set using final model
+print("\n[KM Alignment] Test set vs. XGB recommendation")
+compare_treatment_recommendation_km(
+    booster_final,
+    test_df,
+    genes_main=genes_main,
+    genes_inter=genes_inter,
+    dup_inter=dup_inter,
+    feature_names=feat_names,
+    best_ntree=best_ntree_final,
+)

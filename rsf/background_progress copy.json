@@ -1,0 +1,10 @@
+{
+  "status": "processing",
+  "trees_processed": 54,
+  "features_processed": 23,
+  "max_features": 200,
+  "tokens_used": 5042,
+  "current_tree": 55,
+  "current_feature": "GPX4",
+  "timestamp": 1768367607.101522
+}

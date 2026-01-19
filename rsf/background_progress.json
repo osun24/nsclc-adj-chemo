@@ -1,10 +1,9 @@
 {
-  "status": "processing",
-  "trees_processed": 54,
-  "features_processed": 23,
+  "status": "completed",
+  "trees_processed": 750,
+  "total_trees": 750,
+  "features_processed": 0,
   "max_features": 200,
-  "tokens_used": 5042,
-  "current_tree": 55,
-  "current_feature": "GPX4",
-  "timestamp": 1768367607.101522
+  "tokens_used": 0,
+  "reached_limit": false
 }

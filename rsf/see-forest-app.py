@@ -48,7 +48,7 @@ PROGRESS_FILE = 'rsf/background_progress.json'
 
 # Configure Streamlit page for wide layout
 st.set_page_config(
-    page_title="RSF Tree Visualizer",
+    page_title="RSF Visualization",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -519,7 +519,7 @@ def get_feature_description_llm(feature_name):
 4. What is the strength of the evidence supporting its role in NSCLC, if any?
 """
 
-        print(f"📝 [LLM REQUEST] Preparing API call to GPT-4.1-mini")
+        print(f"📝 [LLM REQUEST] Preparing API call to GPT-5.2-mini")
         print(f"🎯 [LLM REQUEST] Target feature: '{feature_name}'")
         print(f"📊 [LLM REQUEST] System message length: {len(system_message)} characters")
         print(f"📊 [LLM REQUEST] User message length: {len(user_message)} characters")
@@ -815,13 +815,13 @@ def get_feature_description_llm_with_tokens(feature_name):
 
 Keep the response concise and clinically relevant for oncologists and researchers."""
 
-        print(f"📝 [LLM REQUEST] Making API call to GPT-4.1-mini for: {feature_name}")
+        print(f"📝 [LLM REQUEST] Making API call to GPT-5.2-mini for: {feature_name}")
         
         # Record start time for latency measurement
         start_time = time.time()
         
         completion = client.chat.completions.create(
-            model="gpt-4.1-mini",
+            model="gpt-5.2-mini",
             messages=[
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message}
@@ -983,7 +983,7 @@ def main():
                 print("🚀 [INIT] Started background preloader thread")
                 
                 # Show initial message
-                st.info("🚀 Background preloading started! The app is ready to use while features are being processed.")
+                st.info("Background preloading started! The app is ready to use as features are processed.")
             else:
                 st.warning("⚠️ Threading not available - background preloading disabled")
         
@@ -1026,8 +1026,8 @@ def main():
     if 'last_progress_check' not in st.session_state:
         st.session_state['last_progress_check'] = 0
 
-    st.title("RSF Tree Visualizer")
-    st.write("Click Next/Back to view different trees in the forest. Click on a split node (blue) to view feature-based Kaplan-Meier plots, or click on a leaf node (colored) to compare survival outcomes between leaf nodes. Hover over split nodes to get AI-powered feature descriptions.")
+    st.title("Random Survival Forest: Seeing the Forest for the Trees")
+    st.write("Click Next/Back to view different trees in the forest.\nHover over split nodes to see GPT-5.2-mini's feature descriptions.\nClick on a split node (blue) to view feature-based Kaplan-Meier plots, or click on a leaf node (red) to compare survival outcomes between leaf nodes.")
     
     # Check for background progress updates from file (thread-safe approach)
     if st.session_state.get('background_status', {}).get('running'):
@@ -1130,7 +1130,6 @@ def main():
         # Show cache statistics
         cache_count = len(st.session_state.get('feature_descriptions', {}))
         tree_cache_count = len(st.session_state.get('feature_cache', {}))
-        st.success(f"✅ AI-powered feature descriptions enabled! ({cache_count} descriptions cached, {tree_cache_count} trees analyzed)")
         
         # Debug info for developers
         with st.expander("🔧 Debug Information", expanded=False):
@@ -1178,6 +1177,9 @@ def main():
             st.session_state['selected_node'] = None
             # Reset auto-loading state when changing trees
             st.session_state['auto_loading_in_progress'] = False
+            # Clear URL parameters to prevent stale node selection
+            st.query_params.clear()
+            st.query_params['tree_idx'] = st.session_state['tree_idx']
             print(f"🔄 [NAV] Moved to tree {st.session_state['tree_idx'] + 1}, reset auto-loading state")
     with col3:
         if st.button("Next"):
@@ -1186,6 +1188,9 @@ def main():
             st.session_state['selected_node'] = None
             # Reset auto-loading state when changing trees
             st.session_state['auto_loading_in_progress'] = False
+            # Clear URL parameters to prevent stale node selection
+            st.query_params.clear()
+            st.query_params['tree_idx'] = st.session_state['tree_idx']
             print(f"🔄 [NAV] Moved to tree {st.session_state['tree_idx'] + 1}, reset auto-loading state")
     
     # Process pending queue when user navigates to a new tree
@@ -1383,7 +1388,7 @@ def main():
     st.session_state['leaf_info'] = leaf_info
     
     with main_col1:
-        st.subheader("RSF Tree Visualization")
+        st.subheader("A Tree in the Random Survival Forest")
         
         # Build graph for visualization
         G = nx.DiGraph()
@@ -1419,7 +1424,7 @@ def main():
                     "sortMethod": "directed"
                 }
             },
-            "physics": {"enabled": false},
+            "physics": {"enabled": true},
             "edges": {
                 "font": {"size": 12, "align": "middle"}, 
                 "arrows": {"to": { "enabled": true, "scaleFactor": 0.5 }}, 
@@ -1641,7 +1646,7 @@ def main():
                         if (isAIDescription) {{
                             // Format AI description with text wrapping
                             const wrappedDescription = formatTooltipText(description, 45);
-                            enhancedTitle = `${{originalLabel}}\\n\\n🤖 AI: ${{featureName}}\\n${{wrappedDescription}}`;
+                            enhancedTitle = `${{originalLabel}}\\n\\nGPT-5.2-mini: ${{featureName}}\\n${{wrappedDescription}}`;
                         }} else {{
                             // Format basic info with wrapping
                             const wrappedDescription = formatTooltipText(description, 45);
