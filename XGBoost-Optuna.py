@@ -303,7 +303,7 @@ def suggest_hparams(trial):
     TOPK_MAIN_CHOICES = tuple(sorted({k for k in base_main if k <= MAX_GENES}))
     top_k_genes = int(trial.suggest_categorical("top_k_genes", TOPK_MAIN_CHOICES))
 
-    base_inter = [0, 8, 16, 32, 64, 96, 128, 192, 256, 384, 512]
+    base_inter = [0]
     TOPK_INTER_CHOICES = tuple(sorted({k for k in base_inter if k <= MAX_GENES}))
     inter_ratio = trial.suggest_float("inter_ratio", 0.75, 1.25)
     top_k_inter_raw = int(min(int(round(inter_ratio * top_k_genes)), max(base_inter)))
@@ -410,8 +410,8 @@ def cindex_bootstrap(pred, time, event, n_bootstraps=100, seed=42):
     return np.mean(cis), np.std(cis)
 
 # ---- Run study ----
-storage = "sqlite:///xgb_cox_optuna.db"
-study_name = "xgb_cox_jan_19_1se"
+storage = "sqlite:///xgb_cox_optuna_jan25.db"
+study_name = "xgb_cox_jan_25_1se"
 # For multi-objective, use NSGAIISampler and directions.
 # sampler = NSGAIISampler(seed=42, population_size=24)
 study = optuna.create_study(
@@ -535,7 +535,7 @@ def ci_by_arm(pred, t, e, arm):
 print("[Train+Val] CI by arm:", ci_by_arm(pred_trv, t_trv, e_trv, act_trv))
 print("[Test]      CI by arm:", ci_by_arm(pred_te,  t_te,  e_te,  act_te))
 
-date = "11-22"
+date = "1-25"
 
 # Save artifacts
 OUT_DIR = f"xgb_cox_interactions_iptw_bounded-{date}-1SE"

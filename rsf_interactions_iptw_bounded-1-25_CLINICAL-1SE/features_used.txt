@@ -1,0 +1,18 @@
+Adjuvant Chemo
+Age
+IS_MALE
+Stage_IA
+Stage_IB
+Stage_II
+Stage_III
+Histology_Adenocarcinoma
+Histology_Large Cell Carcinoma
+Histology_Squamous Cell Carcinoma
+Race_African American
+Race_Asian
+Race_Caucasian
+Race_Native Hawaiian or Other Pacific Islander
+Race_Unknown
+Smoked?_No
+Smoked?_Unknown
+Smoked?_Yes

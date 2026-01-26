@@ -317,7 +317,7 @@ def suggest_hparams(trial):
     TOPK_MAIN_CHOICES = tuple(sorted({k for k in base_main if k <= MAX_GENES}))
     top_k_genes = int(trial.suggest_categorical("top_k_genes", TOPK_MAIN_CHOICES))
 
-    base_inter = [0, 8, 16, 32, 64, 96, 128, 192, 256, 384, 512]
+    base_inter = [0]
     TOPK_INTER_CHOICES = tuple(sorted({k for k in base_inter if k <= MAX_GENES}))
     inter_ratio = trial.suggest_float("inter_ratio", 0.75, 1.25)
     top_k_inter_raw = int(min(int(round(inter_ratio * top_k_genes)), max(base_inter)))
@@ -433,8 +433,8 @@ def objective(trial):
 
 
 # ---- Run study ----
-storage = "sqlite:///rsf_optuna.db"
-study_name = "rsf_jan_19_1se"
+storage = "sqlite:///rsf_optuna_jan25.db"
+study_name = "rsf_jan_25_1se"
 
 study = optuna.create_study(
     direction="maximize",
