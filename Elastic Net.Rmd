@@ -1,0 +1,544 @@
+---
+title: "Elastic Net"
+output: pdf_document
+date: "2025-03-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(glmnet)
+library(survival)
+
+affyTrain <- read.csv("~/Downloads/affyfRMATrain.txt", row.names = 1)
+affyValidation <- read.csv("~/Downloads/affyfRMAValidation.txt", row.names = 1)
+affyTest <- read.csv("~/Downloads/affyfRMATest.txt", row.names = 1)
+
+affyTrain$Adjuvant.Chemo = as.factor(affyTrain$Adjuvant.Chemo)
+affyValidation$Adjuvant.Chemo = as.factor(affyValidation$Adjuvant.Chemo)
+affyTest$Adjuvant.Chemo = as.factor(affyTest$Adjuvant.Chemo)
+
+tf_to_numeric <- function(df) {
+  df[] <- lapply(df, function(col) {
+
+    if (is.character(col)) {
+      u <- unique(col[!is.na(col)])
+      u_lower <- tolower(u)
+      if (length(u_lower) > 0 && all(u_lower %in% c("true", "false"))) {
+        return(as.integer(tolower(col) == "true"))
+      }
+      return(col)
+    }
+
+    col
+  })
+  df
+}
+
+affyTrain      <- tf_to_numeric(affyTrain)
+affyValidation <- tf_to_numeric(affyValidation)
+affyTest       <- tf_to_numeric(affyTest)
+
+df <- bind_rows(
+  mutate(affyTrain,      .split = "train"),
+  mutate(affyValidation, .split = "val"),
+  mutate(affyTest,       .split = "test")
+)
+
+```
+
+#IPTW COPY
+```{r}
+time_col  <- "OS_MONTHS"
+event_col <- "OS_STATUS"
+
+gene_cols <- colnames(df)[6:13044]
+
+clin_cols <- setdiff(colnames(df), c(gene_cols, time_col, event_col, ".split"))
+X_clin_full <- df[, clin_cols, drop = FALSE]
+
+# gene matrix
+#X_genes_all <- df[, gene_cols, drop = FALSE]
+#X_genes_all[] <- lapply(X_genes_all, function(x) as.numeric(x))
+
+# Use only the interaction-selected genes
+gene_cols <- as.character(LOOCV2$Gene[LOOCV2$Selected == 1034])
+gene_cols2 <- intersect(gene_cols, colnames(df))
+
+
+X_genes_all <- df[, gene_cols, drop = FALSE]
+
+
+X_genes_all[] <- lapply(X_genes_all, as.numeric)
+
+
+
+
+idx_learn <- which(df$.split == "train")
+idx_val   <- which(df$.split == "val")
+idx_test  <- which(df$.split == "test")
+idx_train_all <- c(idx_learn, idx_val)
+
+
+
+# IPTW (Propensity Score) 
+treat_col <- "Adjuvant.Chemo"
+A <- df[[treat_col]]
+
+A_bin <- ifelse(A == "ACT", 1L, 0L)
+
+X_ps_df <- X_clin_full
+X_ps_mm <- model.matrix(~ . - 1, data = X_ps_df)
+
+# Median-impute clinical matrix
+X_ps_mm <- apply(X_ps_mm, 2, function(col) {
+  m <- median(col, na.rm = TRUE)
+  col[is.na(col)] <- m
+  col
+})
+
+
+idx_ps_fit <- c(idx_learn, idx_val)
+
+set.seed(123)
+cv_ps <- cv.glmnet(
+  x = X_ps_mm[idx_ps_fit, , drop = FALSE],
+  y = A_bin[idx_ps_fit],
+  family = "binomial",
+  alpha = 0,                 # ridge for stability
+  nfolds = 10,
+  standardize = TRUE
+)
+
+ps_hat <- as.numeric(predict(cv_ps, newx = X_ps_mm, s = "lambda.min", type = "response"))
+ps_hat <- pmin(pmax(ps_hat, 0.01), 0.99)
+
+p_treat <- mean(A_bin[idx_ps_fit] == 1)
+p_obs   <- 1 - p_treat
+
+sw <- ifelse(A_bin == 1, p_treat / ps_hat,
+             p_obs   / (1 - ps_hat))
+
+
+lo <- quantile(sw[idx_ps_fit], 0.01)
+hi <- quantile(sw[idx_ps_fit], 0.99)
+iptw_w <- pmin(pmax(sw, lo), hi)
+
+cat("\nIPTW weight summary (learn+val):\n")
+print(summary(iptw_w[idx_ps_fit]))
+cat("Max learn+val weight:", max(iptw_w[idx_ps_fit], na.rm = TRUE), "\n")
+
+w_learn     <- iptw_w[idx_learn]
+w_val       <- iptw_w[idx_val]
+w_train_all <- iptw_w[idx_train_all]
+
+y_time  <- as.numeric(df[[time_col]])
+y_event <- as.integer(df[[event_col]])
+
+X_clin <- X_clin_full
+
+
+top_k_genes_from_learn <- function(X_genes_df, learn_idx, K) {
+  # Select only the learning subset (rows)
+  X_learn <- X_genes_df[learn_idx, , drop = FALSE]
+
+  # Compute variance for each gene across samples
+  var_learn <- apply(X_learn, 2, var, na.rm = TRUE)
+
+  # Keep only finite (nonzero) variances
+  var_learn <- var_learn[is.finite(var_learn) & var_learn > 0]
+
+  # Limit K to available genes
+  K <- min(K, length(var_learn))
+
+  # Sort descending by variance and take top K
+  top_genes <- names(sort(var_learn, decreasing = TRUE))[1:K]
+
+  return(top_genes)
+}
+
+cindex_weighted <- function(times, events, scores, weights = NULL) {
+  times   <- as.numeric(times)
+  events  <- as.integer(events)
+  scores  <- as.numeric(scores)
+  if (is.null(weights)) weights <- rep(1, length(times))
+  weights <- as.numeric(weights)
+
+  c_obj <- survival::concordance(
+    survival::Surv(times, events) ~ scores,
+    weights = weights,
+    reverse = TRUE
+  )
+
+  as.numeric(c_obj$concordance)
+}
+
+# ---- Hyperparameter grids ----
+K_LIST <- c(1000, 1500, 2000)
+
+L1_RATIOS <- c(0.25, 0.5, 1.0)
+
+ALPHA_GRID <- rev(10^seq(-1.8, 0.5, length.out = 15))
+
+impute_col_median <- function(df) {
+  df[] <- lapply(df, function(col) {
+    if (is.numeric(col)) {
+      m <- stats::median(col, na.rm = TRUE)
+      col[is.na(col)] <- m
+    }
+    col
+  })
+  df
+}
+
+standardize_by_train <- function(Xtr) {
+  mu <- colMeans(Xtr)
+  sdv <- apply(Xtr, 2, sd)
+  sdv[sdv == 0] <- 1
+  list(
+    center = mu, scale = sdv,
+    transform = function(M) sweep(sweep(M, 2, mu, "-"), 2, sdv, "/")
+  )
+}
+
+results <- tibble()
+best <- list(val_c = -Inf)
+
+for (K in K_LIST) {
+  cat(sprintf("Loop K = %d\n", K))
+
+  topK <- top_k_genes_from_learn(X_genes_all, idx_learn, K)
+
+  X_learn_df <- cbind(
+    X_clin[idx_learn, , drop = FALSE],
+    X_genes_all[idx_learn, topK, drop = FALSE]
+  )
+  X_val_df <- cbind(
+    X_clin[idx_val, , drop = FALSE],
+    X_genes_all[idx_val, topK, drop = FALSE]
+  )
+
+  X_learn_df <- impute_col_median(as.data.frame(X_learn_df))
+  X_val_df   <- impute_col_median(as.data.frame(X_val_df))
+
+  var_learn <- apply(as.matrix(X_learn_df), 2, var, na.rm = TRUE)
+  keep_j <- which(is.finite(var_learn) & var_learn > 1e-6)
+  if (!length(keep_j)) next
+  X_learn_v <- as.matrix(X_learn_df[, keep_j, drop = FALSE])
+  X_val_v   <- as.matrix(X_val_df[,   keep_j, drop = FALSE])
+  kept_cols <- colnames(X_learn_df)[keep_j]
+
+  z <- standardize_by_train(X_learn_v)
+  X_learn_z <- z$transform(X_learn_v)
+  X_val_z   <- z$transform(X_val_v)
+
+  # Surv for glmnet
+  y_learn <- Surv(y_time[idx_learn], y_event[idx_learn])
+
+  for (l1 in L1_RATIOS) {
+
+    fit_path <- glmnet(
+      x = X_learn_z, y = y_learn,
+      family = "cox",
+      alpha = l1,
+      lambda = ALPHA_GRID,
+      standardize = FALSE,
+      weights = w_learn
+)
+
+
+
+    best_local <- list(val_c = -Inf, alpha = NA_real_)
+    for (j in seq_along(ALPHA_GRID)) {
+      lam <- ALPHA_GRID[j]
+
+
+      risk_val <- as.numeric(predict(fit_path, newx = X_val_z, type = "link", s = lam))
+      val_c <- cindex_weighted(
+        times   = y_time[idx_val],
+        events  = y_event[idx_val],
+        scores  = risk_val,
+        weights = w_val
+)
+
+
+      cat(sprintf("Step %d: alpha=%0.4e  val_C=%0.4f\n", j - 1L, lam, val_c))
+
+      if (val_c > best_local$val_c) {
+        best_local <- list(val_c = val_c, alpha = lam)
+      }
+
+
+      results <- bind_rows(
+        results,
+        tibble(K = K, l1_ratio = l1, alpha = best_local$alpha,
+               val_c = best_local$val_c, n_features = ncol(X_learn_z))
+      )
+
+
+      if (best_local$val_c > best$val_c) {
+        best <- list(
+          K = K,
+          l1_ratio = l1,
+          alpha = best_local$alpha,  # λ
+          val_c = best_local$val_c,
+          kept_cols = kept_cols
+        )
+        cat("✅ New best model found:\n")
+        cat(sprintf("   K = %d, l1_ratio = %.2f, alpha = %0.4e, val_C = %.4f\n",
+                    K, l1, best_local$alpha, best_local$val_c))
+      }
+    }
+  }
+}
+
+
+results_iptw <- arrange(results, desc(val_c))
+print(head(results_iptw, 10))
+cat("\n=== BEST (from validation) ===\n")
+print(best)
+
+# TEST
+idx_train_all <- c(idx_learn, idx_val)
+
+K_best     <- best$K
+l1_best    <- best$l1_ratio
+alpha_best <- best$alpha
+
+
+topK_train <- top_k_genes_from_learn(X_genes_all, idx_train_all, K_best)
+
+
+X_train_df <- cbind(
+  X_clin[idx_train_all, , drop = FALSE],
+  X_genes_all[idx_train_all, topK_train, drop = FALSE]
+)
+
+X_test_df <- cbind(
+  X_clin[idx_test, , drop = FALSE],
+  X_genes_all[idx_test, topK_train, drop = FALSE]
+)
+
+
+X_train_df[] <- lapply(X_train_df, function(col) {
+  if (is.numeric(col)) {
+    col[is.na(col)] <- median(col, na.rm = TRUE)
+  }
+  col
+})
+
+X_test_df[] <- lapply(X_test_df, function(col) {
+  if (is.numeric(col)) {
+    col[is.na(col)] <- median(col, na.rm = TRUE)
+  }
+  col
+})
+
+
+num_cols    <- sapply(X_train_df, is.numeric)
+X_train_num <- X_train_df[, num_cols, drop = FALSE]
+
+vars      <- apply(as.matrix(X_train_num), 2, var, na.rm = TRUE)
+keep_cols <- names(vars[is.finite(vars) & vars > 1e-6])
+
+X_train_v <- X_train_df[, keep_cols, drop = FALSE]
+X_test_v  <- X_test_df[,  keep_cols, drop = FALSE]
+
+final_cols <- keep_cols
+
+
+mu <- apply(X_train_v, 2, mean)
+sd <- apply(X_train_v, 2, sd)
+sd[sd == 0 | is.na(sd)] <- 1  # safety guard
+
+X_train_z <- scale(X_train_v, center = mu, scale = sd)
+X_test_z  <- scale(X_test_v,  center = mu, scale = sd)
+
+
+y_train_struct <- Surv(
+  time  = y_time[idx_train_all],
+  event = as.logical(y_event[idx_train_all])
+)
+
+
+cox_final <- glmnet(
+  x       = as.matrix(X_train_z),
+  y       = y_train_struct,
+  family  = "cox",
+  alpha   = l1_best,
+  lambda  = alpha_best,
+  standardize = FALSE,
+  weights = w_train_all
+)
+
+coefs_final <- as.vector(coef(cox_final))
+
+
+test_scores <- as.vector(X_test_z %*% coefs_final)
+
+test_c_iptw <- cindex_weighted(
+  times   = y_time[idx_test],
+  events  = y_event[idx_test],
+  scores  = test_scores,
+  weights = iptw_w[idx_test]
+)
+
+cat("\n=== FINAL EVALUATION ===\n")
+cat(sprintf(
+  "Best hyperparams -> K: %d | l1_ratio: %.2f | alpha: %.2e\n",
+  K_best, l1_best, alpha_best
+))
+cat(sprintf("TEST C-index: %.4f\n", test_c_iptw))
+
+# Coefficient table
+coef_df_iptw <- data.frame(
+  feature        = final_cols,
+  coef_log_hazard= coefs_final,
+  hazard_ratio   = exp(coefs_final)
+) |>
+  dplyr::arrange(desc(abs(coef_log_hazard)))
+
+
+cat("\nTop 20 features by |coef|:\n")
+print(head(coef_df_iptw, 20))
+
+```
+
+#Followed vs not followed
+```{r}
+df_train <- df[idx_train_all, , drop=FALSE]
+df_test  <- df[idx_test, , drop=FALSE]
+
+X_train_df <- cbind(
+  df_train[, clin_cols, drop=FALSE],
+  X_genes_all[idx_train_all, topK_train, drop=FALSE]
+)
+
+X_test_df <- cbind(
+  df_test[, clin_cols, drop=FALSE],
+  X_genes_all[idx_test, topK_train, drop=FALSE]
+)
+
+
+train_meds <- sapply(X_train_df, function(col) if (is.numeric(col)) median(col, na.rm=TRUE) else NA)
+impute_with_train <- function(Xdf){
+  Xdf[] <- Map(function(col, m){
+    if (is.numeric(col)) { col[is.na(col)] <- m }
+    col
+  }, Xdf, train_meds)
+  Xdf
+}
+
+X_train_df <- impute_with_train(X_train_df)
+X_test_df  <- impute_with_train(X_test_df)
+
+
+vars <- apply(as.matrix(X_train_df), 2, var, na.rm=TRUE)
+final_cols_2m <- names(vars[is.finite(vars) & vars > 1e-6])
+
+X_train_v <- as.matrix(X_train_df[, final_cols_2m, drop=FALSE])
+X_test_v  <- as.matrix(X_test_df[,  final_cols_2m, drop=FALSE])
+
+
+mu2 <- colMeans(X_train_v)
+sd2 <- apply(X_train_v, 2, sd); sd2[sd2==0 | is.na(sd2)] <- 1
+
+X_train_z <- scale(X_train_v, center=mu2, scale=sd2)
+X_test_z  <- scale(X_test_v,  center=mu2, scale=sd2)
+
+library(survival)
+library(glmnet)
+
+A_train <- df_train$Adjuvant.Chemo
+y_train <- Surv(df_train$OS_MONTHS, as.integer(df_train$OS_STATUS))
+
+idx_act_tr <- which(A_train == "ACT")
+idx_obs_tr <- which(A_train == "OBS")
+
+w_train_all_local <- iptw_w[idx_train_all]
+
+fit_act <- glmnet(
+  x = X_train_z[idx_act_tr, , drop=FALSE],
+  y = y_train[idx_act_tr],
+  family = "cox",
+  alpha = l1_best,
+  lambda = alpha_best,
+  standardize = FALSE,
+  weights = w_train_all_local[idx_act_tr]
+)
+
+fit_obs <- glmnet(
+  x = X_train_z[idx_obs_tr, , drop=FALSE],
+  y = y_train[idx_obs_tr],
+  family = "cox",
+  alpha = l1_best,
+  lambda = alpha_best,
+  standardize = FALSE,
+  weights = w_train_all_local[idx_obs_tr]
+)
+
+lp_act <- as.numeric(predict(fit_act, newx = X_test_z, type="link", s = alpha_best))
+lp_obs <- as.numeric(predict(fit_obs, newx = X_test_z, type="link", s = alpha_best))
+
+model_rec <- ifelse(lp_act < lp_obs, "ACT", "OBS")
+actual    <- as.character(df_test$Adjuvant.Chemo)
+aligned   <- (actual == model_rec)
+
+df_test_rec2 <- df_test
+df_test_rec2$model_rec <- model_rec
+df_test_rec2$aligned   <- aligned
+df_test_rec2$lp_ACT    <- lp_act
+df_test_rec2$lp_OBS    <- lp_obs
+df_test_rec2$delta     <- lp_obs - lp_act  # positive => ACT better
+
+library(survival)
+
+df_test_rec2$grp <- factor(
+  ifelse(df_test_rec2$aligned, "Followed", "Not Followed"),
+  levels = c("Followed", "Not Followed")
+)
+
+fit_km <- survfit(Surv(OS_MONTHS, as.integer(OS_STATUS)) ~ grp, data = df_test_rec2)
+
+library(survival)
+library(survminer)
+library(ggplot2)
+
+fit_km2 <- survfit(Surv(OS_MONTHS, as.integer(OS_STATUS)) ~ grp, data = df_test_rec2)
+
+p <- ggsurvplot(
+  fit_km2,
+  data = df_test_rec2,
+  conf.int = TRUE,
+  risk.table = TRUE,
+  pval = FALSE,
+  censor.shape = "|",
+  censor.size = 3,
+  palette = c("#1f77b4", "#ff7f0e"),
+  legend.title = NULL,
+  legend.labs = levels(df_test_rec2$grp),
+  legend = c(0.70, 0.90),
+  xlab = "Time",
+  ylab = "Survival Probability",
+  title = "Kaplan-Meier Survival Curves by Treatment Alignment",
+  ggtheme = theme_classic(base_size = 14),
+  risk.table.height = 0.32,
+  risk.table.y.text = TRUE,
+  risk.table.fontsize = 4.5
+)
+
+# Log-rank p-value (like python)
+lr <- survdiff(Surv(OS_MONTHS, as.integer(OS_STATUS)) ~ grp, data = df_test_rec2)
+pval <- 1 - pchisq(lr$chisq, df = 1)
+
+p$plot <- p$plot +
+  annotate("text", x = 20, y = 0.15,
+           label = paste0("Log-rank p-value: ", formatC(pval, format="f", digits=4)),
+           size = 5)
+
+print(p)
+
+```
