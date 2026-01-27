@@ -1,0 +1,34 @@
+Adjuvant Chemo
+Age
+IS_MALE
+Stage_IA
+Stage_IB
+Stage_II
+Stage_III
+Histology_Adenocarcinoma
+Histology_Large Cell Carcinoma
+Histology_Squamous Cell Carcinoma
+Race_African American
+Race_Asian
+Race_Caucasian
+Race_Native Hawaiian or Other Pacific Islander
+Race_Unknown
+Smoked?_No
+Smoked?_Unknown
+Smoked?_Yes
+ADGRF5
+TRIM68
+UBE2NL
+BICRAL
+UBE2S
+ARHGAP44
+RIPOR2
+PER2
+FKBP4
+CYP2B7P
+STX12
+CDKN3
+CD302
+MEF2C
+FMO5
+PARL
