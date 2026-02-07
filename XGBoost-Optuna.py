@@ -208,6 +208,8 @@ def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, du
     plt.ylabel("Survival Probability")
     add_at_risk_counts(kmf_aligned, kmf_not_aligned)
     plt.text(0.1,0.1, f"Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
+    ax.set_xlim(left =0)
+    ax.set_ylim(bottom=0)
     plt.tight_layout()
     plt.savefig("km_alignment_xgb_recommendation.png", dpi=600)
     plt.show()
