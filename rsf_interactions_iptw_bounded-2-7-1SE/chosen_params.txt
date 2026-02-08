@@ -1,0 +1,4 @@
+{'top_k_genes': 51, 'inter_ratio': 0.9368748142534836, 'n_estimators': 700, 'max_depth': 4, 'min_samples_split': 15, 'min_samples_leaf': 31, 'max_features_mode': 'all'}
+
+RSF params used:
+{'n_estimators': 700, 'max_depth': 4, 'min_samples_split': 15, 'min_samples_leaf': 31, 'min_weight_fraction_leaf': 0.0, 'max_features': None, 'max_leaf_nodes': None, 'bootstrap': True, 'oob_score': False, 'n_jobs': -1, 'random_state': 7, 'verbose': 0, 'warm_start': False}

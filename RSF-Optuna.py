@@ -48,6 +48,10 @@ CLINICAL_VARS = [
     "Smoked?_No","Smoked?_Unknown","Smoked?_Yes"
 ]
 
+# ---------- Optional fixed covariate set ----------
+USE_FIXED_COVARIATES = True
+FIXED_COVARIATES_PATH = "combined_features.txt"
+
 
 # ============================================================
 # Helpers: IO, preprocessing, ranking, features, IPTW, metrics
@@ -60,6 +64,20 @@ def load_genes_list(genes_csv):
     genes = g.loc[g["Prop"] == 1, "Gene"].astype(str).tolist()
     print(f"[Genes] Selected {len(genes)} genes with Prop == 1")
     return genes
+
+
+def load_feature_list(path):
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Feature list not found: {path}")
+    with open(path, "r") as f:
+        features = [line.strip() for line in f if line.strip()]
+    seen = set()
+    unique = []
+    for item in features:
+        if item not in seen:
+            unique.append(item)
+            seen.add(item)
+    return unique
 
 
 def preprocess_split(df, clinical_vars, gene_names):
@@ -185,7 +203,7 @@ def make_rsf(**params):
 
 def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, dup_inter,
                                            clin_cols,
-                                           time_col="OS_MONTHS", event_col="OS_STATUS"):
+                                           time_col="OS_MONTHS", event_col="OS_STATUS", path =""):
     """KM comparison for alignment with model's treatment recommendation on provided data."""
     df = df.copy()
     df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
@@ -253,7 +271,7 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
     plt.tight_layout()
-    plt.savefig("km_alignment_rsf_recommendation.png", dpi=600)
+    plt.savefig(path + "km_alignment_rsf_recommendation.png", dpi=600)
     plt.show()
 
 
@@ -279,16 +297,24 @@ print(test_raw["OS_STATUS"].value_counts())
 print("Test Adjuvant Chemo value counts:")
 print(test_raw["Adjuvant Chemo"].value_counts())
 
-GENE_LIST = load_genes_list(GENES_CSV)
+if USE_FIXED_COVARIATES and os.path.exists(FIXED_COVARIATES_PATH):
+    FIXED_FEATURES = load_feature_list(FIXED_COVARIATES_PATH)
+    CLINICAL_VARS_USED = [c for c in CLINICAL_VARS if c in FIXED_FEATURES]
+    GENE_LIST = [f for f in FIXED_FEATURES if f not in CLINICAL_VARS]
+    print(f"[Fixed Covariates] Using {len(FIXED_FEATURES)} features from {FIXED_COVARIATES_PATH}")
+else:
+    FIXED_FEATURES = None
+    CLINICAL_VARS_USED = CLINICAL_VARS
+    GENE_LIST = load_genes_list(GENES_CSV)
 
-train_df = preprocess_split(train_raw, CLINICAL_VARS, GENE_LIST)
-valid_df = preprocess_split(valid_raw, CLINICAL_VARS, GENE_LIST)
-test_df  = preprocess_split(test_raw,  CLINICAL_VARS, GENE_LIST)
+train_df = preprocess_split(train_raw, CLINICAL_VARS_USED, GENE_LIST)
+valid_df = preprocess_split(valid_raw, CLINICAL_VARS_USED, GENE_LIST)
+test_df  = preprocess_split(test_raw,  CLINICAL_VARS_USED, GENE_LIST)
 
 # Keep only features present in all splits
-feat_candidates = [c for c in (CLINICAL_VARS + GENE_LIST)
+feat_candidates = [c for c in (CLINICAL_VARS_USED + GENE_LIST)
                    if c in train_df.columns and c in valid_df.columns and c in test_df.columns]
-CLIN_FEATS = [c for c in CLINICAL_VARS if c in feat_candidates]
+CLIN_FEATS = [c for c in CLINICAL_VARS_USED if c in feat_candidates]
 GENE_FEATS = [g for g in GENE_LIST if g in feat_candidates]
 CLIN_FEATS_PRETX = [c for c in CLIN_FEATS if c != "Adjuvant Chemo"]  # safer than original
 
@@ -315,7 +341,8 @@ def suggest_hparams(trial):
     max_nonclin = max(8, FEAT_BUDGET - len(CLIN_FEATS))
 
     # Same gene menus
-    base_main = [16, 32, 64, 96, 128, 192, 256, 384, 512, MAX_GENES]
+    #base_main = [16, 32, 64, 96, 128, 192, 256, 384, 512, MAX_GENES]
+    base_main = [MAX_GENES]
     TOPK_MAIN_CHOICES = tuple(sorted({k for k in base_main if k <= MAX_GENES}))
     top_k_genes = int(trial.suggest_categorical("top_k_genes", TOPK_MAIN_CHOICES))
 
@@ -335,7 +362,7 @@ def suggest_hparams(trial):
     # Important knobs: n_estimators, max_features, min_samples_leaf/split, max_depth
     n_estimators = trial.suggest_int("n_estimators", 200, 2000, step=100)
 
-    max_depth = trial.suggest_int("max_depth", 2, 10)
+    max_depth = trial.suggest_int("max_depth", 3, 10)
 
     min_samples_split = trial.suggest_int("min_samples_split", 2, 50)
     min_samples_leaf  = trial.suggest_int("min_samples_leaf", 20, 150)
@@ -435,8 +462,8 @@ def objective(trial):
 
 
 # ---- Run study ----
-storage = "sqlite:///rsf_optuna_jan25.db"
-study_name = "rsf_jan_25_1se"
+storage = "sqlite:///rsf_optuna_feb7.db"
+study_name = "rsf_feb_7_1se"
 
 study = optuna.create_study(
     direction="maximize",
@@ -468,7 +495,13 @@ if not candidates:
     chosen = best_trial
     print("[1-SE Rule] No candidates found above threshold, falling back to best trial.")
 else:
-    candidates.sort(key=lambda t: t.user_attrs.get("n_features", float("inf")))
+    candidates.sort(
+        key=lambda t: (
+            t.user_attrs.get("n_features", float("inf")),
+            t.params.get("max_depth", float("inf")),
+            t.params.get("n_estimators", float("inf"))
+        )
+    )
     chosen = candidates[0]
     print(f"[1-SE Rule] Found {len(candidates)} candidates. "
           f"Chose trial #{chosen.number} with {chosen.user_attrs.get('n_features')} features.")
@@ -580,7 +613,7 @@ def ci_by_arm(pred, t, e, arm):
 print("[Train+Val] CI by arm:", ci_by_arm(pred_trv, t_trv, e_trv, act_trv))
 print("[Test]      CI by arm:", ci_by_arm(pred_te,  t_te,  e_te,  act_te))
 
-date = "11-22"
+date = "2-7"
 
 # Save artifacts
 import joblib
@@ -608,4 +641,5 @@ compare_treatment_recommendation_km_rsf(
     genes_inter=genes_inter,
     dup_inter=dup_inter,
     clin_cols=CLIN_FEATS,
+    path = OUT_DIR + "/"
 )
