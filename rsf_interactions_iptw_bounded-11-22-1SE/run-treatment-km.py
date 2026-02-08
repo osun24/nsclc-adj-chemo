@@ -97,7 +97,7 @@ def cindex(pred, time, event):
 
 def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, dup_inter,
                                            clin_cols,
-                                           time_col="OS_MONTHS", event_col="OS_STATUS"):
+                                           time_col="OS_MONTHS", event_col="OS_STATUS", p = 0, q= 0):
     """KM comparison for alignment with model's treatment recommendation."""
     df = df.copy()
     df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
@@ -154,6 +154,9 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
         df.loc[mask_not_aligned, time_col],
         event_observed_A=df.loc[mask_aligned, event_col],
         event_observed_B=df.loc[mask_not_aligned, event_col],
+        weightings="fleming-harrington",
+        p =p,
+        q=q
     )
     print("Log-rank test p-value:", results.p_value)
 
@@ -161,11 +164,14 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
     plt.xlabel("Time (months)")
     plt.ylabel("Survival Probability")
     add_at_risk_counts(kmf_aligned, kmf_not_aligned)
-    plt.text(0.1, 0.1, f"Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
+    if p > 0 or q > 0:
+        text = f"Weighted (p = {p}, q = {q})"
+    else: text=""
+    plt.text(0.1, 0.1, f"{text} Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
     plt.tight_layout()
-    plt.savefig("km_alignment_rsf_recommendation.png", dpi=600)
+    plt.savefig(f"km_alignment_rsf_recommendation_{text}.png", dpi=600)
     print("Saved KM plot to km_alignment_rsf_recommendation.png")
     plt.show()
 

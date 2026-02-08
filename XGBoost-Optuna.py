@@ -149,7 +149,7 @@ def cindex(pred, time, event):
 
 
 def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, dup_inter,
-                                        feature_names, best_ntree, time_col="OS_MONTHS", event_col="OS_STATUS"):
+                                        feature_names, best_ntree, time_col="OS_MONTHS", event_col="OS_STATUS",p=0,q=0):
     """KM comparison for alignment with model's treatment recommendation on provided data."""
     df = df.copy()
     df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
@@ -199,7 +199,8 @@ def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, du
         df.loc[mask_aligned, time_col],
         df.loc[mask_not_aligned, time_col],
         event_observed_A=df.loc[mask_aligned, event_col],
-        event_observed_B=df.loc[mask_not_aligned, event_col])
+        event_observed_B=df.loc[mask_not_aligned, event_col],
+        weightings ="fleming-harrington",p=p,q=q)
     """weightings="fleming-harrington",
     p = 0,
     q = 0"""
@@ -210,11 +211,14 @@ def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, du
     plt.xlabel("Time")
     plt.ylabel("Survival Probability")
     add_at_risk_counts(kmf_aligned, kmf_not_aligned)
-    plt.text(0.1,0.1, f"Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
+    if p > 0 or q > 0:
+        text = f"Weighted (p = {p}, q = {q})"
+    else: text=""
+    plt.text(0.1, 0.1, f"{text} Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
     ax.set_xlim(left =0)
     ax.set_ylim(bottom=0)
     plt.tight_layout()
-    plt.savefig("km_alignment_xgb_recommendation.png", dpi=600)
+    plt.savefig(f"km_alignment_xgb_recommendation_{text}.png", dpi=600)
     plt.show()
 
 # ============================================================
@@ -562,4 +566,16 @@ compare_treatment_recommendation_km(
     dup_inter=dup_inter,
     feature_names=feat_names,
     best_ntree=best_ntree_final,
+    p=0,q=0
+)
+
+compare_treatment_recommendation_km(
+    booster_final,
+    test_df,
+    genes_main=genes_main,
+    genes_inter=genes_inter,
+    dup_inter=dup_inter,
+    feature_names=feat_names,
+    best_ntree=best_ntree_final,
+    p=1,q=0
 )
