@@ -199,8 +199,11 @@ def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, du
         df.loc[mask_aligned, time_col],
         df.loc[mask_not_aligned, time_col],
         event_observed_A=df.loc[mask_aligned, event_col],
-        event_observed_B=df.loc[mask_not_aligned, event_col]
-    )
+        event_observed_B=df.loc[mask_not_aligned, event_col])
+    """weightings="fleming-harrington",
+    p = 0,
+    q = 0"""
+    
     print("Log-rank test p-value:", results.p_value)
 
     plt.title("Kaplan-Meier Survival Curves by Treatment Alignment")
@@ -421,7 +424,7 @@ study = optuna.create_study(
     # directions=["maximize", "minimize"], # For multi-objective
     study_name=study_name, storage=storage, load_if_exists=True, #sampler=sampler
 )
-N_TRIALS = 100  # adjust as needed
+N_TRIALS = 0  # adjust as needed
 print(f"Starting optimization: {N_TRIALS} trials")
 study.optimize(objective, n_trials=N_TRIALS, gc_after_trial=True)
 
