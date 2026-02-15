@@ -569,7 +569,7 @@ compare_treatment_recommendation_km(
     p=0,q=0
 )
 
-compare_treatment_recommendation_km(
+"""compare_treatment_recommendation_km(
     booster_final,
     test_df,
     genes_main=genes_main,
@@ -579,3 +579,4 @@ compare_treatment_recommendation_km(
     best_ntree=best_ntree_final,
     p=1,q=0
 )
+"""

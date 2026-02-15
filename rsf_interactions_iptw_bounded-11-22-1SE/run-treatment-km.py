@@ -1,4 +1,11 @@
 import os
+
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
 import sys
 import numpy as np
 import pandas as pd
@@ -12,8 +19,10 @@ from sksurv.metrics import concordance_index_censored
 from sksurv.util import Surv
 from sksurv.ensemble import RandomSurvivalForest
 from lifelines import KaplanMeierFitter
+from lifelines.utils import restricted_mean_survival_time
 from lifelines.statistics import logrank_test
 from lifelines.plotting import add_at_risk_counts
+from threadpoolctl import threadpool_limits
 
 warnings.filterwarnings(
     "ignore",
@@ -95,6 +104,12 @@ def cindex(pred, time, event):
     return float(concordance_index_censored(event.astype(bool), time.astype(float), pred)[0])
 
 
+def recommend_treatment(risk_treated, risk_untreated, eps=1e-100):
+    """Deterministic treatment recommendation with epsilon tie-break."""
+    diff = risk_untreated - risk_treated  # positive => treated better (lower risk)
+    return np.where(diff > eps, 1, np.where(diff < -eps, 0, 0))
+
+
 def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, dup_inter,
                                            clin_cols,
                                            time_col="OS_MONTHS", event_col="OS_STATUS", p = 0, q= 0):
@@ -117,10 +132,11 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
     )
 
     # RSF predict() returns a risk score: higher = worse
-    risk_treated = model.predict(X_treated.astype(np.float64))
-    risk_untreated = model.predict(X_untreated.astype(np.float64))
+    with threadpool_limits(limits=1):
+        risk_treated = model.predict(X_treated.astype(np.float64))
+        risk_untreated = model.predict(X_untreated.astype(np.float64))
 
-    model_rec = np.where(risk_treated < risk_untreated, 1, 0)  # choose lower risk arm
+    model_rec = recommend_treatment(risk_treated, risk_untreated, eps=1e-100)
     actual = df["Adjuvant Chemo"].to_numpy(int)
     alignment = actual == model_rec
 
@@ -179,6 +195,75 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
     print(f"Not aligned patients: {mask_not_aligned.sum()}")
 
 
+def rmst_by_treatment_recommendation(model, df, genes_main, genes_inter, dup_inter,
+                                     clin_cols, tau=60,
+                                     time_col="OS_MONTHS", event_col="OS_STATUS"):
+    """Compute RMST for patients aligned vs not aligned with model recommendation."""
+    df = df.copy()
+    df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
+
+    # Counterfactual feature matrices with ACT forced to 1 vs 0
+    df_treated = df.copy()
+    df_treated["Adjuvant Chemo"] = 1
+
+    df_untreated = df.copy()
+    df_untreated["Adjuvant Chemo"] = 0
+
+    X_treated, _ = build_features_with_interactions(
+        df_treated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
+    X_untreated, _ = build_features_with_interactions(
+        df_untreated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
+
+    # RSF predict() returns a risk score: higher = worse
+    with threadpool_limits(limits=1):
+        risk_treated = model.predict(X_treated.astype(np.float64))
+        risk_untreated = model.predict(X_untreated.astype(np.float64))
+
+    model_rec = recommend_treatment(risk_treated, risk_untreated, eps=1e-100)
+    actual = df["Adjuvant Chemo"].to_numpy(int)
+    alignment = actual == model_rec
+
+    mask_aligned = alignment
+    mask_not_aligned = ~alignment
+
+    if tau is None:
+        tau = float(df[time_col].max())
+
+    kmf_aligned = KaplanMeierFitter()
+    kmf_not_aligned = KaplanMeierFitter()
+
+    kmf_aligned.fit(
+        durations=df.loc[mask_aligned, time_col],
+        event_observed=df.loc[mask_aligned, event_col],
+        label="Aligned with RSF recommendation"
+    )
+    kmf_not_aligned.fit(
+        durations=df.loc[mask_not_aligned, time_col],
+        event_observed=df.loc[mask_not_aligned, event_col],
+        label="Not aligned with RSF recommendation"
+    )
+
+    rmst_aligned = float(restricted_mean_survival_time(kmf_aligned, t=tau))
+    rmst_not_aligned = float(restricted_mean_survival_time(kmf_not_aligned, t=tau))
+    rmst_diff = rmst_aligned - rmst_not_aligned
+
+    print("\n[RMST by Treatment Recommendation]")
+    print(f"RMST (aligned) at tau={tau:.2f}: {rmst_aligned:.4f}")
+    print(f"RMST (not aligned) at tau={tau:.2f}: {rmst_not_aligned:.4f}")
+    print(f"RMST difference (aligned - not aligned): {rmst_diff:.4f}")
+
+    return {
+        "tau": tau,
+        "rmst_aligned": rmst_aligned,
+        "rmst_not_aligned": rmst_not_aligned,
+        "rmst_diff": rmst_diff,
+        "n_aligned": int(mask_aligned.sum()),
+        "n_not_aligned": int(mask_not_aligned.sum())
+    }
+
+
 # ============================================================
 # Main Script
 # ============================================================
@@ -204,7 +289,11 @@ if __name__ == "__main__":
     
     # Preprocess test set
     test_df = preprocess_split(test_raw, CLINICAL_VARS, genes_used)
-    test_df = test_df.sort_values(by=["OS_MONTHS", "OS_STATUS"], ascending=[False, False]).reset_index(drop=True)
+    test_df = test_df.sort_values(
+        by=["OS_MONTHS", "OS_STATUS"],
+        ascending=[False, False],
+        kind="mergesort"
+    ).reset_index(drop=True)
     
     print(f"Test set: {len(test_df)} samples")
     print(f"Test OS_STATUS value counts:\n{test_df['OS_STATUS'].value_counts()}")
@@ -214,6 +303,11 @@ if __name__ == "__main__":
     print("\n[Loading RSF Model]")
     rsf_model = joblib.load("rsf_interactions_iptw_bounded-11-22-1SE/rsf_final.joblib")
     print(f"Model loaded: {rsf_model}")
+    try:
+        rsf_model.set_params(n_jobs=1)
+    except Exception:
+        print("Could not set n_jobs=1 on RSF model, will rely on threadpool_limits to control threading.")
+        pass
     
     # Parameters from chosen trial
     # From chosen_params.txt: top_k_genes=16, inter_ratio=1.113452335944007
@@ -236,7 +330,8 @@ if __name__ == "__main__":
     )
     X_te = X_te_raw.astype(np.float64)
     
-    pred_te = rsf_model.predict(X_te)
+    with threadpool_limits(limits=1):
+        pred_te = rsf_model.predict(X_te)
     t_te = test_df["OS_MONTHS"].values.astype(float)
     e_te = test_df["OS_STATUS"].values.astype(int)
     
@@ -255,6 +350,15 @@ if __name__ == "__main__":
     # Kaplan-Meier alignment on test set
     print("\n[KM Alignment Analysis]")
     compare_treatment_recommendation_km_rsf(
+        rsf_model,
+        test_df,
+        genes_main=genes_main,
+        genes_inter=genes_inter,
+        dup_inter=dup_inter,
+        clin_cols=clin_used,
+    )
+
+    rmst_by_treatment_recommendation(
         rsf_model,
         test_df,
         genes_main=genes_main,

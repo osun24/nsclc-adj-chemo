@@ -14,6 +14,9 @@ from sksurv.ensemble import RandomSurvivalForest
 from lifelines import KaplanMeierFitter
 from lifelines.statistics import logrank_test
 from lifelines.plotting import add_at_risk_counts
+from lifelines.utils import restricted_mean_survival_time
+from threadpoolctl import threadpool_limits
+from sklearn.inspection import permutation_importance
 
 import optuna
 # from optuna.samplers import NSGAIISampler  # keep if you later switch back to MO
@@ -48,10 +51,6 @@ CLINICAL_VARS = [
     "Smoked?_No","Smoked?_Unknown","Smoked?_Yes"
 ]
 
-# ---------- Optional fixed covariate set ----------
-USE_FIXED_COVARIATES = True
-FIXED_COVARIATES_PATH = "combined_features.txt"
-
 
 # ============================================================
 # Helpers: IO, preprocessing, ranking, features, IPTW, metrics
@@ -64,20 +63,6 @@ def load_genes_list(genes_csv):
     genes = g.loc[g["Prop"] == 1, "Gene"].astype(str).tolist()
     print(f"[Genes] Selected {len(genes)} genes with Prop == 1")
     return genes
-
-
-def load_feature_list(path):
-    if not os.path.exists(path):
-        raise FileNotFoundError(f"Feature list not found: {path}")
-    with open(path, "r") as f:
-        features = [line.strip() for line in f if line.strip()]
-    seen = set()
-    unique = []
-    for item in features:
-        if item not in seen:
-            unique.append(item)
-            seen.add(item)
-    return unique
 
 
 def preprocess_split(df, clinical_vars, gene_names):
@@ -222,9 +207,10 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
         df_untreated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
     )
 
-    # RSF predict() returns a risk score: higher = worse
-    risk_treated = model.predict(X_treated.astype(np.float64))
-    risk_untreated = model.predict(X_untreated.astype(np.float64))
+    with threadpool_limits(limits=1):
+        # RSF predict() returns a risk score: higher = worse
+        risk_treated = model.predict(X_treated.astype(np.float64))
+        risk_untreated = model.predict(X_untreated.astype(np.float64))
 
     model_rec = np.where(risk_treated < risk_untreated, 1, 0)  # choose lower risk arm
     actual = df["Adjuvant Chemo"].to_numpy(int)
@@ -262,6 +248,16 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
         event_observed_B=df.loc[mask_not_aligned, event_col],
     )
     print("Log-rank test p-value:", results.p_value)
+    
+    tau = 60 # 5 year survival
+    rmst_aligned = float(restricted_mean_survival_time(kmf_aligned, t=tau))
+    rmst_not_aligned = float(restricted_mean_survival_time(kmf_not_aligned, t=tau))
+    rmst_diff = rmst_aligned - rmst_not_aligned
+
+    print("\n[RMST by Treatment Recommendation]")
+    print(f"RMST (aligned) at tau={tau:.2f}: {rmst_aligned:.4f}")
+    print(f"RMST (not aligned) at tau={tau:.2f}: {rmst_not_aligned:.4f}")
+    print(f"RMST difference (aligned - not aligned): {rmst_diff:.4f}")
 
     plt.title("Kaplan-Meier Survival Curves by Treatment Alignment")
     plt.xlabel("Time")
@@ -273,7 +269,15 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
     plt.tight_layout()
     plt.savefig(path + "km_alignment_rsf_recommendation.png", dpi=600)
     plt.show()
-
+    
+    return {
+        "tau": tau,
+        "rmst_aligned": rmst_aligned,
+        "rmst_not_aligned": rmst_not_aligned,
+        "rmst_diff": rmst_diff,
+        "n_aligned": int(mask_aligned.sum()),
+        "n_not_aligned": int(mask_not_aligned.sum())
+    }
 
 # ============================================================
 # Load data, rank genes (TRAIN only), set budgets
@@ -297,24 +301,16 @@ print(test_raw["OS_STATUS"].value_counts())
 print("Test Adjuvant Chemo value counts:")
 print(test_raw["Adjuvant Chemo"].value_counts())
 
-if USE_FIXED_COVARIATES and os.path.exists(FIXED_COVARIATES_PATH):
-    FIXED_FEATURES = load_feature_list(FIXED_COVARIATES_PATH)
-    CLINICAL_VARS_USED = [c for c in CLINICAL_VARS if c in FIXED_FEATURES]
-    GENE_LIST = [f for f in FIXED_FEATURES if f not in CLINICAL_VARS]
-    print(f"[Fixed Covariates] Using {len(FIXED_FEATURES)} features from {FIXED_COVARIATES_PATH}")
-else:
-    FIXED_FEATURES = None
-    CLINICAL_VARS_USED = CLINICAL_VARS
-    GENE_LIST = load_genes_list(GENES_CSV)
+GENE_LIST = load_genes_list(GENES_CSV)
 
-train_df = preprocess_split(train_raw, CLINICAL_VARS_USED, GENE_LIST)
-valid_df = preprocess_split(valid_raw, CLINICAL_VARS_USED, GENE_LIST)
-test_df  = preprocess_split(test_raw,  CLINICAL_VARS_USED, GENE_LIST)
+train_df = preprocess_split(train_raw, CLINICAL_VARS, GENE_LIST)
+valid_df = preprocess_split(valid_raw, CLINICAL_VARS, GENE_LIST)
+test_df  = preprocess_split(test_raw,  CLINICAL_VARS, GENE_LIST)
 
 # Keep only features present in all splits
-feat_candidates = [c for c in (CLINICAL_VARS_USED + GENE_LIST)
+feat_candidates = [c for c in (CLINICAL_VARS + GENE_LIST)
                    if c in train_df.columns and c in valid_df.columns and c in test_df.columns]
-CLIN_FEATS = [c for c in CLINICAL_VARS_USED if c in feat_candidates]
+CLIN_FEATS = [c for c in CLINICAL_VARS if c in feat_candidates]
 GENE_FEATS = [g for g in GENE_LIST if g in feat_candidates]
 CLIN_FEATS_PRETX = [c for c in CLIN_FEATS if c != "Adjuvant Chemo"]  # safer than original
 
@@ -341,8 +337,7 @@ def suggest_hparams(trial):
     max_nonclin = max(8, FEAT_BUDGET - len(CLIN_FEATS))
 
     # Same gene menus
-    #base_main = [16, 32, 64, 96, 128, 192, 256, 384, 512, MAX_GENES]
-    base_main = [MAX_GENES]
+    base_main = [16, 32, 64, 96, 128, 192, 256, 384, 512, MAX_GENES]
     TOPK_MAIN_CHOICES = tuple(sorted({k for k in base_main if k <= MAX_GENES}))
     top_k_genes = int(trial.suggest_categorical("top_k_genes", TOPK_MAIN_CHOICES))
 
@@ -362,7 +357,7 @@ def suggest_hparams(trial):
     # Important knobs: n_estimators, max_features, min_samples_leaf/split, max_depth
     n_estimators = trial.suggest_int("n_estimators", 200, 2000, step=100)
 
-    max_depth = trial.suggest_int("max_depth", 3, 10)
+    max_depth = trial.suggest_int("max_depth", 2, 10)
 
     min_samples_split = trial.suggest_int("min_samples_split", 2, 50)
     min_samples_leaf  = trial.suggest_int("min_samples_leaf", 20, 150)
@@ -462,8 +457,8 @@ def objective(trial):
 
 
 # ---- Run study ----
-storage = "sqlite:///rsf_optuna_feb7.db"
-study_name = "rsf_feb_7_1se"
+storage = "sqlite:///rsf_optuna_jan25.db"
+study_name = "rsf_jan_25_1se"
 
 study = optuna.create_study(
     direction="maximize",
@@ -472,7 +467,7 @@ study = optuna.create_study(
     load_if_exists=True,
 )
 
-N_TRIALS = 100
+N_TRIALS = 0
 print(f"Starting optimization: {N_TRIALS} trials")
 study.optimize(objective, n_trials=N_TRIALS, gc_after_trial=True)
 
@@ -495,13 +490,7 @@ if not candidates:
     chosen = best_trial
     print("[1-SE Rule] No candidates found above threshold, falling back to best trial.")
 else:
-    candidates.sort(
-        key=lambda t: (
-            t.user_attrs.get("n_features", float("inf")),
-            t.params.get("max_depth", float("inf")),
-            t.params.get("n_estimators", float("inf"))
-        )
-    )
+    candidates.sort(key=lambda t: t.user_attrs.get("n_features", float("inf")))
     chosen = candidates[0]
     print(f"[1-SE Rule] Found {len(candidates)} candidates. "
           f"Chose trial #{chosen.number} with {chosen.user_attrs.get('n_features')} features.")
@@ -577,43 +566,44 @@ rsf_params_fin = dict(
     max_leaf_nodes=None,
     bootstrap=True,
     oob_score=False,
-    n_jobs=-1,
+    n_jobs=1, # determinism increase
     random_state=7,
     verbose=0,
     warm_start=False,
 )
 
-rsf_final = make_rsf(**rsf_params_fin)
-rsf_final.fit(X_trv, y_trv, sample_weight=w_trv)
+with threadpool_limits(limits=1):
+    rsf_final = make_rsf(**rsf_params_fin)
+    rsf_final.fit(X_trv, y_trv, sample_weight=w_trv)
 
-pred_trv = rsf_final.predict(X_trv)
-pred_te  = rsf_final.predict(X_te)
+    pred_trv = rsf_final.predict(X_trv)
+    pred_te  = rsf_final.predict(X_te)
 
-t_trv = trainval_df["OS_MONTHS"].values.astype(float)
-e_trv = trainval_df["OS_STATUS"].values.astype(int)
-t_te  = test_df["OS_MONTHS"].values.astype(float)
-e_te  = test_df["OS_STATUS"].values.astype(int)
+    t_trv = trainval_df["OS_MONTHS"].values.astype(float)
+    e_trv = trainval_df["OS_STATUS"].values.astype(int)
+    t_te  = test_df["OS_MONTHS"].values.astype(float)
+    e_te  = test_df["OS_STATUS"].values.astype(int)
 
-ci_trv = cindex(pred_trv, t_trv, e_trv)
-ci_te  = cindex(pred_te,  t_te,  e_te)
+    ci_trv = cindex(pred_trv, t_trv, e_trv)
+    ci_te  = cindex(pred_te,  t_te,  e_te)
 
-print(f"\n[Final RSF] Train+Val CI: {ci_trv:.4f}")
-print(f"[Final RSF] Test CI:      {ci_te:.4f}")
+    print(f"\n[Final RSF] Train+Val CI: {ci_trv:.4f}")
+    print(f"[Final RSF] Test CI:      {ci_te:.4f}")
 
-# Per-arm C-indices (sanity)
-act_trv = trainval_df["Adjuvant Chemo"].to_numpy(int)
-act_te  = test_df["Adjuvant Chemo"].to_numpy(int)
+    # Per-arm C-indices (sanity)
+    act_trv = trainval_df["Adjuvant Chemo"].to_numpy(int)
+    act_te  = test_df["Adjuvant Chemo"].to_numpy(int)
 
-def ci_by_arm(pred, t, e, arm):
-    out = {}
-    for label, mask in [("ACT=1", arm == 1), ("ACT=0", arm == 0)]:
-        out[label] = cindex(pred[mask], t[mask], e[mask]) if mask.sum() >= 3 else np.nan
-    return out
+    def ci_by_arm(pred, t, e, arm):
+        out = {}
+        for label, mask in [("ACT=1", arm == 1), ("ACT=0", arm == 0)]:
+            out[label] = cindex(pred[mask], t[mask], e[mask]) if mask.sum() >= 3 else np.nan
+        return out
 
-print("[Train+Val] CI by arm:", ci_by_arm(pred_trv, t_trv, e_trv, act_trv))
-print("[Test]      CI by arm:", ci_by_arm(pred_te,  t_te,  e_te,  act_te))
+    print("[Train+Val] CI by arm:", ci_by_arm(pred_trv, t_trv, e_trv, act_trv))
+    print("[Test]      CI by arm:", ci_by_arm(pred_te,  t_te,  e_te,  act_te))
 
-date = "2-7"
+date = "11-22"
 
 # Save artifacts
 import joblib
@@ -643,3 +633,32 @@ compare_treatment_recommendation_km_rsf(
     clin_cols=CLIN_FEATS,
     path = OUT_DIR + "/"
 )
+
+result = permutation_importance(
+    rsf_final, X_te, y_te, n_repeats=30, random_state=42, n_jobs=-1
+)
+
+importances_df = pd.DataFrame({
+    "importances_mean": result.importances_mean,
+    "importances_std": result.importances_std
+}, index=feat_names).sort_values(by="importances_mean", ascending=False)
+
+# Save to csv
+importances_df.to_csv(os.path.join(OUT_DIR, "feature_importances.csv"), index=True)
+
+print(importances_df)
+
+importances_df = importances_df.sort_values(by="importances_mean", ascending=True)  # Ascending for better barh plot
+
+# Plot the feature importances
+plt.figure(figsize=(12, 8))
+
+# Increase font size
+plt.rcParams.update({'font.size': 14})
+plt.barh(importances_df.index, importances_df["importances_mean"], xerr=importances_df["importances_std"], color=(9/255,117/255,181/255))
+plt.xlabel("Permutation Feature Importance")
+plt.ylabel("Feature")
+plt.title(f"Random Survival Forest: Feature Importances on Test Set")
+plt.tight_layout()
+plt.savefig(os.path.join(OUT_DIR, "feature_importances.png"), dpi=600)
+plt.show()
