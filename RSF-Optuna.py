@@ -207,7 +207,7 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
         df_untreated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
     )
 
-    with threadpool_limits(limits=1):
+    with threadpool_limits(limits=None):
         # RSF predict() returns a risk score: higher = worse
         risk_treated = model.predict(X_treated.astype(np.float64))
         risk_untreated = model.predict(X_untreated.astype(np.float64))
@@ -268,7 +268,7 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
     ax.set_ylim(bottom=0)
     plt.tight_layout()
     plt.savefig(path + "km_alignment_rsf_recommendation.png", dpi=600)
-    plt.show()
+    plt.show(block=False)
     
     return {
         "tau": tau,
@@ -276,7 +276,8 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
         "rmst_not_aligned": rmst_not_aligned,
         "rmst_diff": rmst_diff,
         "n_aligned": int(mask_aligned.sum()),
-        "n_not_aligned": int(mask_not_aligned.sum())
+        "n_not_aligned": int(mask_not_aligned.sum()),
+        "logrank_pvalue": float(results.p_value)
     }
 
 # ============================================================
@@ -504,161 +505,431 @@ print("[Chosen Attrs] k_main=%s k_int=%s dup_inter=%s" %
 
 
 # ============================================================
-# Final training on Train+Val with chosen hyperparams + IPTW
+# Model selection: Best, 1-SE nearest, Highest median RMST diff
 # ============================================================
-best_hp = chosen.params
-k_main = int(chosen.user_attrs["k_main"])
-k_int  = int(chosen.user_attrs["k_int"])
-dup_inter = int(chosen.user_attrs.get("dup_inter", 1))
+def build_rsf_params_from_trial(trial, n_jobs=1):
+    hp = trial.params
+    mf_mode = hp.get("max_features_mode", "sqrt")
+    if mf_mode == "all":
+        max_features = None
+    elif mf_mode == "frac":
+        max_features = float(hp.get("max_features_frac", 1.0))
+    else:
+        max_features = mf_mode
 
+    return dict(
+        n_estimators=int(hp.get("n_estimators", 1000)),
+        max_depth=hp.get("max_depth", None),
+        min_samples_split=int(hp.get("min_samples_split", 6)),
+        min_samples_leaf=int(hp.get("min_samples_leaf", 3)),
+        min_weight_fraction_leaf=0.0,
+        max_features=max_features,
+        max_leaf_nodes=None,
+        bootstrap=True,
+        oob_score=False,
+        n_jobs=n_jobs,
+        random_state=None,
+        verbose=0,
+        warm_start=False,
+    )
+
+
+def get_trial_gene_sets(trial):
+    k_main = int(trial.user_attrs["k_main"])
+    k_int = int(trial.user_attrs["k_int"])
+    dup_inter = int(trial.user_attrs.get("dup_inter", 1))
+    genes_main = GENE_RANK[:k_main]
+    genes_inter = genes_main[:k_int]
+    return k_main, k_int, dup_inter, genes_main, genes_inter
+
+
+def build_feature_mats_for_trial(trial, train_fit_df, eval_df):
+    _, _, dup_inter, genes_main, genes_inter = get_trial_gene_sets(trial)
+    X_trv_raw, feat_names = build_features_with_interactions(
+        train_fit_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+    )
+    X_te_raw, _ = build_features_with_interactions(
+        eval_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+    )
+    X_trv = X_trv_raw.astype(np.float64)
+    X_te = X_te_raw.astype(np.float64)
+    y_trv = Surv.from_arrays(
+        event=train_fit_df["OS_STATUS"].astype(bool).values,
+        time=train_fit_df["OS_MONTHS"].astype(float).values
+    )
+    y_te = Surv.from_arrays(
+        event=eval_df["OS_STATUS"].astype(bool).values,
+        time=eval_df["OS_MONTHS"].astype(float).values
+    )
+    return X_trv, X_te, y_trv, y_te, feat_names, genes_main, genes_inter, dup_inter
+
+
+def evaluate_trial_seeds(
+    trial,
+    train_fit_df,
+    eval_df,
+    w_fit,
+    seed_list,
+    label="",
+    eval_label="Eval",
+    n_jobs=1,
+    checkpoint_csv_path=None,
+    checkpoint_every=1,
+):
+    rsf_params = build_rsf_params_from_trial(trial, n_jobs=n_jobs)
+    X_trv, X_te, y_trv, y_te, feat_names, genes_main, genes_inter, dup_inter = build_feature_mats_for_trial(
+        trial, train_fit_df, eval_df
+    )
+
+    t_trv = train_fit_df["OS_MONTHS"].values.astype(float)
+    e_trv = train_fit_df["OS_STATUS"].values.astype(int)
+    t_te = eval_df["OS_MONTHS"].values.astype(float)
+    e_te = eval_df["OS_STATUS"].values.astype(int)
+
+    all_results = []
+    all_pvalues = []
+    all_ci_test = []
+    all_rmst_following = []
+    all_rmst_not_following = []
+    all_rmst_diffs = []
+
+    print(f"\n{'='*60}")
+    print(f"Running RSF {len(seed_list)} seeds for {label}")
+    print(f"{'='*60}\n")
+
+    for run_idx, seed in enumerate(seed_list, 1):
+        rsf_params["random_state"] = seed
+
+        with threadpool_limits(limits=None):
+            rsf_final = make_rsf(**rsf_params)
+            rsf_final.fit(X_trv, y_trv, sample_weight=w_fit)
+
+            pred_trv = rsf_final.predict(X_trv)
+            pred_te = rsf_final.predict(X_te)
+
+            ci_trv = cindex(pred_trv, t_trv, e_trv)
+            ci_te = cindex(pred_te, t_te, e_te)
+            all_ci_test.append(ci_te)
+
+            km_results = compare_treatment_recommendation_km_rsf(
+                rsf_final,
+                eval_df,
+                genes_main=genes_main,
+                genes_inter=genes_inter,
+                dup_inter=dup_inter,
+                clin_cols=CLIN_FEATS,
+                path=""
+            )
+
+            pvalue = km_results["logrank_pvalue"]
+            rmst_diff = km_results["rmst_diff"]
+            rmst_aligned = km_results["rmst_aligned"]
+            rmst_not_aligned = km_results["rmst_not_aligned"]
+
+            all_pvalues.append(pvalue)
+            all_rmst_following.append(rmst_aligned)
+            all_rmst_not_following.append(rmst_not_aligned)
+            all_rmst_diffs.append(rmst_diff)
+
+            all_results.append({
+                "run": run_idx,
+                "seed": seed,
+                "ci_trainval": ci_trv,
+                "ci_test": ci_te,
+                "logrank_pvalue": pvalue,
+                "rmst_following": rmst_aligned,
+                "rmst_not_following": rmst_not_aligned,
+                "rmst_diff": rmst_diff,
+                "n_aligned": km_results["n_aligned"],
+                "n_not_aligned": km_results["n_not_aligned"],
+            })
+
+            if checkpoint_csv_path is not None and (run_idx % int(checkpoint_every) == 0 or run_idx == len(seed_list)):
+                pd.DataFrame(all_results).to_csv(checkpoint_csv_path, index=False)
+
+            plt.close("all")
+
+    return {
+        "all_results": all_results,
+        "all_pvalues": all_pvalues,
+        "all_ci_test": all_ci_test,
+        "all_rmst_following": all_rmst_following,
+        "all_rmst_not_following": all_rmst_not_following,
+        "all_rmst_diffs": all_rmst_diffs,
+        "feat_names": feat_names,
+        "genes_main": genes_main,
+        "genes_inter": genes_inter,
+        "dup_inter": dup_inter,
+    }
+
+# Model 1: Best model
+best_model_trial = best_trial
+
+# Model 2: 1-SE model nearest to threshold
+if candidates:
+    one_se_nearest = min(candidates, key=lambda t: abs(float(t.value) - one_se_threshold))
+else:
+    print("**PAY ATTENTION: No one_se_nearest candidate found, defaulting to best trial.**")
+    one_se_nearest = best_trial
+
+# Model 3: Highest median RMST diff among 1-SE candidates
+seed_list = list(range(1, 31))
+candidate_rmst_summary = []
+best_rmst_trial = one_se_nearest
+
+date = "2-22"
+OUT_DIR = f"rsf_interactions_iptw_bounded-{date}-1SE"
+os.makedirs(OUT_DIR, exist_ok=True)
+candidate_summary_progress_csv = os.path.join(OUT_DIR, "candidate_rmst_summary_progress.csv")
+
+if os.path.exists(candidate_summary_progress_csv):
+    existing_summary_df = pd.read_csv(candidate_summary_progress_csv)
+    if not existing_summary_df.empty:
+        candidate_rmst_summary = existing_summary_df.to_dict("records")
+        print(f"Loaded existing candidate RMST progress: {len(candidate_rmst_summary)} rows")
+
+if candidates:
+    done_trial_numbers = {int(d["trial_number"]) for d in candidate_rmst_summary if "trial_number" in d}
+
+    for t in candidates:
+        if t.number in done_trial_numbers:
+            print(f"Skipping candidate trial #{t.number} (already in progress file).")
+            continue
+
+        # Print current out of total candidates for progress
+        print(f"\nEvaluating candidate trial #{t.number} ({candidates.index(t)+1}/{len(candidates)}) for RMST summary...")
+
+        candidate_runs_csv = os.path.join(OUT_DIR, f"candidate_trial_{t.number}_validation_runs.csv")
+        
+        eval_out = evaluate_trial_seeds(
+            t,
+            train_fit_df=train_df,
+            eval_df=valid_df,
+            w_fit=w_tr,
+            seed_list=seed_list,
+            label=f"candidate trial #{t.number} (validation)",
+            eval_label="Validation",
+            n_jobs=-1, # -1 to parallelize across seeds but results in non-determinism
+            checkpoint_csv_path=candidate_runs_csv,
+            checkpoint_every=1,
+        )
+        rmst_diffs = np.array(eval_out["all_rmst_diffs"], dtype=float)
+        med = float(np.median(rmst_diffs))
+        q1 = float(np.percentile(rmst_diffs, 25))
+        q3 = float(np.percentile(rmst_diffs, 75))
+        iqr = q3 - q1
+        candidate_rmst_summary.append({
+            "trial_number": t.number,
+            "val_ci": float(t.value),
+            "median_rmst_diff": med,
+            "iqr_rmst_diff": iqr,
+        })
+
+        pd.DataFrame(candidate_rmst_summary).to_csv(candidate_summary_progress_csv, index=False)
+
+    candidate_rmst_summary.sort(key=lambda d: (-d["median_rmst_diff"], d["iqr_rmst_diff"]))
+    pd.DataFrame(candidate_rmst_summary).to_csv(os.path.join(OUT_DIR, "candidate_rmst_summary_final.csv"), index=False)
+    best_rmst_trial_number = candidate_rmst_summary[0]["trial_number"]
+    best_rmst_trial = next(t for t in candidates if t.number == best_rmst_trial_number)
+
+    # Plot distribution of median and IQR RMST diffs across candidates
+    medians = [d["median_rmst_diff"] for d in candidate_rmst_summary]
+    iqrs = [d["iqr_rmst_diff"] for d in candidate_rmst_summary]
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    axes[0].hist(medians, bins=10, color=(100/255, 150/255, 255/255), alpha=0.7, edgecolor="black")
+    axes[0].set_title("Candidate Median RMST Diff (Validation, 60 months)")
+    axes[0].set_xlabel("Median RMST diff (months)")
+    axes[0].set_ylabel("Count")
+    axes[0].grid(axis="y", alpha=0.3)
+
+    axes[1].hist(iqrs, bins=10, color=(255/255, 150/255, 100/255), alpha=0.7, edgecolor="black")
+    axes[1].set_title("Candidate IQR RMST Diff (Validation, 60 months)")
+    axes[1].set_xlabel("IQR RMST diff (months)")
+    axes[1].set_ylabel("Count")
+    axes[1].grid(axis="y", alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUT_DIR, "candidate_rmst_median_iqr_hist.png"), dpi=600)
+    print(f"Saved candidate RMST median/IQR histogram to: {os.path.join(OUT_DIR, 'candidate_rmst_median_iqr_hist.png')}")
+    plt.show()
+
+model_specs = [
+    ("best_model", best_model_trial),
+    ("one_se_nearest", one_se_nearest),
+    ("highest_median_rmst", best_rmst_trial),
+]
+
+# Dataset for final training/eval
 trainval_df = pd.concat([train_df, valid_df], axis=0, ignore_index=True)
 trainval_df = trainval_df.sort_values(by=["OS_MONTHS", "OS_STATUS"], ascending=[False, False]).reset_index(drop=True)
-
-genes_main  = GENE_RANK[:k_main]
-genes_inter = genes_main[:k_int]
-
-X_trv_raw, feat_names = build_features_with_interactions(
-    trainval_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
-)
-X_te_raw, _ = build_features_with_interactions(
-    test_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
-)
-
-X_trv = X_trv_raw.astype(np.float64)
-X_te  = X_te_raw.astype(np.float64)
-
-y_trv = Surv.from_arrays(
-    event=trainval_df["OS_STATUS"].astype(bool).values,
-    time=trainval_df["OS_MONTHS"].astype(float).values
-)
-y_te = Surv.from_arrays(
-    event=test_df["OS_STATUS"].astype(bool).values,
-    time=test_df["OS_MONTHS"].astype(float).values
-)
 
 # IPTW (train prevalence anchor)
 w_trv, ps_model_fin, pi_fin = compute_iptw(trainval_df, covariate_cols=CLIN_FEATS_PRETX)
 w_te, _, _ = compute_iptw(test_df, covariate_cols=CLIN_FEATS_PRETX, ref_prev=pi_fin, model=ps_model_fin)
 
-# Extract RSF params from chosen trial params
-rsf_param_names = {
-    "n_estimators", "max_depth", "min_samples_split", "min_samples_leaf",
-    "min_weight_fraction_leaf", "max_features", "max_leaf_nodes",
-    "bootstrap", "oob_score", "n_jobs", "random_state", "verbose", "warm_start"
-}
 
-# Rebuild max_features from mode params if needed
-mf_mode = best_hp.get("max_features_mode", "sqrt")
-if mf_mode == "all":
-    max_features = None
-elif mf_mode == "frac":
-    max_features = float(best_hp.get("max_features_frac", 1.0))
-else:
-    max_features = mf_mode
+date = "2-22"
+BASE_OUT_DIR = f"rsf_multiselect-{date}-1SE"
+os.makedirs(BASE_OUT_DIR, exist_ok=True)
 
-rsf_params_fin = dict(
-    n_estimators=int(best_hp.get("n_estimators", 1000)),
-    max_depth=best_hp.get("max_depth", None),
-    min_samples_split=int(best_hp.get("min_samples_split", 6)),
-    min_samples_leaf=int(best_hp.get("min_samples_leaf", 3)),
-    min_weight_fraction_leaf=0.0,
-    max_features=max_features,
-    max_leaf_nodes=None,
-    bootstrap=True,
-    oob_score=False,
-    n_jobs=1, # determinism increase
-    random_state=7,
-    verbose=0,
-    warm_start=False,
-)
+for model_label, trial in model_specs:
+    print(f"\n{'='*60}")
+    print(f"MODEL: {model_label} (trial #{trial.number})")
+    print(f"{'='*60}\n")
 
-with threadpool_limits(limits=1):
-    rsf_final = make_rsf(**rsf_params_fin)
-    rsf_final.fit(X_trv, y_trv, sample_weight=w_trv)
+    model_out_dir = os.path.join(BASE_OUT_DIR, model_label)
+    os.makedirs(model_out_dir, exist_ok=True)
 
-    pred_trv = rsf_final.predict(X_trv)
-    pred_te  = rsf_final.predict(X_te)
+    eval_out = evaluate_trial_seeds(
+        trial,
+        train_fit_df=trainval_df,
+        eval_df=test_df,
+        w_fit=w_trv,
+        seed_list=seed_list,
+        label=f"{model_label}",
+        eval_label="Test",
+        n_jobs=-1, # -1 to parallelize across seeds but results in non-determinism
+        checkpoint_csv_path=os.path.join(model_out_dir, "multiple_runs_results_progress.csv"),
+        checkpoint_every=1,
+    )
 
-    t_trv = trainval_df["OS_MONTHS"].values.astype(float)
-    e_trv = trainval_df["OS_STATUS"].values.astype(int)
-    t_te  = test_df["OS_MONTHS"].values.astype(float)
-    e_te  = test_df["OS_STATUS"].values.astype(int)
+    all_results = eval_out["all_results"]
+    all_pvalues = eval_out["all_pvalues"]
+    all_ci_test = eval_out["all_ci_test"]
+    all_rmst_following = eval_out["all_rmst_following"]
+    all_rmst_not_following = eval_out["all_rmst_not_following"]
+    all_rmst_diffs = eval_out["all_rmst_diffs"]
 
-    ci_trv = cindex(pred_trv, t_trv, e_trv)
-    ci_te  = cindex(pred_te,  t_te,  e_te)
+    median_pvalue = float(np.median(all_pvalues))
+    mean_pvalue = float(np.mean(all_pvalues))
+    std_pvalue = float(np.std(all_pvalues))
+    median_ci = float(np.median(all_ci_test))
+    mean_ci = float(np.mean(all_ci_test))
+    std_ci = float(np.std(all_ci_test))
 
-    print(f"\n[Final RSF] Train+Val CI: {ci_trv:.4f}")
-    print(f"[Final RSF] Test CI:      {ci_te:.4f}")
+    median_rmst_following = float(np.median(all_rmst_following))
+    mean_rmst_following = float(np.mean(all_rmst_following))
+    std_rmst_following = float(np.std(all_rmst_following))
+    median_rmst_not_following = float(np.median(all_rmst_not_following))
+    mean_rmst_not_following = float(np.mean(all_rmst_not_following))
+    std_rmst_not_following = float(np.std(all_rmst_not_following))
+    median_rmst_diff = float(np.median(all_rmst_diffs))
+    mean_rmst_diff = float(np.mean(all_rmst_diffs))
+    std_rmst_diff = float(np.std(all_rmst_diffs))
 
-    # Per-arm C-indices (sanity)
-    act_trv = trainval_df["Adjuvant Chemo"].to_numpy(int)
-    act_te  = test_df["Adjuvant Chemo"].to_numpy(int)
+    print(f"\n{model_label} Test C-index:")
+    print(f"Median: {median_ci:.4f}")
+    print(f"Mean:   {mean_ci:.4f} ± {std_ci:.4f}")
 
-    def ci_by_arm(pred, t, e, arm):
-        out = {}
-        for label, mask in [("ACT=1", arm == 1), ("ACT=0", arm == 0)]:
-            out[label] = cindex(pred[mask], t[mask], e[mask]) if mask.sum() >= 3 else np.nan
-        return out
+    print(f"\n{model_label} 60-Month RMST (Following):")
+    print(f"Median: {median_rmst_following:.4f} months")
+    print(f"Mean:   {mean_rmst_following:.4f} ± {std_rmst_following:.4f} months")
 
-    print("[Train+Val] CI by arm:", ci_by_arm(pred_trv, t_trv, e_trv, act_trv))
-    print("[Test]      CI by arm:", ci_by_arm(pred_te,  t_te,  e_te,  act_te))
+    print(f"\n{model_label} 60-Month RMST (NOT Following):")
+    print(f"Median: {median_rmst_not_following:.4f} months")
+    print(f"Mean:   {mean_rmst_not_following:.4f} ± {std_rmst_not_following:.4f} months")
 
-date = "11-22"
+    print(f"\n{model_label} 60-Month RMST Difference (Following - Not Following):")
+    print(f"Median: {median_rmst_diff:.4f} months")
+    print(f"Mean:   {mean_rmst_diff:.4f} ± {std_rmst_diff:.4f} months")
 
-# Save artifacts
-import joblib
-OUT_DIR = f"rsf_interactions_iptw_bounded-{date}-1SE"
-os.makedirs(OUT_DIR, exist_ok=True)
+    pd.DataFrame(all_results).to_csv(os.path.join(model_out_dir, "multiple_runs_results.csv"), index=False)
 
-joblib.dump(rsf_final, os.path.join(OUT_DIR, "rsf_final.joblib"))
+    runs = np.arange(1, len(seed_list) + 1)
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
 
-with open(os.path.join(OUT_DIR, "chosen_params.txt"), "w") as f:
-    f.write(str(best_hp) + "\n\n")
-    f.write("RSF params used:\n")
-    f.write(str(rsf_params_fin))
+    ax1 = axes[0, 0]
+    ax1.bar(runs, all_pvalues, color=(9/255,117/255,181/255), alpha=0.7, edgecolor='black')
+    ax1.axhline(y=median_pvalue, color='red', linestyle='--', linewidth=2, label=f'Median: {median_pvalue:.6f}')
+    ax1.axhline(y=0.05, color='orange', linestyle=':', linewidth=2, label='α = 0.05')
+    ax1.set_xlabel('Run Number', fontsize=12)
+    ax1.set_ylabel('Log-rank p-value', fontsize=12)
+    ax1.set_title(f'{model_label} Log-rank P-values', fontsize=14, fontweight='bold')
+    ax1.set_xticks(runs[::5])
+    ax1.legend(fontsize=10)
+    ax1.grid(axis='y', alpha=0.3)
 
-with open(os.path.join(OUT_DIR, "features_used.txt"), "w") as f:
-    f.write("\n".join(feat_names))
+    ax2 = axes[0, 1]
+    ax2.hist(all_pvalues, bins=10, color=(9/255,117/255,181/255), alpha=0.7, edgecolor='black')
+    ax2.axvline(x=median_pvalue, color='red', linestyle='--', linewidth=2, label=f'Median: {median_pvalue:.6f}')
+    ax2.axvline(x=mean_pvalue, color='green', linestyle='--', linewidth=2, label=f'Mean: {mean_pvalue:.6f}')
+    ax2.axvline(x=0.05, color='orange', linestyle=':', linewidth=2, label='α = 0.05')
+    ax2.set_xlabel('Log-rank p-value', fontsize=12)
+    ax2.set_ylabel('Frequency', fontsize=12)
+    ax2.set_title(f'{model_label} P-value Distribution', fontsize=14, fontweight='bold')
+    ax2.legend(fontsize=10)
+    ax2.grid(axis='y', alpha=0.3)
 
-print("Saved final model and parameters to:", OUT_DIR)
+    ax3 = axes[1, 0]
+    ax3.bar(runs, all_rmst_diffs, color=(220/255,20/255,60/255), alpha=0.7, edgecolor='black')
+    ax3.axhline(y=median_rmst_diff, color='darkred', linestyle='--', linewidth=2, label=f'Median: {median_rmst_diff:.4f}')
+    ax3.axhline(y=0, color='black', linestyle='-', linewidth=1)
+    ax3.set_xlabel('Run Number', fontsize=12)
+    ax3.set_ylabel('RMST Difference (months)', fontsize=12)
+    ax3.set_title(f'{model_label} RMST Difference', fontsize=14, fontweight='bold')
+    ax3.set_xticks(runs[::5])
+    ax3.legend(fontsize=10)
+    ax3.grid(axis='y', alpha=0.3)
 
-# Kaplan-Meier alignment on test set using final model
-print("\n[KM Alignment] Test set vs. RSF recommendation")
-compare_treatment_recommendation_km_rsf(
-    rsf_final,
-    test_df,
-    genes_main=genes_main,
-    genes_inter=genes_inter,
-    dup_inter=dup_inter,
-    clin_cols=CLIN_FEATS,
-    path = OUT_DIR + "/"
-)
+    ax4 = axes[1, 1]
+    ax4.hist(all_rmst_diffs, bins=10, color=(220/255,20/255,60/255), alpha=0.7, edgecolor='black')
+    ax4.axvline(x=median_rmst_diff, color='darkred', linestyle='--', linewidth=2, label=f'Median: {median_rmst_diff:.4f}')
+    ax4.axvline(x=mean_rmst_diff, color='darkgreen', linestyle='--', linewidth=2, label=f'Mean: {mean_rmst_diff:.4f}')
+    ax4.axvline(x=0, color='black', linestyle='-', linewidth=1)
+    ax4.set_xlabel('RMST Difference (months)', fontsize=12)
+    ax4.set_ylabel('Frequency', fontsize=12)
+    ax4.set_title(f'{model_label} RMST Diff Distribution', fontsize=14, fontweight='bold')
+    ax4.legend(fontsize=10)
+    ax4.grid(axis='y', alpha=0.3)
 
-result = permutation_importance(
-    rsf_final, X_te, y_te, n_repeats=30, random_state=42, n_jobs=-1
-)
+    plt.tight_layout()
+    plt.savefig(os.path.join(model_out_dir, "pvalue_and_rmst_distribution.png"), dpi=600)
+    plt.show()
 
-importances_df = pd.DataFrame({
-    "importances_mean": result.importances_mean,
-    "importances_std": result.importances_std
-}, index=feat_names).sort_values(by="importances_mean", ascending=False)
+    # Feature importance and final KM plot using median p-value seed
+    median_run_idx = np.argsort(all_pvalues)[len(all_pvalues)//2]
+    median_seed = seed_list[median_run_idx]
+    rsf_params = build_rsf_params_from_trial(trial)
+    rsf_params["random_state"] = median_seed
 
-# Save to csv
-importances_df.to_csv(os.path.join(OUT_DIR, "feature_importances.csv"), index=True)
+    X_trv, X_te, y_trv, y_te, feat_names, genes_main, genes_inter, dup_inter = build_feature_mats_for_trial(
+        trial, trainval_df, test_df
+    )
 
-print(importances_df)
+    with threadpool_limits(limits=None):
+        rsf_final = make_rsf(**rsf_params)
+        rsf_final.fit(X_trv, y_trv, sample_weight=w_trv)
 
-importances_df = importances_df.sort_values(by="importances_mean", ascending=True)  # Ascending for better barh plot
+        compare_treatment_recommendation_km_rsf(
+            rsf_final,
+            test_df,
+            genes_main=genes_main,
+            genes_inter=genes_inter,
+            dup_inter=dup_inter,
+            clin_cols=CLIN_FEATS,
+            path=model_out_dir + "/"
+        )
 
-# Plot the feature importances
-plt.figure(figsize=(12, 8))
+        result = permutation_importance(
+            rsf_final, X_te, y_te, n_repeats=30, random_state=42, n_jobs=-1
+        )
 
-# Increase font size
-plt.rcParams.update({'font.size': 14})
-plt.barh(importances_df.index, importances_df["importances_mean"], xerr=importances_df["importances_std"], color=(9/255,117/255,181/255))
-plt.xlabel("Permutation Feature Importance")
-plt.ylabel("Feature")
-plt.title(f"Random Survival Forest: Feature Importances on Test Set")
-plt.tight_layout()
-plt.savefig(os.path.join(OUT_DIR, "feature_importances.png"), dpi=600)
-plt.show()
+    importances_df = pd.DataFrame({
+        "importances_mean": result.importances_mean,
+        "importances_std": result.importances_std
+    }, index=feat_names).sort_values(by="importances_mean", ascending=False)
+
+    importances_df.to_csv(os.path.join(model_out_dir, "feature_importances.csv"), index=True)
+
+    importances_df = importances_df.sort_values(by="importances_mean", ascending=True)
+    plt.figure(figsize=(12, 8))
+    plt.rcParams.update({'font.size': 14})
+    plt.barh(importances_df.index, importances_df["importances_mean"],
+             xerr=importances_df["importances_std"], color=(9/255,117/255,181/255))
+    plt.xlabel("Permutation Feature Importance")
+    plt.ylabel("Feature")
+    plt.title(f"Random Survival Forest: Feature Importances on Test Set ({model_label})")
+    plt.tight_layout()
+    plt.savefig(os.path.join(model_out_dir, "feature_importances.png"), dpi=600)
+    plt.show()
