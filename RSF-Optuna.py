@@ -19,7 +19,6 @@ from threadpoolctl import threadpool_limits
 from sklearn.inspection import permutation_importance
 
 import optuna
-# from optuna.samplers import NSGAIISampler  # keep if you later switch back to MO
 
 warnings.filterwarnings(
     "ignore",
@@ -280,6 +279,58 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
         "logrank_pvalue": float(results.p_value)
     }
 
+
+def compute_alignment_rmst_diff_rsf(model, df, genes_main, genes_inter, dup_inter,
+                                   clin_cols, tau=60,
+                                   time_col="OS_MONTHS", event_col="OS_STATUS"):
+    """Compute RMST difference (aligned - not aligned) without plotting/log-rank output."""
+    df = df.copy()
+    df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
+
+    df_treated = df.copy()
+    df_treated["Adjuvant Chemo"] = 1
+
+    df_untreated = df.copy()
+    df_untreated["Adjuvant Chemo"] = 0
+
+    X_treated, _ = build_features_with_interactions(
+        df_treated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
+    X_untreated, _ = build_features_with_interactions(
+        df_untreated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
+
+    with threadpool_limits(limits=None):
+        risk_treated = model.predict(X_treated.astype(np.float64))
+        risk_untreated = model.predict(X_untreated.astype(np.float64))
+
+    model_rec = np.where(risk_treated < risk_untreated, 1, 0)
+    actual = df["Adjuvant Chemo"].to_numpy(int)
+    alignment = actual == model_rec
+
+    mask_aligned = alignment
+    mask_not_aligned = ~alignment
+
+    # Guard against degenerate splits
+    if int(mask_aligned.sum()) == 0 or int(mask_not_aligned.sum()) == 0:
+        return 0.0
+
+    kmf_aligned = KaplanMeierFitter()
+    kmf_not_aligned = KaplanMeierFitter()
+
+    kmf_aligned.fit(
+        durations=df.loc[mask_aligned, time_col],
+        event_observed=df.loc[mask_aligned, event_col],
+    )
+    kmf_not_aligned.fit(
+        durations=df.loc[mask_not_aligned, time_col],
+        event_observed=df.loc[mask_not_aligned, event_col],
+    )
+
+    rmst_aligned = float(restricted_mean_survival_time(kmf_aligned, t=tau))
+    rmst_not_aligned = float(restricted_mean_survival_time(kmf_not_aligned, t=tau))
+    return float(rmst_aligned - rmst_not_aligned)
+
 # ============================================================
 # Load data, rank genes (TRAIN only), set budgets
 # ============================================================
@@ -329,6 +380,10 @@ N_EVENTS_TR = int(train_df["OS_STATUS"].sum())
 FEAT_EVENT_FRACTION = 0.50
 FEAT_BUDGET = max(24, int(FEAT_EVENT_FRACTION * N_EVENTS_TR))  # total inputs incl. clinical
 print(f"[Budgets] events(train)={N_EVENTS_TR} → feature budget ≤ {FEAT_BUDGET}")
+
+# Multi-objective RMST settings (used inside Optuna objective)
+RMST_OPT_N_RUNS = 10
+RMST_OPT_SEEDS = list(range(1, RMST_OPT_N_RUNS + 1))
 
 
 # ============================================================
@@ -427,76 +482,114 @@ def objective(trial):
     k_main, k_int, dup_inter, rsf_params = suggest_hparams(trial)
     Xtr, ytr, wtr, Xva, yva, wva, feat_names, genes_main, genes_inter = build_trial_mats(k_main, k_int, dup_inter)
 
-    rsf = make_rsf(**rsf_params)
-    rsf.fit(Xtr, ytr, sample_weight=wtr)
-
-    tr_pred = rsf.predict(Xtr)
-    va_pred = rsf.predict(Xva)
-
-    ttr = train_df["OS_MONTHS"].values.astype(float)
-    etr = train_df["OS_STATUS"].values.astype(int)
     tva = valid_df["OS_MONTHS"].values.astype(float)
     eva = valid_df["OS_STATUS"].values.astype(int)
 
-    tr_ci = cindex(tr_pred, ttr, etr)
-    va_ci, va_ci_se = cindex_bootstrap(va_pred, tva, eva)
-    gap = max(0.0, tr_ci - va_ci)
+    va_cis = []
+    rmst_diffs = []
+
+    for seed in RMST_OPT_SEEDS:
+        rsf_params["random_state"] = int(seed)
+        rsf = make_rsf(**rsf_params)
+        rsf.fit(Xtr, ytr, sample_weight=wtr)
+
+        va_pred = rsf.predict(Xva)
+        va_ci = cindex(va_pred, tva, eva)
+        va_cis.append(float(va_ci))
+
+        rmst_diff = compute_alignment_rmst_diff_rsf(
+            rsf,
+            valid_df,
+            genes_main=genes_main,
+            genes_inter=genes_inter,
+            dup_inter=dup_inter,
+            clin_cols=CLIN_FEATS,
+            tau=60,
+        )
+        rmst_diffs.append(float(rmst_diff))
+
+    median_val_ci = float(np.median(va_cis))
+    median_rmst_diff = float(np.median(rmst_diffs))
+    val_ci_se = float(np.std(va_cis, ddof=1)) if len(va_cis) > 1 else 0.0
+    rmst_iqr = float(np.percentile(rmst_diffs, 75) - np.percentile(rmst_diffs, 25)) if len(rmst_diffs) > 1 else 0.0
 
     trial.set_user_attr("n_features", int(Xtr.shape[1]))
     trial.set_user_attr("k_main", int(k_main))
     trial.set_user_attr("k_int", int(k_int))
     trial.set_user_attr("dup_inter", int(dup_inter))
-    trial.set_user_attr("val_ci_se", float(va_ci_se))
+    trial.set_user_attr("val_ci_median_10runs", float(median_val_ci))
+    trial.set_user_attr("val_ci_se_10runs", float(val_ci_se))
+    trial.set_user_attr("median_rmst_diff_10runs", float(median_rmst_diff))
+    trial.set_user_attr("iqr_rmst_diff_10runs", float(rmst_iqr))
+    trial.set_user_attr("rmst_runs_n", int(RMST_OPT_N_RUNS))
 
     print(
-        f"[Trial {trial.number:03d}] Val CI={va_ci:.4f} (SE={va_ci_se:.4f}), "
-        f"Gap={gap:.4f}, N_feats={Xtr.shape[1]}, K_main={k_main}, K_int={k_int}, Dup={dup_inter}, "
+        f"[Trial {trial.number:03d}] Val CI median(10)={median_val_ci:.4f} (SE={val_ci_se:.4f}), "
+        f"RMST diff median(10)={median_rmst_diff:.4f} (IQR={rmst_iqr:.4f}), "
+        f"N_feats={Xtr.shape[1]}, K_main={k_main}, K_int={k_int}, Dup={dup_inter}, "
         f"n_estimators={rsf_params['n_estimators']}"
     )
 
-    return va_ci
+    # Multi-objective: maximize validation C-index and median RMST difference
+    return median_val_ci, median_rmst_diff
 
 
 # ---- Run study ----
-storage = "sqlite:///rsf_optuna_jan25.db"
-study_name = "rsf_jan_25_1se"
+RUN_TAG = "3-8-mo-ci-rmst10"
+storage = "sqlite:///rsf_optuna_mar8_multiobj.db"
+study_name = f"rsf_{RUN_TAG}"
 
 study = optuna.create_study(
-    direction="maximize",
+    directions=["maximize", "maximize"],
     study_name=study_name,
     storage=storage,
     load_if_exists=True,
+    sampler=optuna.samplers.NSGAIISampler(seed=42),
 )
 
-N_TRIALS = 0
+N_TRIALS = 100
 print(f"Starting optimization: {N_TRIALS} trials")
 study.optimize(objective, n_trials=N_TRIALS, gc_after_trial=True)
 
 
-# ---- Choose the best trial using the 1-Standard-Error (1-SE) rule ----
-best_trial = study.best_trial
-best_ci = float(best_trial.value)
-best_ci_se = float(best_trial.user_attrs.get("val_ci_se", 0.0))
-
-one_se_threshold = best_ci - best_ci_se
-print(f"\n[1-SE Rule] Best Val CI: {best_ci:.4f} (SE: {best_ci_se:.4f})")
-print(f"[1-SE Rule] Threshold: {one_se_threshold:.4f}")
-
+# ---- Multi-objective selection from Pareto front ----
 candidates = [
-    t for t in study.trials
-    if t.state == optuna.trial.TrialState.COMPLETE and float(t.value) >= one_se_threshold
+    t for t in study.best_trials
+    if t.state == optuna.trial.TrialState.COMPLETE and t.values is not None
 ]
 
 if not candidates:
-    chosen = best_trial
-    print("[1-SE Rule] No candidates found above threshold, falling back to best trial.")
-else:
-    candidates.sort(key=lambda t: t.user_attrs.get("n_features", float("inf")))
-    chosen = candidates[0]
-    print(f"[1-SE Rule] Found {len(candidates)} candidates. "
-          f"Chose trial #{chosen.number} with {chosen.user_attrs.get('n_features')} features.")
+    candidates = [
+        t for t in study.trials
+        if t.state == optuna.trial.TrialState.COMPLETE and t.values is not None
+    ]
 
-print("\n[Chosen Trial] #", chosen.number, "Val CI:", float(chosen.value))
+if not candidates:
+    raise RuntimeError("No completed multi-objective trials found. Increase N_TRIALS and rerun.")
+
+ci_vals = np.array([float(t.values[0]) for t in candidates], dtype=float)
+rmst_vals = np.array([float(t.values[1]) for t in candidates], dtype=float)
+
+ci_min, ci_max = float(ci_vals.min()), float(ci_vals.max())
+rmst_min, rmst_max = float(rmst_vals.min()), float(rmst_vals.max())
+
+def _norm(x, lo, hi):
+    return 0.0 if hi <= lo else (x - lo) / (hi - lo)
+
+scored = []
+for t in candidates:
+    ci = float(t.values[0])
+    rmst = float(t.values[1])
+    score = _norm(ci, ci_min, ci_max) + _norm(rmst, rmst_min, rmst_max)
+    scored.append((score, t))
+
+scored.sort(key=lambda z: z[0], reverse=True)
+chosen = scored[0][1]
+best_trial = chosen
+
+print(f"\n[Pareto] Candidates: {len(candidates)}")
+print(f"[Pareto] Selected compromise trial #{chosen.number}")
+print(f"[Pareto] Selected values: Val CI={float(chosen.values[0]):.4f}, Median RMST diff={float(chosen.values[1]):.4f}")
 print("[Chosen Params]", chosen.params)
 print("[Chosen Attrs] k_main=%s k_int=%s dup_inter=%s" %
       (str(chosen.user_attrs.get("k_main")),
@@ -505,7 +598,7 @@ print("[Chosen Attrs] k_main=%s k_int=%s dup_inter=%s" %
 
 
 # ============================================================
-# Model selection: Best, 1-SE nearest, Highest median RMST diff
+# Model selection: Pareto compromise, Pareto best CI, Highest median RMST diff
 # ============================================================
 def build_rsf_params_from_trial(trial, n_jobs=1):
     hp = trial.params
@@ -665,20 +758,19 @@ def evaluate_trial_seeds(
 # Model 1: Best model
 best_model_trial = best_trial
 
-# Model 2: 1-SE model nearest to threshold
+# Model 2: Pareto candidate with highest validation CI
 if candidates:
-    one_se_nearest = min(candidates, key=lambda t: abs(float(t.value) - one_se_threshold))
+    one_se_nearest = max(candidates, key=lambda t: float(t.values[0]))
 else:
-    print("**PAY ATTENTION: No one_se_nearest candidate found, defaulting to best trial.**")
+    print("**PAY ATTENTION: No Pareto CI-max candidate found, defaulting to best trial.**")
     one_se_nearest = best_trial
 
-# Model 3: Highest median RMST diff among 1-SE candidates
+# Model 3: Highest median RMST diff among Pareto candidates
 seed_list = list(range(1, 31))
 candidate_rmst_summary = []
 best_rmst_trial = one_se_nearest
 
-date = "2-22"
-OUT_DIR = f"rsf_interactions_iptw_bounded-{date}-1SE"
+OUT_DIR = f"rsf_interactions_iptw_bounded-{RUN_TAG}-pareto"
 os.makedirs(OUT_DIR, exist_ok=True)
 candidate_summary_progress_csv = os.path.join(OUT_DIR, "candidate_rmst_summary_progress.csv")
 
@@ -720,7 +812,7 @@ if candidates:
         iqr = q3 - q1
         candidate_rmst_summary.append({
             "trial_number": t.number,
-            "val_ci": float(t.value),
+            "val_ci": float(t.values[0]),
             "median_rmst_diff": med,
             "iqr_rmst_diff": iqr,
         })
@@ -752,11 +844,11 @@ if candidates:
     plt.tight_layout()
     plt.savefig(os.path.join(OUT_DIR, "candidate_rmst_median_iqr_hist.png"), dpi=600)
     print(f"Saved candidate RMST median/IQR histogram to: {os.path.join(OUT_DIR, 'candidate_rmst_median_iqr_hist.png')}")
-    plt.show()
+    plt.show(block=False)
 
 model_specs = [
     ("best_model", best_model_trial),
-    ("one_se_nearest", one_se_nearest),
+    ("pareto_best_ci", one_se_nearest),
     ("highest_median_rmst", best_rmst_trial),
 ]
 
@@ -769,8 +861,7 @@ w_trv, ps_model_fin, pi_fin = compute_iptw(trainval_df, covariate_cols=CLIN_FEAT
 w_te, _, _ = compute_iptw(test_df, covariate_cols=CLIN_FEATS_PRETX, ref_prev=pi_fin, model=ps_model_fin)
 
 
-date = "2-22"
-BASE_OUT_DIR = f"rsf_multiselect-{date}-1SE"
+BASE_OUT_DIR = f"rsf_multiselect-{RUN_TAG}-pareto"
 os.makedirs(BASE_OUT_DIR, exist_ok=True)
 
 for model_label, trial in model_specs:
@@ -885,7 +976,7 @@ for model_label, trial in model_specs:
 
     plt.tight_layout()
     plt.savefig(os.path.join(model_out_dir, "pvalue_and_rmst_distribution.png"), dpi=600)
-    plt.show()
+    plt.show(block = False)
 
     # Feature importance and final KM plot using median p-value seed
     median_run_idx = np.argsort(all_pvalues)[len(all_pvalues)//2]
@@ -932,4 +1023,4 @@ for model_label, trial in model_specs:
     plt.title(f"Random Survival Forest: Feature Importances on Test Set ({model_label})")
     plt.tight_layout()
     plt.savefig(os.path.join(model_out_dir, "feature_importances.png"), dpi=600)
-    plt.show()
+    plt.show(block = False)

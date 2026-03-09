@@ -334,7 +334,6 @@ def main():
 
 	rsf_params = build_rsf_params_from_trial(trial, n_jobs=1)
 
-	all_pvalues = []
 	all_runs = []
 
 	print("\nRunning deterministic seed sweep (n_jobs=1, threadpool_limits=1)...")
@@ -355,7 +354,6 @@ def main():
 			clin_cols=clin_feats,
 			out_png=None,
 		)
-		all_pvalues.append(km_res["logrank_pvalue"])
 		all_runs.append(
 			{
 				"seed": seed,
@@ -367,9 +365,17 @@ def main():
 	runs_df = pd.DataFrame(all_runs)
 	runs_df.to_csv(os.path.join(OUT_DIR, "trial_50_test_runs_all_seeds.csv"), index=False)
 
-	median_run_idx = np.argsort(all_pvalues)[len(all_pvalues) // 2]
-	median_seed = SEED_LIST[median_run_idx]
-	print(f"Selected median-p-value seed (original procedure): {median_seed}")
+	median_pvalue = float(runs_df["logrank_pvalue"].median())
+	runs_df["p_abs_dev"] = (runs_df["logrank_pvalue"] - median_pvalue).abs()
+	selected_row = runs_df.sort_values(
+		by=["p_abs_dev", "logrank_pvalue", "seed"],
+		ascending=[True, True, True],
+	).iloc[0]
+	median_seed = int(selected_row["seed"])
+	print(
+		"Selected seed closest to median log-rank p-value: "
+		f"{median_seed} (median={median_pvalue:.6f}, selected={selected_row['logrank_pvalue']:.6f})"
+	)
 
 	rsf_params["random_state"] = median_seed
 	with threadpool_limits(limits=1):
@@ -379,7 +385,7 @@ def main():
 	km_png = os.path.join(OUT_DIR, "trial_50_test_km_alignment.png")
 	km_png_weighted = os.path.join(OUT_DIR, "trial_50_test_km_alignment_weighted.png")
 	with threadpool_limits(limits=1):
-		km_final = compare_treatment_recommendation_km_rsf(
+		km_final_unweighted = compare_treatment_recommendation_km_rsf(
 			model_final,
 			test_df,
 			genes_main=genes_main,
@@ -393,14 +399,14 @@ def main():
 		q = 0
 		weightings = "fleming-harrington"
   
-		km_final = compare_treatment_recommendation_km_rsf(
+		km_final_weighted = compare_treatment_recommendation_km_rsf(
 			model_final,
 			test_df,
 			genes_main=genes_main,
 			genes_inter=genes_inter,
 			dup_inter=dup_inter,
 			clin_cols=clin_feats,
-			out_png=km_png,
+			out_png=km_png_weighted,
             weightings=weightings,
             p=p,
             q=q,
@@ -408,12 +414,15 @@ def main():
 
 	print("\n=== Trial 50 Test KM + RMST (median-p seed) ===")
 	print(f"Seed: {median_seed}")
-	print(f"Log-rank p-value: {km_final['logrank_pvalue']:.6f}")
-	print(f"RMST following (tau={km_final['tau']}): {km_final['rmst_aligned']:.6f}")
-	print(f"RMST not following (tau={km_final['tau']}): {km_final['rmst_not_aligned']:.6f}")
-	print(f"RMST difference (following - not following): {km_final['rmst_diff']:.6f}")
-	print(f"N following: {km_final['n_aligned']}, N not following: {km_final['n_not_aligned']}")
+	print(f"Log-rank p-value (unweighted): {km_final_unweighted['logrank_pvalue']:.6f}")
+	print(f"Log-rank p-value (Fleming-Harrington p={p}, q={q}): {km_final_weighted['logrank_pvalue']:.6f}")
+ 
+	print(f"RMST following (tau={km_final_unweighted['tau']}): {km_final_unweighted['rmst_aligned']:.6f}")
+	print(f"RMST not following (tau={km_final_unweighted['tau']}): {km_final_unweighted['rmst_not_aligned']:.6f}")
+	print(f"RMST difference (following - not following): {km_final_unweighted['rmst_diff']:.6f}")
+	print(f"N following: {km_final_unweighted['n_aligned']}, N not following: {km_final_unweighted['n_not_aligned']}")
 	print(f"Saved KM plot: {km_png}")
+	print(f"Saved weighted KM plot: {km_png_weighted}")
 	print(f"Saved all-seed results: {os.path.join(OUT_DIR, 'trial_50_test_runs_all_seeds.csv')}")
 
 
