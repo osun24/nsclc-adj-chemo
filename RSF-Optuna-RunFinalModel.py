@@ -187,7 +187,7 @@ def make_rsf(**params):
 
 def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, dup_inter,
                                            clin_cols,
-                                           time_col="OS_MONTHS", event_col="OS_STATUS", path =""):
+                                           time_col="OS_MONTHS", event_col="OS_STATUS", path ="", includeRMST=False, p=None, q=None):
     """KM comparison for alignment with model's treatment recommendation on provided data."""
     df = df.copy()
     df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
@@ -263,6 +263,25 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
     plt.ylabel("Survival Probability")
     add_at_risk_counts(kmf_aligned, kmf_not_aligned)
     plt.text(0.1, 0.1, f"Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
+    print(f"Log-rank test p-value: {results.p_value:.4f}")
+    
+    if includeRMST:
+        plt.text(0.1, 0.05, f"5-year RMST difference: {rmst_diff:.2f} months", transform=plt.gca().transAxes)
+    
+    if p is not None and q is not None:
+        # Calculate Fleming-Harrington p-value with weights p and q
+        fh_results = logrank_test(
+            df.loc[mask_aligned, time_col],
+            df.loc[mask_not_aligned, time_col],
+            event_observed_A=df.loc[mask_aligned, event_col],
+            event_observed_B=df.loc[mask_not_aligned, event_col],
+            weightings="fleming-harrington",
+            p = p, 
+            q = q
+        )
+        print(f"Fleming-Harrington test p-value (p={p}, q={q}): {fh_results.p_value:.4f}")
+        plt.text(0.1, 0.15, f"FH({p}, {q}) log-rank p-value: {fh_results.p_value:.4f}", transform=plt.gca().transAxes)
+    
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
     plt.tight_layout()
@@ -758,98 +777,10 @@ def evaluate_trial_seeds(
 # Model 1: Best model
 best_model_trial = best_trial
 
-# Model 2: Pareto candidate with highest validation CI
-if candidates:
-    one_se_nearest = max(candidates, key=lambda t: float(t.values[0]))
-else:
-    print("**PAY ATTENTION: No Pareto CI-max candidate found, defaulting to best trial.**")
-    one_se_nearest = best_trial
-
-# Model 3: Highest median RMST diff among Pareto candidates
 seed_list = list(range(1, 31))
-candidate_rmst_summary = []
-best_rmst_trial = one_se_nearest
-
-OUT_DIR = f"rsf_interactions_iptw_bounded-{RUN_TAG}-pareto"
-os.makedirs(OUT_DIR, exist_ok=True)
-candidate_summary_progress_csv = os.path.join(OUT_DIR, "candidate_rmst_summary_progress.csv")
-
-if os.path.exists(candidate_summary_progress_csv):
-    existing_summary_df = pd.read_csv(candidate_summary_progress_csv)
-    if not existing_summary_df.empty:
-        candidate_rmst_summary = existing_summary_df.to_dict("records")
-        print(f"Loaded existing candidate RMST progress: {len(candidate_rmst_summary)} rows")
-
-if candidates:
-    done_trial_numbers = {int(d["trial_number"]) for d in candidate_rmst_summary if "trial_number" in d}
-
-    for t in candidates:
-        if t.number in done_trial_numbers:
-            print(f"Skipping candidate trial #{t.number} (already in progress file).")
-            continue
-
-        # Print current out of total candidates for progress
-        print(f"\nEvaluating candidate trial #{t.number} ({candidates.index(t)+1}/{len(candidates)}) for RMST summary...")
-
-        candidate_runs_csv = os.path.join(OUT_DIR, f"candidate_trial_{t.number}_validation_runs.csv")
-        
-        eval_out = evaluate_trial_seeds(
-            t,
-            train_fit_df=train_df,
-            eval_df=valid_df,
-            w_fit=w_tr,
-            seed_list=seed_list,
-            label=f"candidate trial #{t.number} (validation)",
-            eval_label="Validation",
-            n_jobs=-1, # -1 to parallelize across seeds but results in non-determinism
-            checkpoint_csv_path=candidate_runs_csv,
-            checkpoint_every=1,
-        )
-        rmst_diffs = np.array(eval_out["all_rmst_diffs"], dtype=float)
-        med = float(np.median(rmst_diffs))
-        q1 = float(np.percentile(rmst_diffs, 25))
-        q3 = float(np.percentile(rmst_diffs, 75))
-        iqr = q3 - q1
-        candidate_rmst_summary.append({
-            "trial_number": t.number,
-            "val_ci": float(t.values[0]),
-            "median_rmst_diff": med,
-            "iqr_rmst_diff": iqr,
-        })
-
-        pd.DataFrame(candidate_rmst_summary).to_csv(candidate_summary_progress_csv, index=False)
-
-    candidate_rmst_summary.sort(key=lambda d: (-d["median_rmst_diff"], d["iqr_rmst_diff"]))
-    pd.DataFrame(candidate_rmst_summary).to_csv(os.path.join(OUT_DIR, "candidate_rmst_summary_final.csv"), index=False)
-    best_rmst_trial_number = candidate_rmst_summary[0]["trial_number"]
-    best_rmst_trial = next(t for t in candidates if t.number == best_rmst_trial_number)
-
-    # Plot distribution of median and IQR RMST diffs across candidates
-    medians = [d["median_rmst_diff"] for d in candidate_rmst_summary]
-    iqrs = [d["iqr_rmst_diff"] for d in candidate_rmst_summary]
-
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-    axes[0].hist(medians, bins=10, color=(100/255, 150/255, 255/255), alpha=0.7, edgecolor="black")
-    axes[0].set_title("Candidate Median RMST Diff (Validation, 60 months)")
-    axes[0].set_xlabel("Median RMST diff (months)")
-    axes[0].set_ylabel("Count")
-    axes[0].grid(axis="y", alpha=0.3)
-
-    axes[1].hist(iqrs, bins=10, color=(255/255, 150/255, 100/255), alpha=0.7, edgecolor="black")
-    axes[1].set_title("Candidate IQR RMST Diff (Validation, 60 months)")
-    axes[1].set_xlabel("IQR RMST diff (months)")
-    axes[1].set_ylabel("Count")
-    axes[1].grid(axis="y", alpha=0.3)
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(OUT_DIR, "candidate_rmst_median_iqr_hist.png"), dpi=600)
-    print(f"Saved candidate RMST median/IQR histogram to: {os.path.join(OUT_DIR, 'candidate_rmst_median_iqr_hist.png')}")
-    plt.show(block=False)
 
 model_specs = [
     ("best_model", best_model_trial),
-    ("pareto_best_ci", one_se_nearest),
-    ("highest_median_rmst", best_rmst_trial),
 ]
 
 # Dataset for final training/eval
@@ -978,9 +909,40 @@ for model_label, trial in model_specs:
     plt.savefig(os.path.join(model_out_dir, "pvalue_and_rmst_distribution.png"), dpi=600)
     plt.show(block = False)
 
-    # Feature importance and final KM plot using median p-value seed
-    median_run_idx = np.argsort(all_pvalues)[len(all_pvalues)//2]
+    # Feature importance and final KM plot using ordinal minimax selection:
+    # 1) rank by |log(p) - log(median p)|
+    # 2) rank by |rmst - median rmst|
+    # 3) combined score R = max(rank_p, rank_r)
+    # 4) choose minimal R with deterministic tie-break
+    pvals_arr = np.asarray(all_pvalues, dtype=float)
+    rmst_arr = np.asarray(all_rmst_diffs, dtype=float)
+
+    p_eps = 1e-12
+    log_pvals = np.log(np.clip(pvals_arr, p_eps, None))
+    log_median_p = float(np.log(max(median_pvalue, p_eps)))
+    p_dist_log = np.abs(log_pvals - log_median_p)
+    r_dist = np.abs(rmst_arr - median_rmst_diff)
+
+    def _ordinal_ranks(dist):
+        order = np.argsort(dist, kind="mergesort")
+        ranks = np.empty_like(order, dtype=int)
+        ranks[order] = np.arange(1, len(dist) + 1)
+        return ranks
+
+    rankdist_p = _ordinal_ranks(p_dist_log)
+    rankdist_r = _ordinal_ranks(r_dist)
+    combined_rank = np.maximum(rankdist_p, rankdist_r)
+
+    # Deterministic tie-break: smaller combined rank, then smaller p-rank,
+    # then smaller r-rank, then earlier run index.
+    run_idx_arr = np.arange(len(seed_list))
+    median_run_idx = int(np.lexsort((run_idx_arr, rankdist_r, rankdist_p, combined_rank))[0])
     median_seed = seed_list[median_run_idx]
+    print(
+        f"\nSelected seed for final evaluation and feature importance: {median_seed} "
+        f"(Run {median_run_idx + 1}; R={combined_rank[median_run_idx]}, "
+        f"rank_p={rankdist_p[median_run_idx]}, rank_r={rankdist_r[median_run_idx]})"
+    )
     rsf_params = build_rsf_params_from_trial(trial)
     rsf_params["random_state"] = median_seed
 
@@ -988,7 +950,7 @@ for model_label, trial in model_specs:
         trial, trainval_df, test_df
     )
 
-    with threadpool_limits(limits=None):
+    with threadpool_limits(limits=1):
         rsf_final = make_rsf(**rsf_params)
         rsf_final.fit(X_trv, y_trv, sample_weight=w_trv)
 
@@ -999,7 +961,10 @@ for model_label, trial in model_specs:
             genes_inter=genes_inter,
             dup_inter=dup_inter,
             clin_cols=CLIN_FEATS,
-            path=model_out_dir + "/"
+            path=model_out_dir + "/", 
+            includeRMST=True,
+            p = 1, 
+            q = 0
         )
 
         result = permutation_importance(
