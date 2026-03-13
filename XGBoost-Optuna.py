@@ -25,6 +25,8 @@ from lifelines.plotting import add_at_risk_counts
 from lifelines.utils import restricted_mean_survival_time
 from threadpoolctl import threadpool_limits
 
+from sksurv.compare import compare_survival
+
 import optuna
 from optuna.samplers import NSGAIISampler
 
@@ -236,7 +238,16 @@ def compare_treatment_recommendation_km_xgb(booster, df, genes_main, genes_inter
         event_observed_A=df.loc[mask_aligned, event_col],
         event_observed_B=df.loc[mask_not_aligned, event_col],
     )
-    print("Log-rank test p-value:", results.p_value)
+    print("Lifelines Log-rank test p-value:", results.p_value)
+    
+    # Run with scikit-survival compare_survival to cross-check log-rank p-value
+    y_all = Surv.from_arrays(
+        event=df[event_col].astype(bool).values,
+        time=df[time_col].values.astype(float),
+    )
+    group_indicator = np.where(mask_aligned.to_numpy(bool), "aligned", "not_aligned")
+    chisq, pvalue = compare_survival(y_all, group_indicator)
+    print("scikit-survival compare_survival log-rank p-value:", pvalue)
 
     tau = 60  # 5 year survival
     rmst_aligned = float(restricted_mean_survival_time(kmf_aligned, t=tau))
@@ -423,7 +434,7 @@ def train_xgb_cox(dtrain, dvalid, params, num_boost_round, early_stopping_rounds
     return booster, evals_result
 
 # ============================================================
-# Optuna: NSGA-II (Val CI ↑, RMST diff ↑) + emphasized interactions
+# Optuna: NSGA-II (Val CI ↑, RMST diff ↑) + deterministic bootstrap tuning
 # ============================================================
 def suggest_hparams(trial):
     max_nonclin = max(8, FEAT_BUDGET - len(CLIN_FEATS))
@@ -437,15 +448,17 @@ def suggest_hparams(trial):
         TOPK_MAIN_CHOICES = (min(MAX_GENES, max_main),)
     top_k_genes = int(trial.suggest_categorical("top_k_genes", TOPK_MAIN_CHOICES))
 
-    inter_ratio = trial.suggest_float("inter_ratio", 0.30, 1.00)
-    top_k_inter_raw = int(min(int(round(inter_ratio * top_k_genes)), top_k_genes))
-
-    # Budget clamp
     k_main = int(min(top_k_genes, max_main))
     k_int_cap = int(max(0, min(k_main, max_nonclin - k_main)))
-    k_int  = int(min(top_k_inter_raw, k_int_cap))
-    if k_int_cap > 0 and k_int == 0:
-        k_int = 1
+
+    base_inter = [0, 8, 16, 32, 64]
+    TOPK_INTER_CHOICES = tuple(sorted({k for k in base_inter if 0 <= k <= k_int_cap}))
+    if len(TOPK_INTER_CHOICES) == 0:
+        TOPK_INTER_CHOICES = (0,)
+    inter_param_name = f"top_k_inter_cap_{k_int_cap}"
+    top_k_inter = int(trial.suggest_categorical(inter_param_name, TOPK_INTER_CHOICES))
+
+    k_int = int(min(top_k_inter, k_int_cap))
 
     # Optional duplication of interaction columns (1 = off)
     dup_inter = 1 #trial.suggest_int("dup_inter", 1, 3)
@@ -480,69 +493,133 @@ w_tr, ps_model, pi_tr = compute_iptw(train_df, covariate_cols=CLIN_FEATS_PRETX, 
 w_va, _, _ = compute_iptw(valid_df, covariate_cols=CLIN_FEATS_PRETX, act_col="Adjuvant Chemo",
                           ref_prev=pi_tr, model=ps_model)
 
-def build_trial_mats(k_main, k_int, dup_inter):
+# Bootstrap tuning on TRAIN; each fitted model is scored on the fixed VALID split.
+BOOTSTRAP_TUNE_N = 5
+BOOTSTRAP_BASE_SEED = 42
+BOOTSTRAP_MAX_RESAMPLE_TRIES = 256
+
+def bootstrap_resample_df(df, seed, require_two_arms=False, require_event=True):
+    rng = np.random.default_rng(int(seed))
+    n = len(df)
+    for _ in range(BOOTSTRAP_MAX_RESAMPLE_TRIES):
+        idx = rng.integers(0, n, size=n)
+        boot = df.iloc[idx].copy()
+        if require_event and int(boot["OS_STATUS"].sum()) == 0:
+            continue
+        if require_two_arms and boot["Adjuvant Chemo"].nunique() < 2:
+            continue
+        return boot.sort_values(by=["OS_MONTHS", "OS_STATUS"], ascending=[False, False]).reset_index(drop=True)
+    raise RuntimeError("Could not draw a valid bootstrap sample with events and both treatment arms.")
+
+def build_trial_mats_for_splits(train_fit_df, valid_eval_df, w_fit, w_eval, k_main, k_int, dup_inter):
     genes_main  = GENE_RANK[:k_main]
     genes_inter = genes_main[:k_int]
     Xtr_raw, feat_names = build_features_with_interactions(
-        train_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+        train_fit_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
     )
     Xva_raw, _ = build_features_with_interactions(
-        valid_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+        valid_eval_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
     )
 
     Xtr = Xtr_raw.astype(np.float32)
     Xva = Xva_raw.astype(np.float32)
 
-    ytr = pack_cox_labels(train_df["OS_MONTHS"].values, train_df["OS_STATUS"].values)
-    yva = pack_cox_labels(valid_df["OS_MONTHS"].values,  valid_df["OS_STATUS"].values)
+    ytr = pack_cox_labels(train_fit_df["OS_MONTHS"].values, train_fit_df["OS_STATUS"].values)
+    yva = pack_cox_labels(valid_eval_df["OS_MONTHS"].values,  valid_eval_df["OS_STATUS"].values)
 
-    dtr = xgb.DMatrix(Xtr, label=ytr, weight=w_tr, feature_names=feat_names)
-    dva = xgb.DMatrix(Xva, label=yva, weight=w_va, feature_names=feat_names)
+    dtr = xgb.DMatrix(Xtr, label=ytr, weight=w_fit, feature_names=feat_names)
+    dva = xgb.DMatrix(Xva, label=yva, weight=w_eval, feature_names=feat_names)
     return dtr, dva, feat_names, genes_main, genes_inter
 
 def objective(trial):
     k_main, k_int, dup_inter, params, num_boost_round, esr = suggest_hparams(trial)
-    dtr, dva, feat_names, genes_main, genes_inter = build_trial_mats(k_main, k_int, dup_inter)
-    booster, _ = train_xgb_cox(dtr, dva, params, num_boost_round, esr)
+    boot_val_cis = []
+    boot_rmst_diffs = []
+    boot_best_ntrees = []
+    n_features = None
 
-    yva_signed = dva.get_label()
-    tva = np.abs(yva_signed)
-    eva = (yva_signed > 0).astype(int)
+    for b in range(BOOTSTRAP_TUNE_N):
+        boot_seed = BOOTSTRAP_BASE_SEED + trial.number * 1000 + b
+        boot_train_df = bootstrap_resample_df(
+            train_df,
+            seed=boot_seed,
+            require_two_arms=True,
+            require_event=True,
+        )
+        w_tr_boot, _, _ = compute_iptw(
+            boot_train_df,
+            covariate_cols=CLIN_FEATS_PRETX,
+            act_col="Adjuvant Chemo",
+        )
+        dtr, dva, feat_names, genes_main, genes_inter = build_trial_mats_for_splits(
+            boot_train_df,
+            valid_df,
+            w_fit=w_tr_boot,
+            w_eval=None,
+            k_main=k_main,
+            k_int=k_int,
+            dup_inter=dup_inter,
+        )
+        params_boot = dict(params)
+        params_boot["seed"] = int(boot_seed)
 
-    best_ntree = booster.best_iteration + 1 if booster.best_iteration is not None else num_boost_round
-    va_pred = booster.predict(dva, iteration_range=(0, best_ntree), output_margin=True)
-    val_ci = float(cindex(va_pred, tva, eva))
-    rmst_diff = compute_alignment_rmst_diff_xgb(
-        booster,
-        valid_df,
-        genes_main=genes_main,
-        genes_inter=genes_inter,
-        dup_inter=dup_inter,
-        feature_names=feat_names,
-        best_ntree=best_ntree,
-        clin_cols=CLIN_FEATS,
-        tau=60,
-    )
+        booster, _ = train_xgb_cox(dtr, dva, params_boot, num_boost_round, esr)
 
-    trial.set_user_attr("n_features", int(len(dtr.feature_names)))
+        yva_signed = dva.get_label()
+        tva = np.abs(yva_signed)
+        eva = (yva_signed > 0).astype(int)
+
+        best_ntree = booster.best_iteration + 1 if booster.best_iteration is not None else num_boost_round
+        va_pred = booster.predict(dva, iteration_range=(0, best_ntree), output_margin=True)
+        val_ci = float(cindex(va_pred, tva, eva))
+        rmst_diff = compute_alignment_rmst_diff_xgb(
+            booster,
+            valid_df,
+            genes_main=genes_main,
+            genes_inter=genes_inter,
+            dup_inter=dup_inter,
+            feature_names=feat_names,
+            best_ntree=best_ntree,
+            clin_cols=CLIN_FEATS,
+            tau=60,
+        )
+
+        boot_val_cis.append(float(val_ci))
+        boot_rmst_diffs.append(float(rmst_diff))
+        boot_best_ntrees.append(int(best_ntree))
+        n_features = len(dtr.feature_names)
+
+    median_val_ci = float(np.median(boot_val_cis))
+    median_rmst_diff = float(np.median(boot_rmst_diffs))
+    val_ci_se = float(np.std(boot_val_cis, ddof=1)) if len(boot_val_cis) > 1 else 0.0
+    rmst_iqr = float(np.percentile(boot_rmst_diffs, 75) - np.percentile(boot_rmst_diffs, 25)) if len(boot_rmst_diffs) > 1 else 0.0
+    best_ntree_median = int(round(np.median(boot_best_ntrees))) if boot_best_ntrees else int(num_boost_round)
+
+    trial.set_user_attr("n_features", int(n_features))
     trial.set_user_attr("k_main", int(k_main))
     trial.set_user_attr("k_int", int(k_int))
     trial.set_user_attr("dup_inter", int(dup_inter))
-    trial.set_user_attr("best_ntree", int(best_ntree))
-    trial.set_user_attr("val_ci", float(val_ci))
-    trial.set_user_attr("rmst_diff", float(rmst_diff))
+    trial.set_user_attr("best_ntree", int(best_ntree_median))
+    trial.set_user_attr("val_ci", float(median_val_ci))
+    trial.set_user_attr("rmst_diff", float(median_rmst_diff))
+    trial.set_user_attr("val_ci_boot_median", float(median_val_ci))
+    trial.set_user_attr("val_ci_boot_se", float(val_ci_se))
+    trial.set_user_attr("rmst_diff_boot_median", float(median_rmst_diff))
+    trial.set_user_attr("rmst_diff_boot_iqr", float(rmst_iqr))
+    trial.set_user_attr("bootstrap_n", int(BOOTSTRAP_TUNE_N))
 
     print(
-        f"[Trial {trial.number:03d}] Val CI={val_ci:.4f}, RMST diff={float(rmst_diff):.4f}, "
-        f"N_feats={len(dtr.feature_names)}, K_main={k_main}, K_int={k_int}, Dup={dup_inter}, "
-        f"N_tree={best_ntree}"
+        f"[Trial {trial.number:03d}] Boot Val CI median({BOOTSTRAP_TUNE_N})={median_val_ci:.4f} "
+        f"(SE={val_ci_se:.4f}), RMST diff median({BOOTSTRAP_TUNE_N})={float(median_rmst_diff):.4f} "
+        f"(IQR={rmst_iqr:.4f}), N_feats={n_features}, K_main={k_main}, K_int={k_int}, Dup={dup_inter}, "
+        f"N_tree={best_ntree_median}"
     )
 
-    return val_ci, float(rmst_diff)
+    return median_val_ci, float(median_rmst_diff)
 
 # ---- Run study ----
-RUN_TAG = "3-12-mo-ci-rmst"
-storage = "sqlite:///xgb_cox_optuna_mar12_multiobj.db"
+RUN_TAG = f"3-13-mo-ci-rmst-boot{BOOTSTRAP_TUNE_N}"
+storage = f"sqlite:///xgb_cox_optuna_mar12_multiobj_boot{BOOTSTRAP_TUNE_N}.db"
 study_name = f"xgb_cox_{RUN_TAG}"
 study = optuna.create_study(
     directions=["maximize", "maximize"],
@@ -552,7 +629,7 @@ study = optuna.create_study(
     sampler=NSGAIISampler(seed=42),
 )
 N_TRIALS = 0 # adjust as needed
-print(f"Starting optimization: {N_TRIALS} trials")
+print(f"Starting bootstrap optimization: {N_TRIALS} trials x {BOOTSTRAP_TUNE_N} bootstraps/trial")
 study.optimize(objective, n_trials=N_TRIALS, gc_after_trial=True)
 
 # ---- Multi-objective selection from Pareto front ----
@@ -591,11 +668,13 @@ chosen = scored[0][1]
 
 print(f"\n[Pareto] Candidates: {len(candidates)}")
 print(f"[Pareto] Selected compromise trial #{chosen.number}")
-print(f"[Pareto] Selected values: Val CI={float(chosen.values[0]):.4f}, RMST diff={float(chosen.values[1]):.4f}")
+print(f"[Pareto] Selected values: Boot median Val CI={float(chosen.values[0]):.4f}, Boot median RMST diff={float(chosen.values[1]):.4f}")
 print("[Chosen Params]", chosen.params)
-print("[Chosen Attrs] k_main=%s k_int=%s dup_inter=%s best_ntree=%s" %
+print("[Chosen Attrs] k_main=%s k_int=%s dup_inter=%s best_ntree=%s ci_se=%s rmst_iqr=%s boot_n=%s" %
       (str(chosen.user_attrs.get("k_main")), str(chosen.user_attrs.get("k_int")),
-       str(chosen.user_attrs.get("dup_inter")), str(chosen.user_attrs.get("best_ntree"))))
+       str(chosen.user_attrs.get("dup_inter")), str(chosen.user_attrs.get("best_ntree")),
+       str(chosen.user_attrs.get("val_ci_boot_se")), str(chosen.user_attrs.get("rmst_diff_boot_iqr")),
+       str(chosen.user_attrs.get("bootstrap_n"))))
 
 # ============================================================
 # Final training on Train+Val with chosen hyperparams + IPTW
@@ -640,7 +719,14 @@ params_fin = {
     "disable_default_eval_metric": True, # custom_metric only
     "seed": 7,
     "nthread": -1,
-    **{k: v for k, v in best_hp.items() if k not in ["num_boost_round", "early_stopping_rounds"]}
+    **{
+        k: v for k, v in best_hp.items()
+        if k in {
+            "eta", "max_depth", "min_child_weight", "gamma",
+            "subsample", "colsample_bytree", "colsample_bylevel",
+            "colsample_bynode", "reg_lambda", "reg_alpha", "max_bin"
+        }
+    }
 }
 num_boost_round_fin = int(best_hp.get("num_boost_round", 1600))
 early_stopping_rounds_fin = int(best_hp.get("early_stopping_rounds", 125))
