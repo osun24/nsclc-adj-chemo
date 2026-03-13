@@ -160,6 +160,15 @@ def predict_xgb_risk(booster, X, feature_names, best_ntree):
     return booster.predict(dmat, iteration_range=(0, int(best_ntree)), output_margin=True)
 
 
+def slice_booster_to_best_iteration(booster, best_ntree):
+    if best_ntree is None:
+        return booster
+    try:
+        return booster[:int(best_ntree)]
+    except Exception:
+        return booster
+
+
 def compare_treatment_recommendation_km_xgb(booster, df, genes_main, genes_inter, dup_inter,
                                             feature_names, best_ntree, clin_cols,
                                             time_col="OS_MONTHS", event_col="OS_STATUS",
@@ -185,6 +194,13 @@ def compare_treatment_recommendation_km_xgb(booster, df, genes_main, genes_inter
     with threadpool_limits(limits=1):
         risk_treated = predict_xgb_risk(booster, X_treated, feature_names, best_ntree)
         risk_untreated = predict_xgb_risk(booster, X_untreated, feature_names, best_ntree)
+        
+        delta = risk_treated - risk_untreated
+        delta_mean = float(np.mean(delta))
+        delta_std = float(np.std(delta))
+        print(f"[Delta risk treated-untreated] mean={delta_mean:.6f}, sd={delta_std:.6f}, n_interactions={len(genes_inter)}")
+        if np.isclose(delta_std, 0.0, atol=1e-10):
+            print("[Warning] Near-zero treatment heterogeneity detected (counterfactual risks are almost identical).")
 
     model_rec = np.where(risk_treated < risk_untreated, 1, 0)  # choose lower risk arm
     actual = df["Adjuvant Chemo"].to_numpy(int)
@@ -412,19 +428,24 @@ def train_xgb_cox(dtrain, dvalid, params, num_boost_round, early_stopping_rounds
 def suggest_hparams(trial):
     max_nonclin = max(8, FEAT_BUDGET - len(CLIN_FEATS))
 
-    # Larger menu; interactions can be as numerous as mains (within budget)
-    base_main  = [16, 32, 64, 96, 128, 192, 256, 384, 512, MAX_GENES]
-    TOPK_MAIN_CHOICES = tuple(sorted({k for k in base_main if k <= MAX_GENES}))
+    # Reserve headroom for interactions; otherwise k_int is forced to zero.
+    max_main = max(1, max_nonclin - 1)
+
+    base_main  = [4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, MAX_GENES]
+    TOPK_MAIN_CHOICES = tuple(sorted({k for k in base_main if 1 <= k <= min(MAX_GENES, max_main)}))
+    if len(TOPK_MAIN_CHOICES) == 0:
+        TOPK_MAIN_CHOICES = (min(MAX_GENES, max_main),)
     top_k_genes = int(trial.suggest_categorical("top_k_genes", TOPK_MAIN_CHOICES))
 
-    base_inter = [0]
-    TOPK_INTER_CHOICES = tuple(sorted({k for k in base_inter if k <= MAX_GENES}))
-    inter_ratio = trial.suggest_float("inter_ratio", 0.75, 1.25)
-    top_k_inter_raw = int(min(int(round(inter_ratio * top_k_genes)), max(base_inter)))
+    inter_ratio = trial.suggest_float("inter_ratio", 0.30, 1.00)
+    top_k_inter_raw = int(min(int(round(inter_ratio * top_k_genes)), top_k_genes))
 
     # Budget clamp
-    k_main = int(min(top_k_genes, max_nonclin))
-    k_int  = int(min(top_k_inter_raw, k_main, max_nonclin - k_main))
+    k_main = int(min(top_k_genes, max_main))
+    k_int_cap = int(max(0, min(k_main, max_nonclin - k_main)))
+    k_int  = int(min(top_k_inter_raw, k_int_cap))
+    if k_int_cap > 0 and k_int == 0:
+        k_int = 1
 
     # Optional duplication of interaction columns (1 = off)
     dup_inter = 1 #trial.suggest_int("dup_inter", 1, 3)
@@ -634,6 +655,7 @@ d_va_es = xgb.DMatrix(X_trv[va_idx], label=y_trv[va_idx], weight=w_trv[va_idx], 
 booster_final, evr_final = train_xgb_cox(d_tr_es, d_va_es, params_fin,
                                          num_boost_round_fin, early_stopping_rounds_fin)
 best_ntree_final = booster_final.best_iteration + 1 if booster_final.best_iteration is not None else num_boost_round_fin
+booster_final_best = slice_booster_to_best_iteration(booster_final, best_ntree_final)
 
 # Evaluate Train+Val and Test at the best iteration
 pred_trv = booster_final.predict(d_trv, iteration_range=(0, best_ntree_final), output_margin=True)
@@ -662,7 +684,7 @@ print("[Test]      CI by arm:", ci_by_arm(pred_te,  t_te,  e_te,  act_te))
 # Save artifacts
 OUT_DIR = f"xgb_cox_interactions_iptw_bounded-{RUN_TAG}-pareto"
 os.makedirs(OUT_DIR, exist_ok=True)
-booster_final.save_model(os.path.join(OUT_DIR, "xgb_cox_final.json"))
+booster_final_best.save_model(os.path.join(OUT_DIR, "xgb_cox_final.json"))
 with open(os.path.join(OUT_DIR, "chosen_params.txt"), "w") as f:
     f.write(str(best_hp))
 with open(os.path.join(OUT_DIR, "features_used.txt"), "w") as f:
@@ -672,7 +694,7 @@ print("Saved final model and parameters to:", OUT_DIR)
 # Kaplan-Meier alignment on test set using final model
 print("\n[KM Alignment] Test set vs. XGBoost recommendation")
 compare_treatment_recommendation_km_xgb(
-    booster_final,
+    booster_final_best,
     test_df,
     genes_main=genes_main,
     genes_inter=genes_inter,
