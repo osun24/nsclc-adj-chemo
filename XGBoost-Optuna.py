@@ -2,7 +2,7 @@
 # Colab-ready SINGLE CELL (CPU)
 # XGBoost (gbtree) Cox PH with IPTW, feature budgets,
 # emphasized gene×ACT interactions (incl. optional duplication),
-# early stopping on C-index, and conservative Pareto selection
+# early stopping on C-index, and multi-objective Pareto selection
 # ============================================================
 
 # ---------- Imports ----------
@@ -22,6 +22,8 @@ from sksurv.linear_model import CoxPHSurvivalAnalysis
 from lifelines import KaplanMeierFitter
 from lifelines.statistics import logrank_test
 from lifelines.plotting import add_at_risk_counts
+from lifelines.utils import restricted_mean_survival_time
+from threadpoolctl import threadpool_limits
 
 import optuna
 from optuna.samplers import NSGAIISampler
@@ -53,7 +55,7 @@ CLINICAL_VARS = [
     "Race_African American","Race_Asian","Race_Caucasian","Race_Native Hawaiian or Other Pacific Islander","Race_Unknown",
     "Smoked?_No","Smoked?_Unknown","Smoked?_Yes"
 ]
-CLIN_FEATS_PRETX = [c for c in CLINICAL_VARS if c != "Adjuvant Chemo"]  # for IPTW only
+CLIN_FEATS_PRETX = [c for c in CLINICAL_VARS if c != "Adjuvant Chemo"]  # reset after feature intersection
 
 # ============================================================
 # Helpers: IO, preprocessing, ranking, features, IPTW, metrics
@@ -96,12 +98,17 @@ def rank_genes_univariate(train_df, gene_cols):
     return [g for g, _ in ranks]
 
 # === Emphasize interactions via optional duplication ===
-def build_features_with_interactions(df, main_genes, inter_genes, act_col="Adjuvant Chemo", dup_inter=1):
+def build_features_with_interactions(df, main_genes, inter_genes,
+                                     act_col="Adjuvant Chemo", dup_inter=1,
+                                     clin_cols=None):
     """
     Build [clinical + genes_main + gene*ACT] features.
     If dup_inter>1, duplicate interaction columns with unique names to bias column sampling.
     """
-    base_cols = CLINICAL_VARS + list(main_genes)  # keep ACT main effect in clinicals
+    if clin_cols is None:
+        clin_cols = CLINICAL_VARS
+
+    base_cols = list(clin_cols) + list(main_genes)  # keep ACT main effect in clinicals
     X_base = df[base_cols].to_numpy(dtype=np.float32)
     A = df[act_col].to_numpy(dtype=np.float32).reshape(-1, 1)
 
@@ -148,26 +155,38 @@ def cindex(pred, time, event):
     return float(concordance_index_censored(event.astype(bool), time.astype(float), pred)[0])
 
 
-def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, dup_inter,
-                                        feature_names, best_ntree, time_col="OS_MONTHS", event_col="OS_STATUS",p=0,q=0):
+def predict_xgb_risk(booster, X, feature_names, best_ntree):
+    dmat = xgb.DMatrix(X.astype(np.float32), feature_names=feature_names)
+    return booster.predict(dmat, iteration_range=(0, int(best_ntree)), output_margin=True)
+
+
+def compare_treatment_recommendation_km_xgb(booster, df, genes_main, genes_inter, dup_inter,
+                                            feature_names, best_ntree, clin_cols,
+                                            time_col="OS_MONTHS", event_col="OS_STATUS",
+                                            path="", includeRMST=False, p=None, q=None):
     """KM comparison for alignment with model's treatment recommendation on provided data."""
     df = df.copy()
     df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
 
     # Counterfactual feature matrices with ACT forced to 1 vs 0
-    df_treated = df.copy(); df_treated["Adjuvant Chemo"] = 1
-    df_untreated = df.copy(); df_untreated["Adjuvant Chemo"] = 0
+    df_treated = df.copy()
+    df_treated["Adjuvant Chemo"] = 1
 
-    X_treated, _ = build_features_with_interactions(df_treated, genes_main, genes_inter, dup_inter=dup_inter)
-    X_untreated, _ = build_features_with_interactions(df_untreated, genes_main, genes_inter, dup_inter=dup_inter)
+    df_untreated = df.copy()
+    df_untreated["Adjuvant Chemo"] = 0
 
-    dm_treated = xgb.DMatrix(X_treated.astype(np.float32), feature_names=feature_names)
-    dm_untreated = xgb.DMatrix(X_untreated.astype(np.float32), feature_names=feature_names)
+    X_treated, _ = build_features_with_interactions(
+        df_treated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
+    X_untreated, _ = build_features_with_interactions(
+        df_untreated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
 
-    risk_treated = booster.predict(dm_treated, iteration_range=(0, best_ntree), output_margin=True)
-    risk_untreated = booster.predict(dm_untreated, iteration_range=(0, best_ntree), output_margin=True)
+    with threadpool_limits(limits=1):
+        risk_treated = predict_xgb_risk(booster, X_treated, feature_names, best_ntree)
+        risk_untreated = predict_xgb_risk(booster, X_untreated, feature_names, best_ntree)
 
-    model_rec = np.where(risk_treated < risk_untreated, 1, 0)
+    model_rec = np.where(risk_treated < risk_untreated, 1, 0)  # choose lower risk arm
     actual = df["Adjuvant Chemo"].to_numpy(int)
     alignment = actual == model_rec
 
@@ -184,42 +203,127 @@ def compare_treatment_recommendation_km(booster, df, genes_main, genes_inter, du
     kmf_aligned.fit(
         durations=df.loc[mask_aligned, time_col],
         event_observed=df.loc[mask_aligned, event_col],
-        label="Aligned with XGB recommendation"
+        label="Aligned with XGBoost recommendation"
     )
     ax = kmf_aligned.plot(ci_show=True)
 
     kmf_not_aligned.fit(
         durations=df.loc[mask_not_aligned, time_col],
         event_observed=df.loc[mask_not_aligned, event_col],
-        label="Not aligned with XGB recommendation"
+        label="Not aligned with XGBoost recommendation"
     )
     kmf_not_aligned.plot(ax=ax, ci_show=True)
-    
+
     results = logrank_test(
         df.loc[mask_aligned, time_col],
         df.loc[mask_not_aligned, time_col],
         event_observed_A=df.loc[mask_aligned, event_col],
         event_observed_B=df.loc[mask_not_aligned, event_col],
-        weightings ="fleming-harrington",p=p,q=q)
-    """weightings="fleming-harrington",
-    p = 0,
-    q = 0"""
-    
+    )
     print("Log-rank test p-value:", results.p_value)
+
+    tau = 60  # 5 year survival
+    rmst_aligned = float(restricted_mean_survival_time(kmf_aligned, t=tau))
+    rmst_not_aligned = float(restricted_mean_survival_time(kmf_not_aligned, t=tau))
+    rmst_diff = rmst_aligned - rmst_not_aligned
+
+    print("\n[RMST by Treatment Recommendation]")
+    print(f"RMST (aligned) at tau={tau:.2f}: {rmst_aligned:.4f}")
+    print(f"RMST (not aligned) at tau={tau:.2f}: {rmst_not_aligned:.4f}")
+    print(f"RMST difference (aligned - not aligned): {rmst_diff:.4f}")
 
     plt.title("Kaplan-Meier Survival Curves by Treatment Alignment")
     plt.xlabel("Time")
     plt.ylabel("Survival Probability")
     add_at_risk_counts(kmf_aligned, kmf_not_aligned)
-    if p > 0 or q > 0:
-        text = f"Weighted (p = {p}, q = {q})"
-    else: text=""
-    plt.text(0.1, 0.1, f"{text} Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
-    ax.set_xlim(left =0)
+    plt.text(0.1, 0.1, f"Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
+    print(f"Log-rank test p-value: {results.p_value:.4f}")
+
+    if includeRMST:
+        plt.text(0.1, 0.05, f"5-year RMST difference: {rmst_diff:.2f} months", transform=plt.gca().transAxes)
+
+    fh_pvalue = None
+    if p is not None and q is not None:
+        fh_results = logrank_test(
+            df.loc[mask_aligned, time_col],
+            df.loc[mask_not_aligned, time_col],
+            event_observed_A=df.loc[mask_aligned, event_col],
+            event_observed_B=df.loc[mask_not_aligned, event_col],
+            weightings="fleming-harrington",
+            p=p,
+            q=q,
+        )
+        fh_pvalue = float(fh_results.p_value)
+        print(f"Fleming-Harrington test p-value (p={p}, q={q}): {fh_pvalue:.4f}")
+        plt.text(0.1, 0.15, f"FH({p}, {q}) log-rank p-value: {fh_pvalue:.4f}", transform=plt.gca().transAxes)
+
+    ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
     plt.tight_layout()
-    plt.savefig(f"km_alignment_xgb_recommendation_{text}.png", dpi=600)
-    plt.show()
+    plt.savefig(path + "km_alignment_xgb_recommendation.png", dpi=600)
+    plt.show(block=False)
+
+    return {
+        "tau": tau,
+        "rmst_aligned": rmst_aligned,
+        "rmst_not_aligned": rmst_not_aligned,
+        "rmst_diff": rmst_diff,
+        "n_aligned": int(mask_aligned.sum()),
+        "n_not_aligned": int(mask_not_aligned.sum()),
+        "logrank_pvalue": float(results.p_value),
+        "fh_pvalue": fh_pvalue,
+    }
+
+
+def compute_alignment_rmst_diff_xgb(booster, df, genes_main, genes_inter, dup_inter,
+                                    feature_names, best_ntree, clin_cols, tau=60,
+                                    time_col="OS_MONTHS", event_col="OS_STATUS"):
+    """Compute RMST difference (aligned - not aligned) without plotting/log-rank output."""
+    df = df.copy()
+    df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
+
+    df_treated = df.copy()
+    df_treated["Adjuvant Chemo"] = 1
+
+    df_untreated = df.copy()
+    df_untreated["Adjuvant Chemo"] = 0
+
+    X_treated, _ = build_features_with_interactions(
+        df_treated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
+    X_untreated, _ = build_features_with_interactions(
+        df_untreated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
+
+    with threadpool_limits(limits=None):
+        risk_treated = predict_xgb_risk(booster, X_treated, feature_names, best_ntree)
+        risk_untreated = predict_xgb_risk(booster, X_untreated, feature_names, best_ntree)
+
+    model_rec = np.where(risk_treated < risk_untreated, 1, 0)
+    actual = df["Adjuvant Chemo"].to_numpy(int)
+    alignment = actual == model_rec
+
+    mask_aligned = alignment
+    mask_not_aligned = ~alignment
+
+    if int(mask_aligned.sum()) == 0 or int(mask_not_aligned.sum()) == 0:
+        return 0.0
+
+    kmf_aligned = KaplanMeierFitter()
+    kmf_not_aligned = KaplanMeierFitter()
+
+    kmf_aligned.fit(
+        durations=df.loc[mask_aligned, time_col],
+        event_observed=df.loc[mask_aligned, event_col],
+    )
+    kmf_not_aligned.fit(
+        durations=df.loc[mask_not_aligned, time_col],
+        event_observed=df.loc[mask_not_aligned, event_col],
+    )
+
+    rmst_aligned = float(restricted_mean_survival_time(kmf_aligned, t=tau))
+    rmst_not_aligned = float(restricted_mean_survival_time(kmf_not_aligned, t=tau))
+    return float(rmst_aligned - rmst_not_aligned)
 
 # ============================================================
 # Load data, rank genes (TRAIN only), set budgets
@@ -255,6 +359,7 @@ feat_candidates = [c for c in (CLINICAL_VARS + GENE_LIST)
                    if c in train_df.columns and c in valid_df.columns and c in test_df.columns]
 CLIN_FEATS = [c for c in CLINICAL_VARS if c in feat_candidates]
 GENE_FEATS = [g for g in GENE_LIST if g in feat_candidates]
+CLIN_FEATS_PRETX = [c for c in CLIN_FEATS if c != "Adjuvant Chemo"]
 
 # Sort by time/status for stability
 train_df = train_df.sort_values(by=["OS_MONTHS","OS_STATUS"], ascending=[False, False]).reset_index(drop=True)
@@ -302,7 +407,7 @@ def train_xgb_cox(dtrain, dvalid, params, num_boost_round, early_stopping_rounds
     return booster, evals_result
 
 # ============================================================
-# Optuna: NSGA-II (Val CI ↑, Gap ↓) + emphasized interactions
+# Optuna: NSGA-II (Val CI ↑, RMST diff ↑) + emphasized interactions
 # ============================================================
 def suggest_hparams(trial):
     max_nonclin = max(8, FEAT_BUDGET - len(CLIN_FEATS))
@@ -357,8 +462,12 @@ w_va, _, _ = compute_iptw(valid_df, covariate_cols=CLIN_FEATS_PRETX, act_col="Ad
 def build_trial_mats(k_main, k_int, dup_inter):
     genes_main  = GENE_RANK[:k_main]
     genes_inter = genes_main[:k_int]
-    Xtr_raw, feat_names = build_features_with_interactions(train_df, genes_main, genes_inter, dup_inter=dup_inter)
-    Xva_raw, _          = build_features_with_interactions(valid_df, genes_main, genes_inter, dup_inter=dup_inter)
+    Xtr_raw, feat_names = build_features_with_interactions(
+        train_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+    )
+    Xva_raw, _ = build_features_with_interactions(
+        valid_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+    )
 
     Xtr = Xtr_raw.astype(np.float32)
     Xva = Xva_raw.astype(np.float32)
@@ -368,98 +477,100 @@ def build_trial_mats(k_main, k_int, dup_inter):
 
     dtr = xgb.DMatrix(Xtr, label=ytr, weight=w_tr, feature_names=feat_names)
     dva = xgb.DMatrix(Xva, label=yva, weight=w_va, feature_names=feat_names)
-    return dtr, dva, feat_names
+    return dtr, dva, feat_names, genes_main, genes_inter
 
 def objective(trial):
     k_main, k_int, dup_inter, params, num_boost_round, esr = suggest_hparams(trial)
-    dtr, dva, feat_names = build_trial_mats(k_main, k_int, dup_inter)
-    booster, evr = train_xgb_cox(dtr, dva, params, num_boost_round, esr)
+    dtr, dva, feat_names, genes_main, genes_inter = build_trial_mats(k_main, k_int, dup_inter)
+    booster, _ = train_xgb_cox(dtr, dva, params, num_boost_round, esr)
 
-    # Best iteration
+    yva_signed = dva.get_label()
+    tva = np.abs(yva_signed)
+    eva = (yva_signed > 0).astype(int)
+
     best_ntree = booster.best_iteration + 1 if booster.best_iteration is not None else num_boost_round
-    tr_pred = booster.predict(dtr, iteration_range=(0, best_ntree), output_margin=True)
     va_pred = booster.predict(dva, iteration_range=(0, best_ntree), output_margin=True)
-
-    ytr_signed = dtr.get_label(); ttr = np.abs(ytr_signed); etr = (ytr_signed > 0).astype(int)
-    yva_signed = dva.get_label(); tva = np.abs(yva_signed); eva = (yva_signed > 0).astype(int)
-
-    tr_ci = cindex(tr_pred, ttr, etr)
-    va_ci, va_ci_se = cindex_bootstrap(va_pred, tva, eva) # Get C-index and SE
-    gap = max(0.0, tr_ci - va_ci)
+    val_ci = float(cindex(va_pred, tva, eva))
+    rmst_diff = compute_alignment_rmst_diff_xgb(
+        booster,
+        valid_df,
+        genes_main=genes_main,
+        genes_inter=genes_inter,
+        dup_inter=dup_inter,
+        feature_names=feat_names,
+        best_ntree=best_ntree,
+        clin_cols=CLIN_FEATS,
+        tau=60,
+    )
 
     trial.set_user_attr("n_features", int(len(dtr.feature_names)))
     trial.set_user_attr("k_main", int(k_main))
     trial.set_user_attr("k_int", int(k_int))
     trial.set_user_attr("dup_inter", int(dup_inter))
     trial.set_user_attr("best_ntree", int(best_ntree))
-    trial.set_user_attr("val_ci_se", va_ci_se) # Store standard error
+    trial.set_user_attr("val_ci", float(val_ci))
+    trial.set_user_attr("rmst_diff", float(rmst_diff))
 
-    print(f"[Trial {trial.number:03d}] Val CI={va_ci:.4f} (SE={va_ci_se:.4f}), Gap={gap:.4f}, N_feats={len(dtr.feature_names)}, "
-          f"K_main={k_main}, K_int={k_int}, Dup={dup_inter}, N_tree={best_ntree}")
+    print(
+        f"[Trial {trial.number:03d}] Val CI={val_ci:.4f}, RMST diff={float(rmst_diff):.4f}, "
+        f"N_feats={len(dtr.feature_names)}, K_main={k_main}, K_int={k_int}, Dup={dup_inter}, "
+        f"N_tree={best_ntree}"
+    )
 
-    # For single-objective, return just the value.
-    # For multi-objective, you would return a tuple, e.g., (va_ci, gap).
-    return va_ci
-
-def cindex_bootstrap(pred, time, event, n_bootstraps=100, seed=42):
-    """Computes C-index and its bootstrap standard error."""
-    rng = np.random.RandomState(seed)
-    n_samples = len(time)
-    cis = []
-    for _ in range(n_bootstraps):
-        indices = rng.choice(np.arange(n_samples), size=n_samples, replace=True)
-        if len(np.unique(event[indices])) < 2: continue # Need both events and non-events
-        try:
-            ci = cindex(pred[indices], time[indices], event[indices])
-            cis.append(ci)
-        except Exception:
-            continue # In case of convergence errors on small bootstrap samples
-    
-    if not cis: return 0.5, 0.5 # Should be rare
-    return np.mean(cis), np.std(cis)
+    return val_ci, float(rmst_diff)
 
 # ---- Run study ----
-storage = "sqlite:///xgb_cox_optuna_jan25.db"
-study_name = "xgb_cox_jan_25_1se"
-# For multi-objective, use NSGAIISampler and directions.
-# sampler = NSGAIISampler(seed=42, population_size=24)
+RUN_TAG = "3-12-mo-ci-rmst"
+storage = "sqlite:///xgb_cox_optuna_mar12_multiobj.db"
+study_name = f"xgb_cox_{RUN_TAG}"
 study = optuna.create_study(
-    direction="maximize",  # Single-objective
-    # directions=["maximize", "minimize"], # For multi-objective
-    study_name=study_name, storage=storage, load_if_exists=True, #sampler=sampler
+    directions=["maximize", "maximize"],
+    study_name=study_name,
+    storage=storage,
+    load_if_exists=True,
+    sampler=NSGAIISampler(seed=42),
 )
-N_TRIALS = 0  # adjust as needed
+N_TRIALS = 0 # adjust as needed
 print(f"Starting optimization: {N_TRIALS} trials")
 study.optimize(objective, n_trials=N_TRIALS, gc_after_trial=True)
 
-# ---- Choose the best trial using the 1-Standard-Error (1-SE) rule ----
-# Find the best trial (highest validation C-index)
-best_trial = study.best_trial
-best_ci = best_trial.value
-best_ci_se = best_trial.user_attrs.get("val_ci_se", 0.0)
-
-# 1-SE threshold: performance within one standard error of the best
-one_se_threshold = best_ci - best_ci_se
-print(f"\n[1-SE Rule] Best Val CI: {best_ci:.4f} (SE: {best_ci_se:.4f})")
-print(f"[1-SE Rule] Threshold: {one_se_threshold:.4f}")
-
-# Find candidate trials above the 1-SE threshold
+# ---- Multi-objective selection from Pareto front ----
 candidates = [
-    t for t in study.trials 
-    if t.state == optuna.trial.TrialState.COMPLETE and t.value >= one_se_threshold
+    t for t in study.best_trials
+    if t.state == optuna.trial.TrialState.COMPLETE and t.values is not None
 ]
 
 if not candidates:
-    # Fallback to the best trial if no candidates are found (unlikely)
-    chosen = best_trial
-    print("[1-SE Rule] No candidates found above threshold, falling back to best trial.")
-else:
-    # From candidates, choose the one with the fewest features (most parsimonious)
-    candidates.sort(key=lambda t: t.user_attrs.get("n_features", float('inf')))
-    chosen = candidates[0]
-    print(f"[1-SE Rule] Found {len(candidates)} candidates. Chose trial #{chosen.number} with {chosen.user_attrs.get('n_features')} features.")
+    candidates = [
+        t for t in study.trials
+        if t.state == optuna.trial.TrialState.COMPLETE and t.values is not None
+    ]
 
-print("\n[Chosen Trial] #", chosen.number, "Val CI:", chosen.values[0])
+if not candidates:
+    raise RuntimeError("No completed multi-objective trials found. Increase N_TRIALS and rerun.")
+
+ci_vals = np.array([float(t.values[0]) for t in candidates], dtype=float)
+rmst_vals = np.array([float(t.values[1]) for t in candidates], dtype=float)
+
+ci_min, ci_max = float(ci_vals.min()), float(ci_vals.max())
+rmst_min, rmst_max = float(rmst_vals.min()), float(rmst_vals.max())
+
+def _norm(x, lo, hi):
+    return 0.0 if hi <= lo else (x - lo) / (hi - lo)
+
+scored = []
+for t in candidates:
+    ci = float(t.values[0])
+    rmst = float(t.values[1])
+    score = _norm(ci, ci_min, ci_max) + _norm(rmst, rmst_min, rmst_max)
+    scored.append((score, t))
+
+scored.sort(key=lambda z: z[0], reverse=True)
+chosen = scored[0][1]
+
+print(f"\n[Pareto] Candidates: {len(candidates)}")
+print(f"[Pareto] Selected compromise trial #{chosen.number}")
+print(f"[Pareto] Selected values: Val CI={float(chosen.values[0]):.4f}, RMST diff={float(chosen.values[1]):.4f}")
 print("[Chosen Params]", chosen.params)
 print("[Chosen Attrs] k_main=%s k_int=%s dup_inter=%s best_ntree=%s" %
       (str(chosen.user_attrs.get("k_main")), str(chosen.user_attrs.get("k_int")),
@@ -479,8 +590,12 @@ trainval_df = trainval_df.sort_values(by=["OS_MONTHS","OS_STATUS"], ascending=[F
 
 genes_main  = GENE_RANK[:k_main]
 genes_inter = genes_main[:k_int]
-X_trv_raw, feat_names = build_features_with_interactions(trainval_df, genes_main, genes_inter, dup_inter=dup_inter)
-X_te_raw,  _          = build_features_with_interactions(test_df,      genes_main, genes_inter, dup_inter=dup_inter)
+X_trv_raw, feat_names = build_features_with_interactions(
+    trainval_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+)
+X_te_raw, _ = build_features_with_interactions(
+    test_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+)
 
 X_trv = X_trv_raw.astype(np.float32)
 X_te  = X_te_raw.astype(np.float32)
@@ -512,7 +627,7 @@ early_stopping_rounds_fin = int(best_hp.get("early_stopping_rounds", 125))
 # Split Train+Val for ES
 event_mask = (y_trv > 0).astype(int)
 idx = np.arange(len(y_trv))
-tr_idx, va_idx = train_test_split(idx, test_size=0.25, random_state=7, stratify=event_mask)
+tr_idx, va_idx = train_test_split(idx, test_size=0.25, random_state=42, stratify=event_mask)
 d_tr_es = xgb.DMatrix(X_trv[tr_idx], label=y_trv[tr_idx], weight=w_trv[tr_idx], feature_names=feat_names)
 d_va_es = xgb.DMatrix(X_trv[va_idx], label=y_trv[va_idx], weight=w_trv[va_idx], feature_names=feat_names)
 
@@ -544,10 +659,8 @@ def ci_by_arm(pred, t, e, arm):
 print("[Train+Val] CI by arm:", ci_by_arm(pred_trv, t_trv, e_trv, act_trv))
 print("[Test]      CI by arm:", ci_by_arm(pred_te,  t_te,  e_te,  act_te))
 
-date = "1-25"
-
 # Save artifacts
-OUT_DIR = f"xgb_cox_interactions_iptw_bounded-{date}-1SE"
+OUT_DIR = f"xgb_cox_interactions_iptw_bounded-{RUN_TAG}-pareto"
 os.makedirs(OUT_DIR, exist_ok=True)
 booster_final.save_model(os.path.join(OUT_DIR, "xgb_cox_final.json"))
 with open(os.path.join(OUT_DIR, "chosen_params.txt"), "w") as f:
@@ -557,8 +670,8 @@ with open(os.path.join(OUT_DIR, "features_used.txt"), "w") as f:
 print("Saved final model and parameters to:", OUT_DIR)
 
 # Kaplan-Meier alignment on test set using final model
-print("\n[KM Alignment] Test set vs. XGB recommendation")
-compare_treatment_recommendation_km(
+print("\n[KM Alignment] Test set vs. XGBoost recommendation")
+compare_treatment_recommendation_km_xgb(
     booster_final,
     test_df,
     genes_main=genes_main,
@@ -566,17 +679,9 @@ compare_treatment_recommendation_km(
     dup_inter=dup_inter,
     feature_names=feat_names,
     best_ntree=best_ntree_final,
-    p=0,q=0
+    clin_cols=CLIN_FEATS,
+    path=OUT_DIR + "/",
+    includeRMST=True,
+    p=1,
+    q=0,
 )
-
-"""compare_treatment_recommendation_km(
-    booster_final,
-    test_df,
-    genes_main=genes_main,
-    genes_inter=genes_inter,
-    dup_inter=dup_inter,
-    feature_names=feat_names,
-    best_ntree=best_ntree_final,
-    p=1,q=0
-)
-"""
