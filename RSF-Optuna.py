@@ -280,6 +280,123 @@ def compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, 
     }
 
 
+def final_compare_treatment_recommendation_km_rsf(model, df, genes_main, genes_inter, dup_inter,
+                                           clin_cols,
+                                           time_col="OS_MONTHS", event_col="OS_STATUS", path ="", includeRMST=False, p=None, q=None, Cindex = None):
+    """KM comparison for alignment with model's treatment recommendation on provided data."""
+    df = df.copy()
+    df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
+
+    # Counterfactual feature matrices with ACT forced to 1 vs 0
+    df_treated = df.copy()
+    df_treated["Adjuvant Chemo"] = 1
+
+    df_untreated = df.copy()
+    df_untreated["Adjuvant Chemo"] = 0
+
+    X_treated, _ = build_features_with_interactions(
+        df_treated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
+    X_untreated, _ = build_features_with_interactions(
+        df_untreated, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=clin_cols
+    )
+
+    with threadpool_limits(limits=None):
+        # RSF predict() returns a risk score: higher = worse
+        risk_treated = model.predict(X_treated.astype(np.float64))
+        risk_untreated = model.predict(X_untreated.astype(np.float64))
+
+    model_rec = np.where(risk_treated < risk_untreated, 1, 0)  # choose lower risk arm
+    actual = df["Adjuvant Chemo"].to_numpy(int)
+    alignment = actual == model_rec
+
+    df["model_rec"] = model_rec
+    df["alignment"] = alignment
+
+    mask_aligned = df["alignment"]
+    mask_not_aligned = ~df["alignment"]
+
+    kmf_aligned = KaplanMeierFitter()
+    kmf_not_aligned = KaplanMeierFitter()
+
+    plt.figure(figsize=(10, 6))
+
+    kmf_aligned.fit(
+        durations=df.loc[mask_aligned, time_col],
+        event_observed=df.loc[mask_aligned, event_col],
+        label="Aligned with RSF recommendation"
+    )
+    ax = kmf_aligned.plot(ci_show=True)
+
+    kmf_not_aligned.fit(
+        durations=df.loc[mask_not_aligned, time_col],
+        event_observed=df.loc[mask_not_aligned, event_col],
+        label="Not aligned with RSF recommendation"
+    )
+    kmf_not_aligned.plot(ax=ax, ci_show=True)
+
+    results = logrank_test(
+        df.loc[mask_aligned, time_col],
+        df.loc[mask_not_aligned, time_col],
+        event_observed_A=df.loc[mask_aligned, event_col],
+        event_observed_B=df.loc[mask_not_aligned, event_col],
+    )
+    print("Log-rank test p-value:", results.p_value)
+    
+    tau = 60 # 5 year survival
+    rmst_aligned = float(restricted_mean_survival_time(kmf_aligned, t=tau))
+    rmst_not_aligned = float(restricted_mean_survival_time(kmf_not_aligned, t=tau))
+    rmst_diff = rmst_aligned - rmst_not_aligned
+
+    print("\n[RMST by Treatment Recommendation]")
+    print(f"RMST (aligned) at tau={tau:.2f}: {rmst_aligned:.4f}")
+    print(f"RMST (not aligned) at tau={tau:.2f}: {rmst_not_aligned:.4f}")
+    print(f"RMST difference (aligned - not aligned): {rmst_diff:.4f}")
+
+    plt.title("RSF: Kaplan-Meier Survival Curves by Treatment Alignment (Test)")
+    plt.xlabel("Time")
+    plt.ylabel("Survival Probability")
+    add_at_risk_counts(kmf_aligned, kmf_not_aligned)
+    plt.text(0.1, 0.2, f"Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
+    print(f"Log-rank test p-value: {results.p_value:.4f}")
+    
+    if p is not None and q is not None:
+        # Calculate Fleming-Harrington p-value with weights p and q
+        fh_results = logrank_test(
+            df.loc[mask_aligned, time_col],
+            df.loc[mask_not_aligned, time_col],
+            event_observed_A=df.loc[mask_aligned, event_col],
+            event_observed_B=df.loc[mask_not_aligned, event_col],
+            weightings="fleming-harrington",
+            p = p, 
+            q = q
+        )
+        print(f"Fleming-Harrington test p-value (p={p}, q={q}): {fh_results.p_value:.4f}")
+        plt.text(0.1, 0.15, f"FH({p}, {q}) log-rank p-value: {fh_results.p_value:.4f}", transform=plt.gca().transAxes)
+    
+    if Cindex is not None:
+        plt.text(0.1, 0.1, f"C-index: {Cindex:.4f}", transform=plt.gca().transAxes)
+        print(f"C-index: {Cindex:.4f}")
+        
+            
+    if includeRMST:
+        plt.text(0.1, 0.05, f"5-year RMST difference: {rmst_diff:.2f} months", transform=plt.gca().transAxes)
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
+    plt.tight_layout()
+    plt.savefig(path + "km_alignment_rsf_recommendation.png", dpi=600)
+    plt.show(block=False)
+    
+    return {
+        "tau": tau,
+        "rmst_aligned": rmst_aligned,
+        "rmst_not_aligned": rmst_not_aligned,
+        "rmst_diff": rmst_diff,
+        "n_aligned": int(mask_aligned.sum()),
+        "n_not_aligned": int(mask_not_aligned.sum()),
+        "logrank_pvalue": float(results.p_value)
+    }
+
 def compute_alignment_rmst_diff_rsf(model, df, genes_main, genes_inter, dup_inter,
                                    clin_cols, tau=60,
                                    time_col="OS_MONTHS", event_col="OS_STATUS"):
@@ -381,13 +498,16 @@ FEAT_EVENT_FRACTION = 0.50
 FEAT_BUDGET = max(24, int(FEAT_EVENT_FRACTION * N_EVENTS_TR))  # total inputs incl. clinical
 print(f"[Budgets] events(train)={N_EVENTS_TR} → feature budget ≤ {FEAT_BUDGET}")
 
-# Multi-objective RMST settings (used inside Optuna objective)
-RMST_OPT_N_RUNS = 10
-RMST_OPT_SEEDS = list(range(1, RMST_OPT_N_RUNS + 1))
+# Bootstrap tuning settings (used inside Optuna objective)
+BOOTSTRAP_TUNE_N = 5
+BOOTSTRAP_BASE_SEED = 31415
+BOOTSTRAP_MAX_RESAMPLE_TRIES = 256
+BOOTSTRAP_EVAL_SEED_N = 10
+BOOTSTRAP_EVAL_SEEDS = list(range(1, BOOTSTRAP_EVAL_SEED_N + 1))
 
 
 # ============================================================
-# Optuna: single-objective (Val CI ↑) with RSF + interactions
+# Optuna: multi-objective (Val CI ↑, RMST diff ↑) with RSF + deterministic bootstrap tuning
 # ============================================================
 def suggest_hparams(trial):
     max_nonclin = max(8, FEAT_BUDGET - len(CLIN_FEATS))
@@ -453,90 +573,148 @@ w_va, _, _ = compute_iptw(valid_df, covariate_cols=CLIN_FEATS_PRETX, act_col="Ad
 
 
 def build_trial_mats(k_main, k_int, dup_inter):
+    return build_trial_mats_for_splits(train_df, valid_df, w_tr, k_main, k_int, dup_inter)
+
+
+def bootstrap_resample_df(df, seed, require_two_arms=False, require_event=True):
+    rng = np.random.default_rng(int(seed))
+    n = len(df)
+    for _ in range(BOOTSTRAP_MAX_RESAMPLE_TRIES):
+        idx = rng.integers(0, n, size=n)
+        boot = df.iloc[idx].copy()
+        if require_event and int(boot["OS_STATUS"].sum()) == 0:
+            continue
+        if require_two_arms and boot["Adjuvant Chemo"].nunique() < 2:
+            continue
+        return boot.sort_values(by=["OS_MONTHS", "OS_STATUS"], ascending=[False, False]).reset_index(drop=True)
+    raise RuntimeError("Could not draw a valid bootstrap sample with events and both treatment arms.")
+
+
+def build_trial_mats_for_splits(train_fit_df, valid_eval_df, w_fit, k_main, k_int, dup_inter):
     genes_main  = GENE_RANK[:k_main]
     genes_inter = genes_main[:k_int]
 
     Xtr_raw, feat_names = build_features_with_interactions(
-        train_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+        train_fit_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
     )
     Xva_raw, _ = build_features_with_interactions(
-        valid_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
+        valid_eval_df, genes_main, genes_inter, dup_inter=dup_inter, clin_cols=CLIN_FEATS
     )
 
     Xtr = Xtr_raw.astype(np.float64)
     Xva = Xva_raw.astype(np.float64)
 
     ytr = Surv.from_arrays(
-        event=train_df["OS_STATUS"].astype(bool).values,
-        time=train_df["OS_MONTHS"].astype(float).values
+        event=train_fit_df["OS_STATUS"].astype(bool).values,
+        time=train_fit_df["OS_MONTHS"].astype(float).values
     )
     yva = Surv.from_arrays(
-        event=valid_df["OS_STATUS"].astype(bool).values,
-        time=valid_df["OS_MONTHS"].astype(float).values
+        event=valid_eval_df["OS_STATUS"].astype(bool).values,
+        time=valid_eval_df["OS_MONTHS"].astype(float).values
     )
 
-    return Xtr, ytr, w_tr, Xva, yva, w_va, feat_names, genes_main, genes_inter
+    return Xtr, ytr, w_fit, Xva, yva, feat_names, genes_main, genes_inter
 
 
 def objective(trial):
     k_main, k_int, dup_inter, rsf_params = suggest_hparams(trial)
-    Xtr, ytr, wtr, Xva, yva, wva, feat_names, genes_main, genes_inter = build_trial_mats(k_main, k_int, dup_inter)
-
     tva = valid_df["OS_MONTHS"].values.astype(float)
     eva = valid_df["OS_STATUS"].values.astype(int)
 
-    va_cis = []
-    rmst_diffs = []
+    boot_val_cis = []
+    boot_rmst_diffs = []
+    boot_val_ci_seed_ses = []
+    boot_rmst_seed_iqrs = []
+    n_features = None
 
-    for seed in RMST_OPT_SEEDS:
-        rsf_params["random_state"] = int(seed)
-        rsf = make_rsf(**rsf_params)
-        rsf.fit(Xtr, ytr, sample_weight=wtr)
-
-        va_pred = rsf.predict(Xva)
-        va_ci = cindex(va_pred, tva, eva)
-        va_cis.append(float(va_ci))
-
-        rmst_diff = compute_alignment_rmst_diff_rsf(
-            rsf,
-            valid_df,
-            genes_main=genes_main,
-            genes_inter=genes_inter,
-            dup_inter=dup_inter,
-            clin_cols=CLIN_FEATS,
-            tau=60,
+    for b in range(BOOTSTRAP_TUNE_N):
+        boot_seed = BOOTSTRAP_BASE_SEED + trial.number * 1000 + b
+        boot_train_df = bootstrap_resample_df(
+            train_df,
+            seed=boot_seed,
+            require_two_arms=True,
+            require_event=True,
         )
-        rmst_diffs.append(float(rmst_diff))
+        w_tr_boot, _, _ = compute_iptw(
+            boot_train_df,
+            covariate_cols=CLIN_FEATS_PRETX,
+            act_col="Adjuvant Chemo",
+        )
+        Xtr, ytr, wtr, Xva, yva, feat_names, genes_main, genes_inter = build_trial_mats_for_splits(
+            boot_train_df, valid_df, w_tr_boot, k_main, k_int, dup_inter
+        )
 
-    median_val_ci = float(np.median(va_cis))
-    median_rmst_diff = float(np.median(rmst_diffs))
-    val_ci_se = float(np.std(va_cis, ddof=1)) if len(va_cis) > 1 else 0.0
-    rmst_iqr = float(np.percentile(rmst_diffs, 75) - np.percentile(rmst_diffs, 25)) if len(rmst_diffs) > 1 else 0.0
+        seed_val_cis = []
+        seed_rmst_diffs = []
 
-    trial.set_user_attr("n_features", int(Xtr.shape[1]))
+        for seed in BOOTSTRAP_EVAL_SEEDS:
+            rsf_params_boot = dict(rsf_params)
+            rsf_params_boot["random_state"] = int(boot_seed * 100 + seed)
+            rsf = make_rsf(**rsf_params_boot)
+            rsf.fit(Xtr, ytr, sample_weight=wtr)
+
+            va_pred = rsf.predict(Xva)
+            val_ci = cindex(va_pred, tva, eva)
+            rmst_diff = compute_alignment_rmst_diff_rsf(
+                rsf,
+                valid_df,
+                genes_main=genes_main,
+                genes_inter=genes_inter,
+                dup_inter=dup_inter,
+                clin_cols=CLIN_FEATS,
+                tau=60,
+            )
+
+            seed_val_cis.append(float(val_ci))
+            seed_rmst_diffs.append(float(rmst_diff))
+
+        boot_val_cis.append(float(np.median(seed_val_cis)))
+        boot_rmst_diffs.append(float(np.median(seed_rmst_diffs)))
+        boot_val_ci_seed_ses.append(float(np.std(seed_val_cis, ddof=1)) if len(seed_val_cis) > 1 else 0.0)
+        boot_rmst_seed_iqrs.append(
+            float(np.percentile(seed_rmst_diffs, 75) - np.percentile(seed_rmst_diffs, 25))
+            if len(seed_rmst_diffs) > 1 else 0.0
+        )
+        n_features = Xtr.shape[1]
+
+    median_val_ci = float(np.median(boot_val_cis))
+    median_rmst_diff = float(np.median(boot_rmst_diffs))
+    val_ci_se = float(np.std(boot_val_cis, ddof=1)) if len(boot_val_cis) > 1 else 0.0
+    rmst_iqr = float(np.percentile(boot_rmst_diffs, 75) - np.percentile(boot_rmst_diffs, 25)) if len(boot_rmst_diffs) > 1 else 0.0
+    median_seed_val_ci_se = float(np.median(boot_val_ci_seed_ses)) if len(boot_val_ci_seed_ses) > 0 else 0.0
+    median_seed_rmst_iqr = float(np.median(boot_rmst_seed_iqrs)) if len(boot_rmst_seed_iqrs) > 0 else 0.0
+
+    trial.set_user_attr("n_features", int(n_features))
     trial.set_user_attr("k_main", int(k_main))
     trial.set_user_attr("k_int", int(k_int))
     trial.set_user_attr("dup_inter", int(dup_inter))
-    trial.set_user_attr("val_ci_median_10runs", float(median_val_ci))
-    trial.set_user_attr("val_ci_se_10runs", float(val_ci_se))
-    trial.set_user_attr("median_rmst_diff_10runs", float(median_rmst_diff))
-    trial.set_user_attr("iqr_rmst_diff_10runs", float(rmst_iqr))
-    trial.set_user_attr("rmst_runs_n", int(RMST_OPT_N_RUNS))
+    trial.set_user_attr("val_ci", float(median_val_ci))
+    trial.set_user_attr("rmst_diff", float(median_rmst_diff))
+    trial.set_user_attr("val_ci_boot_median", float(median_val_ci))
+    trial.set_user_attr("val_ci_boot_se", float(val_ci_se))
+    trial.set_user_attr("rmst_diff_boot_median", float(median_rmst_diff))
+    trial.set_user_attr("rmst_diff_boot_iqr", float(rmst_iqr))
+    trial.set_user_attr("bootstrap_n", int(BOOTSTRAP_TUNE_N))
+    trial.set_user_attr("seed_eval_n", int(BOOTSTRAP_EVAL_SEED_N))
+    trial.set_user_attr("val_ci_seed_se_median", float(median_seed_val_ci_se))
+    trial.set_user_attr("rmst_diff_seed_iqr_median", float(median_seed_rmst_iqr))
 
     print(
-        f"[Trial {trial.number:03d}] Val CI median(10)={median_val_ci:.4f} (SE={val_ci_se:.4f}), "
-        f"RMST diff median(10)={median_rmst_diff:.4f} (IQR={rmst_iqr:.4f}), "
-        f"N_feats={Xtr.shape[1]}, K_main={k_main}, K_int={k_int}, Dup={dup_inter}, "
+        f"[Trial {trial.number:03d}] Boot Val CI median({BOOTSTRAP_TUNE_N})={median_val_ci:.4f} "
+        f"(SE={val_ci_se:.4f}), RMST diff median({BOOTSTRAP_TUNE_N})={median_rmst_diff:.4f} "
+        f"(IQR={rmst_iqr:.4f}), seed-panel={BOOTSTRAP_EVAL_SEED_N}, "
+        f"seed CI SE median={median_seed_val_ci_se:.4f}, seed RMST IQR median={median_seed_rmst_iqr:.4f}, "
+        f"N_feats={n_features}, K_main={k_main}, K_int={k_int}, Dup={dup_inter}, "
         f"n_estimators={rsf_params['n_estimators']}"
     )
 
-    # Multi-objective: maximize validation C-index and median RMST difference
+    # Multi-objective: maximize bootstrapped validation C-index and RMST difference
     return median_val_ci, median_rmst_diff
 
 
 # ---- Run study ----
-RUN_TAG = "3-8-mo-ci-rmst10"
-storage = "sqlite:///rsf_optuna_mar8_multiobj.db"
+RUN_TAG = f"3-13-mo-ci-rmst-boot{BOOTSTRAP_TUNE_N}-seed{BOOTSTRAP_EVAL_SEED_N}"
+storage = f"sqlite:///rsf_optuna_mar13_multiobj_boot{BOOTSTRAP_TUNE_N}_seed{BOOTSTRAP_EVAL_SEED_N}.db"
 study_name = f"rsf_{RUN_TAG}"
 
 study = optuna.create_study(
@@ -548,7 +726,10 @@ study = optuna.create_study(
 )
 
 N_TRIALS = 0
-print(f"Starting optimization: {N_TRIALS} trials")
+print(
+    f"Starting bootstrap optimization: {N_TRIALS} trials x {BOOTSTRAP_TUNE_N} bootstraps/trial "
+    f"x {BOOTSTRAP_EVAL_SEED_N} seeds/bootstrap"
+)
 study.optimize(objective, n_trials=N_TRIALS, gc_after_trial=True)
 
 
@@ -589,12 +770,18 @@ best_trial = chosen
 
 print(f"\n[Pareto] Candidates: {len(candidates)}")
 print(f"[Pareto] Selected compromise trial #{chosen.number}")
-print(f"[Pareto] Selected values: Val CI={float(chosen.values[0]):.4f}, Median RMST diff={float(chosen.values[1]):.4f}")
+print(f"[Pareto] Selected values: Boot median Val CI={float(chosen.values[0]):.4f}, Boot median RMST diff={float(chosen.values[1]):.4f}")
 print("[Chosen Params]", chosen.params)
-print("[Chosen Attrs] k_main=%s k_int=%s dup_inter=%s" %
+print("[Chosen Attrs] k_main=%s k_int=%s dup_inter=%s ci_se=%s rmst_iqr=%s boot_n=%s seed_n=%s seed_ci_se=%s seed_rmst_iqr=%s" %
       (str(chosen.user_attrs.get("k_main")),
        str(chosen.user_attrs.get("k_int")),
-       str(chosen.user_attrs.get("dup_inter"))))
+       str(chosen.user_attrs.get("dup_inter")),
+       str(chosen.user_attrs.get("val_ci_boot_se")),
+       str(chosen.user_attrs.get("rmst_diff_boot_iqr")),
+       str(chosen.user_attrs.get("bootstrap_n")),
+       str(chosen.user_attrs.get("seed_eval_n")),
+       str(chosen.user_attrs.get("val_ci_seed_se_median")),
+       str(chosen.user_attrs.get("rmst_diff_seed_iqr_median"))))
 
 
 # ============================================================
@@ -898,6 +1085,9 @@ for model_label, trial in model_specs:
     median_ci = float(np.median(all_ci_test))
     mean_ci = float(np.mean(all_ci_test))
     std_ci = float(np.std(all_ci_test))
+    median_ci_train = float(np.median([r["ci_trainval"] for r in all_results]))
+    mean_ci_train = float(np.mean([r["ci_trainval"] for r in all_results]))
+    std_ci_train = float(np.std([r["ci_trainval"] for r in all_results]))
 
     median_rmst_following = float(np.median(all_rmst_following))
     mean_rmst_following = float(np.mean(all_rmst_following))
@@ -912,6 +1102,10 @@ for model_label, trial in model_specs:
     print(f"\n{model_label} Test C-index:")
     print(f"Median: {median_ci:.4f}")
     print(f"Mean:   {mean_ci:.4f} ± {std_ci:.4f}")
+    
+    print(f"\n{model_label} Train/Val C-index:")    
+    print(f"Median: {median_ci_train:.4f}")
+    print(f"Mean:   {mean_ci_train:.4f} ± {std_ci_train:.4f}")
 
     print(f"\n{model_label} 60-Month RMST (Following):")
     print(f"Median: {median_rmst_following:.4f} months")
@@ -992,14 +1186,18 @@ for model_label, trial in model_specs:
         rsf_final = make_rsf(**rsf_params)
         rsf_final.fit(X_trv, y_trv, sample_weight=w_trv)
 
-        compare_treatment_recommendation_km_rsf(
+        final_compare_treatment_recommendation_km_rsf(
             rsf_final,
             test_df,
             genes_main=genes_main,
             genes_inter=genes_inter,
             dup_inter=dup_inter,
             clin_cols=CLIN_FEATS,
-            path=model_out_dir + "/"
+            path=model_out_dir + "/",
+            includeRMST=True,
+            p = 1, 
+            q = 0,
+            Cindex = median_ci,
         )
 
         result = permutation_importance(

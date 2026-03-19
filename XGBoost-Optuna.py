@@ -174,7 +174,7 @@ def slice_booster_to_best_iteration(booster, best_ntree):
 def compare_treatment_recommendation_km_xgb(booster, df, genes_main, genes_inter, dup_inter,
                                             feature_names, best_ntree, clin_cols,
                                             time_col="OS_MONTHS", event_col="OS_STATUS",
-                                            path="", includeRMST=False, p=None, q=None):
+                                            path="", includeRMST=False, p=None, q=None, Cindex=None):
     """KM comparison for alignment with model's treatment recommendation on provided data."""
     df = df.copy()
     df["Adjuvant Chemo"] = df["Adjuvant Chemo"].astype(int)
@@ -238,7 +238,18 @@ def compare_treatment_recommendation_km_xgb(booster, df, genes_main, genes_inter
         event_observed_A=df.loc[mask_aligned, event_col],
         event_observed_B=df.loc[mask_not_aligned, event_col],
     )
-    print("Lifelines Log-rank test p-value:", results.p_value)
+    fh_pvalue = None
+    if p is not None and q is not None:
+        fh_results = logrank_test(
+            df.loc[mask_aligned, time_col],
+            df.loc[mask_not_aligned, time_col],
+            event_observed_A=df.loc[mask_aligned, event_col],
+            event_observed_B=df.loc[mask_not_aligned, event_col],
+            weightings="fleming-harrington",
+            p=p,
+            q=q,
+        )
+        fh_pvalue = float(fh_results.p_value)
     
     # Run with scikit-survival compare_survival to cross-check log-rank p-value
     y_all = Surv.from_arrays(
@@ -259,30 +270,25 @@ def compare_treatment_recommendation_km_xgb(booster, df, genes_main, genes_inter
     print(f"RMST (not aligned) at tau={tau:.2f}: {rmst_not_aligned:.4f}")
     print(f"RMST difference (aligned - not aligned): {rmst_diff:.4f}")
 
+    # Ordered metrics: Log-rank p-value; Fleming-Harrington p-value; Test C-index; 5-year RMST difference
+    print(f"Log-rank test p-value: {float(results.p_value):.4f}")
+    if fh_pvalue is not None:
+        print(f"Fleming-Harrington test p-value (p={p}, q={q}): {fh_pvalue:.4f}")
+    if Cindex is not None:
+        print(f"C-index: {float(Cindex):.4f}")
+    print(f"5-year RMST difference: {float(rmst_diff):.4f} months")
+
     plt.title("Kaplan-Meier Survival Curves by Treatment Alignment")
     plt.xlabel("Time")
     plt.ylabel("Survival Probability")
     add_at_risk_counts(kmf_aligned, kmf_not_aligned)
-    plt.text(0.1, 0.1, f"Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
-    print(f"Log-rank test p-value: {results.p_value:.4f}")
-
+    plt.text(0.1, 0.2, f"Log-rank p-value: {results.p_value:.4f}", transform=plt.gca().transAxes)
+    if fh_pvalue is not None:
+        plt.text(0.1, 0.15, f"FH({p}, {q}) log-rank p-value: {fh_pvalue:.4f}", transform=plt.gca().transAxes)
+    if Cindex is not None:
+        plt.text(0.1, 0.1, f"C-index: {float(Cindex):.4f}", transform=plt.gca().transAxes)
     if includeRMST:
         plt.text(0.1, 0.05, f"5-year RMST difference: {rmst_diff:.2f} months", transform=plt.gca().transAxes)
-
-    fh_pvalue = None
-    if p is not None and q is not None:
-        fh_results = logrank_test(
-            df.loc[mask_aligned, time_col],
-            df.loc[mask_not_aligned, time_col],
-            event_observed_A=df.loc[mask_aligned, event_col],
-            event_observed_B=df.loc[mask_not_aligned, event_col],
-            weightings="fleming-harrington",
-            p=p,
-            q=q,
-        )
-        fh_pvalue = float(fh_results.p_value)
-        print(f"Fleming-Harrington test p-value (p={p}, q={q}): {fh_pvalue:.4f}")
-        plt.text(0.1, 0.15, f"FH({p}, {q}) log-rank p-value: {fh_pvalue:.4f}", transform=plt.gca().transAxes)
 
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
@@ -442,7 +448,7 @@ def suggest_hparams(trial):
     # Reserve headroom for interactions; otherwise k_int is forced to zero.
     max_main = max(1, max_nonclin - 1)
 
-    base_main  = [4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, MAX_GENES]
+    base_main  = [16, 32, 64, 96, 128, 192, 256, 384, 512, MAX_GENES]
     TOPK_MAIN_CHOICES = tuple(sorted({k for k in base_main if 1 <= k <= min(MAX_GENES, max_main)}))
     if len(TOPK_MAIN_CHOICES) == 0:
         TOPK_MAIN_CHOICES = (min(MAX_GENES, max_main),)
@@ -792,4 +798,5 @@ compare_treatment_recommendation_km_xgb(
     includeRMST=True,
     p=1,
     q=0,
+    Cindex=ci_te,
 )
